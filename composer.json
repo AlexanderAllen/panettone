@@ -1,0 +1,43 @@
+{
+    "name": "alexanderallen/panettone",
+    "type": "library",
+    "description": "A lightweight PHP type generator for Open API (formerly Swagger)",
+    "keywords": [
+        "model",
+        "entity",
+        "schema",
+        "dto",
+        "data transfer objects",
+        "open api",
+        "swagger"
+    ],
+    "homepage": "https://github.com/AlexanderAllen/panettone",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Richard Allen",
+            "email": "14018885+AlexanderAllen@users.noreply.github.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "AlexanderAllen\\Panettone\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "AlexanderAllen\\Panettone\\Tests\\": "tests/"
+        }
+    },
+    "require": {
+        "psr/log": "^3.0",
+        "consolidation/log": "^3.0"
+    },
+    "require-dev": {
+        "api-platform/schema-generator": "^5.2",
+        "myclabs/php-enum": "^1.8",
+        "cebe/php-openapi": "^1.7",
+        "nette/neon":"^3.4",
+        "nette/php-generator":"^4.1"
+    }
+}
