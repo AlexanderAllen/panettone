@@ -38,6 +38,7 @@
         "myclabs/php-enum": "^1.8",
         "cebe/php-openapi": "^1.7",
         "nette/neon":"^3.4",
-        "nette/php-generator":"^4.1"
+        "nette/php-generator":"^4.1",
+        "squizlabs/php_codesniffer": "^3.9"
     }
 }
