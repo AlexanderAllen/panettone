@@ -1,19 +1,18 @@
 {
   "php.validate.executablePath": "/usr/bin/php82",
-  "phpcs.autoConfigSearch": true,
-
-  "phpstan.configFile": "phpstan.neon",
-  "phpstan.showProgress": true,
-  "phpstan.rootDir": "",
-
-  "phpcs.showSources": true,
-  "phpcs.standard": "",
-  "phpcs.enable": false,
-  "phpstan.binPath": "/home/wsl/.composer/vendor/bin/phpstan",
 
   "workbench.colorCustomizations": {
     "editorError.foreground": "#ffef0f",
     "editorWarning.foreground": "#3777ff"
-  }
+  },
 
+  "phpstan.configFile": "phpstan.neon",
+  "phpstan.showProgress": true,
+  "phpstan.rootDir": "",
+  "phpstan.binPath": "/home/wsl/.composer/vendor/bin/phpstan",
+
+  "phpcs.showSources": true,
+  "phpcs.standard": "./phpcs.xml",
+  "phpcs.executablePath": "./vendor/bin/phpcs",
+  "phpcs.enable": true,
 }

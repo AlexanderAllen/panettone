@@ -1,0 +1,21 @@
+{
+  "recommendations": [
+    "yile-ou.paddy-color-theme",
+    "johnpapa.vscode-peacock",
+    "beardedbear.beardedtheme",
+    "catppuccin.catppuccin-vsc-icons",
+    "krueger71.crt-themes",
+    "s-nlf-fh.glassit",
+    "monokai.theme-monokai-pro-vscode",
+    "ikappas.phpcs",
+    "sanderronde.phpstan-vscode",
+    "zamerick.vscode-caddyfile-syntax",
+    "esbenp.prettier-vscode",
+    "jeremyrajan.webpack",
+    "felixfbecker.php-intellisense",
+    "xdebug.php-pack",
+    "william-voyek.vscode-nginx",
+    "ahmadalli.vscode-nginx-conf",
+    "kumar-harsh.graphql-for-vscode"
+  ]
+}
