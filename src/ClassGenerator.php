@@ -13,49 +13,66 @@ use cebe\openapi\spec\Schema;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\NullLogger;
 
-class ClassGenerator {
+class ClassGenerator
+{
+    use LoggerAwareTrait;
+    use SchemaTraversalTrait;
 
-  use LoggerAwareTrait;
-  use SchemaTraversalTrait;
+    private PropertyGeneratorInterface $propertyGenerator;
 
-  private PropertyGeneratorInterface $propertyGenerator;
-
-  public function __construct()
-  {
-    $this->logger = new NullLogger();
-    $this->propertyGenerator = new PropertyGenerator();
-  }
-
-  public function kneadSchema(OpenApi $openapi): void {
-
-    $classes = [];
-    foreach($openapi->components->schemas as $name => $schema) {
-      \assert($schema instanceof Schema);
-      $classes[] = $this->buildClassFromSchema($name, $schema);
+    public function __construct()
+    {
+        $this->logger = new NullLogger();
+        $this->propertyGenerator = new PropertyGenerator();
     }
 
-  }
+    public function kneadSchema(OpenApi $openapi): void
+    {
 
-  function buildClassFromSchema(string $name, Schema $schema): Class_
-  {
-      $class = new Class_($name);
+        $classes = [];
+        try {
+            foreach ($openapi->components->schemas as $name => $schema) {
+                $this->logger->info(sprintf('Source schema "%s"', $name));
+                \assert($schema instanceof Schema);
+                $classes[] = $this->buildClassFromSchema($name, $schema);
+            }
+        } catch (\Throwable $source) {
+            $this->logger->error(
+                sprintf('Error sourcing schema "%s"', $name),
+                [
+                  'exception' => new SourceException('Bad ingredient', $source)
+                ]
+            );
+        }
+    }
 
-      $schemaProperties = [];
-      foreach ($this->getSchemaItem($schema) as $schemaItem) {
-          $schemaProperties = array_merge($schemaProperties, $schemaItem->properties);
-      }
+    public function buildClassFromSchema(string $name, Schema $schema): Class_
+    {
+        $class = new Class_($name);
 
-      foreach ($schemaProperties as $propertyName => $schemaProperty) {
-          \assert($schemaProperty instanceof Schema);
+        $schemaProperties = [];
+        foreach ($this->getSchemaItem($schema) as $schemaItem) {
+            $schemaProperties = array_merge($schemaProperties, $schemaItem->properties);
+        }
 
-          $this->logger->info(sprintf('Evaluating property named "%s"', $propertyName));
+        foreach ($schemaProperties as $propertyName => $schemaProperty) {
+            \assert($schemaProperty instanceof Schema);
 
-          $property = ($this->propertyGenerator)($propertyName, [], $class, ['schema' => $schema, 'property' => $schemaProperty]);
-          if ($property) {
-              $class->addProperty($property);
-          }
-      }
+            $this->logger->info(sprintf('Source property named "%s"', $propertyName));
 
-      return $class;
-  }
+            $property =
+            ($this->propertyGenerator)(
+                $propertyName,
+                [],
+                $class,
+                ['schema' => $schema, 'property' => $schemaProperty]
+            );
+
+            if ($property) {
+                $class->addProperty($property);
+            }
+        }
+
+        return $class;
+    }
 }
