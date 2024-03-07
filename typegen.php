@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /**
  * @file
  * Script for generating DTO types from a OAS file.
@@ -20,6 +18,8 @@ declare(strict_types=1);
  * - Instead, it should be just schemas.
  */
 
+declare(strict_types=1);
+
 require __DIR__ . '/vendor/autoload.php';
 
 use cebe\openapi\Reader;
@@ -33,9 +33,9 @@ use AlexanderAllen\Panettone\ClassGenerator;
 
 
 $openapi = Reader::readFromYamlFile(
-  realpath('schema/soundcloud/oas-1.0.1.yml'),
-  OpenAPI::class,
-  ReferenceContext::RESOLVE_MODE_INLINE
+    realpath('schema/soundcloud/oas-1.0.1.yml'),
+    OpenAPI::class,
+    ReferenceContext::RESOLVE_MODE_INLINE
 );
 
 $cake = new ClassGenerator();
@@ -44,8 +44,6 @@ $output = new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG);
 $cake->setLogger(new Logger($output));
 
 $cake->kneadSchema($openapi);
-
-$test = NULL;
 
 // Inspiration from vendor/api-platform/schema-generator/src/OpenApi/ClassGenerator.php
 
@@ -61,4 +59,3 @@ $test = NULL;
 
 
 echo "hi" . PHP_EOL;
-
