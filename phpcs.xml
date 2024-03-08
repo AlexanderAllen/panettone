@@ -12,6 +12,13 @@
 
   <rule ref="PSR12" />
 
+  <rule ref="Generic.Metrics.CyclomaticComplexity">
+      <properties>
+          <property name="complexity" value="10"/>
+          <property name="absoluteComplexity" value="15"/>
+      </properties>
+  </rule>
+
   <exclude-pattern>*/vendor/*</exclude-pattern>
 
   <file>./src</file>
