@@ -5,7 +5,8 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Schema Generator",
+      "name": "Lando: debug",
+
       "type": "php",
       "request": "launch",
       "port": 9003,
@@ -16,8 +17,19 @@
       "xdebugSettings": {
         "show_hidden": 1,
       },
-      "stopOnEntry": true,
+      "stopOnEntry": false,
     },
+    {
+        "name": "Local: debug",
+        "type": "php",
+        "request": "launch",
+        "port": 9003,
+        "hostname": "localhost",
+        "xdebugSettings": {
+          "show_hidden": 1,
+        },
+        "stopOnEntry": false
+      },
     {
       "name": "Launch currently open script",
       "type": "php",

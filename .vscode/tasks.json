@@ -42,8 +42,8 @@
         "env": {
           "XDEBUG_CONFIG": "idekey=VSCODE",
           "XDEBUG_MODE": "debug",
-          "XDEBUG_SESSION": "1",
-        },
+          "XDEBUG_SESSION": "1"
+        }
       },
       "linux": {
         "options": {
@@ -98,6 +98,13 @@
       "linux": {
         "options": {
           "cwd": "/home/wsl/dreamy-ritchie/docroot/web/modules/contrib/musica/tools/schema-generator"
+        }
+      },
+      "options": {
+        "env": {
+          "XDEBUG_CONFIG": "idekey=VSCODE",
+        //   "XDEBUG_MODE": "debug",
+          "XDEBUG_SESSION": "1"
         }
       },
       "problemMatcher": "$eslint-compact",
