@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d979fed7ed342365fa469069131063cf",
+    "content-hash": "8e1d6f8c5637e61294134690319af5fe",
     "packages": [
         {
             "name": "consolidation/log",
