@@ -68,12 +68,12 @@
     {
       "label": "Local: phpunit",
       "type": "shell",
-      // "command": "./lando php docroot/vendor/bin/phpunit docroot/web/modules/custom --testdox --exclude-group ignore",
-      "command": "docroot/web/modules/contrib/musica/tools/phpunit/test",
+      "command": "./test",
       "detail": "Executes PHPUnit on the local system",
       "options": {
         "env": {
-          "XDEBUG_CONFIG": "idekey=VSCODE"
+          "XDEBUG_CONFIG": "idekey=VSCODE",
+          "XDEBUG_SESSION": "1"
         },
       },
       "group": {
@@ -95,11 +95,6 @@
       "label": "Local: panettone",
       "detail": "Run type generator locally without Docker",
       "type": "shell",
-      "linux": {
-        "options": {
-          "cwd": "/home/wsl/dreamy-ritchie/docroot/web/modules/contrib/musica/tools/schema-generator"
-        }
-      },
       "options": {
         "env": {
           "XDEBUG_CONFIG": "idekey=VSCODE",

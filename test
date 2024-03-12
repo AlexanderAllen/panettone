@@ -1,0 +1,10 @@
+#!/bin/sh
+
+php vendor/bin/phpunit --no-progress \
+tests \
+--testdox \
+--log-junit $PWD/junit.xml \
+--coverage-text \
+--coverage-cobertura $PWD/coverage.cobertura.xml \
+--exclude-group ignore \
+--coverage-filter src
