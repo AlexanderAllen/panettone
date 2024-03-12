@@ -29,16 +29,20 @@ class BakeCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $openapi = Reader::readFromYamlFile(
-            realpath($input->getArgument('source')),
-            OpenAPI::class,
-            ReferenceContext::RESOLVE_MODE_INLINE
-        );
+        try {
+            $openapi = Reader::readFromYamlFile(
+                realpath($input->getArgument('source')),
+                OpenAPI::class,
+                ReferenceContext::RESOLVE_MODE_INLINE
+            );
 
-        $cake = new ClassGenerator();
-        $output = new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG);
-        $cake->setLogger(new Logger($output));
-        $cake->kneadSchema($openapi);
+            $cake = new ClassGenerator();
+            $output = new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG);
+            $cake->setLogger(new Logger($output));
+            $cake->kneadSchema($openapi);
+        } catch (\Exception $th) {
+            return Command::FAILURE;
+        }
 
         // Inspiration from vendor/api-platform/schema-generator/src/OpenApi/ClassGenerator.php
 
@@ -48,21 +52,6 @@ class BakeCommand extends Command
         //     $classes = array_merge($this->buildEnumClasses($showSchema, $showClass, $config), $classes);
         // }
 
-        // ... put here the code to create the user
-
-        // this method must return an integer number with the "exit status code"
-        // of the command. You can also use these constants to make code more readable
-
-        // return this if there was no problem running the command
-        // (it's equivalent to returning int(0))
         return Command::SUCCESS;
-
-        // or return this if some error happened during the execution
-        // (it's equivalent to returning int(1))
-        // return Command::FAILURE;
-
-        // or return this to indicate incorrect command usage; e.g. invalid options
-        // or missing arguments (it's equivalent to returning int(2))
-        // return Command::INVALID
     }
 }
