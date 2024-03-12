@@ -27,9 +27,16 @@ use cebe\openapi\ReferenceContext;
 use cebe\openapi\spec\OpenApi;
 use Consolidation\Log\Logger;
 use Symfony\Component\Console\Output\ConsoleOutput;
-
 use AlexanderAllen\Panettone\ClassGenerator;
 
+use Symfony\Component\Console\Application;
+use AlexanderAllen\Panettone\Command\BakeCommand;
+
+$application = new Application();
+$baker = new BakeCommand();
+$application->add($baker);
+$application->setDefaultCommand($baker->getName(), true);
+$application->run();
 
 
 $openapi = Reader::readFromYamlFile(
@@ -38,12 +45,10 @@ $openapi = Reader::readFromYamlFile(
     ReferenceContext::RESOLVE_MODE_INLINE
 );
 
-$cake = new ClassGenerator();
-
-$output = new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG);
-$cake->setLogger(new Logger($output));
-
-$cake->kneadSchema($openapi);
+// $cake = new ClassGenerator();
+// $output = new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG);
+// $cake->setLogger(new Logger($output));
+// $cake->kneadSchema($openapi);
 
 // Inspiration from vendor/api-platform/schema-generator/src/OpenApi/ClassGenerator.php
 
