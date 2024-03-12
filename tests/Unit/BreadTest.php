@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace AlexanderAllen\Panettone\Test;
+namespace AlexanderAllen\Panettone\Test\Unit;
 
 use AlexanderAllen\Panettone\BreadGenerator;
 use PHPUnit\Framework\TestCase;
