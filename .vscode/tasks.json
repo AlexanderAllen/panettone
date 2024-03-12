@@ -103,15 +103,22 @@
       "options": {
         "env": {
           "XDEBUG_CONFIG": "idekey=VSCODE",
-        //   "XDEBUG_MODE": "debug",
           "XDEBUG_SESSION": "1"
         }
       },
       "problemMatcher": "$eslint-compact",
-      "command": "php typegen.php",
+      "command": "php typegen.php ${input:source}",
       "group": "none",
       "isBackground": false,
       "icon": {"id": "server-process", "color": "terminal.ansiGreen"},
     },
+  ],
+  "inputs": [
+    {
+        "id": "source",
+        "type": "promptString",
+        "description": "Open API source",
+        "default": "schema/soundcloud/oas-1.0.1.yml"
+    }
   ]
 }
