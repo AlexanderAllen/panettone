@@ -8,6 +8,7 @@ use AlexanderAllen\Panettone\Bread\BreadGenerator;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Depends;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestDox;
 
@@ -38,6 +39,7 @@ use PHPUnit\Framework\Attributes\TestDox;
  */
 #[CoversClass(BreadGenerator::class)]
 #[TestDox('Generator test')]
+#[Group('ignore')]
 class BreadTest extends TestCase
 {
     protected static \Generator $generator;

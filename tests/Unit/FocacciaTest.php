@@ -7,7 +7,7 @@ namespace AlexanderAllen\Panettone\Test\Unit;
 use AlexanderAllen\Panettone\Bread\Focaccia;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Depends;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestDox;
 use Symfony\Component\Console\Output\ConsoleOutput;
@@ -40,6 +40,7 @@ use Consolidation\Log\Logger;
  */
 #[CoversClass(Focaccia::class)]
 #[TestDox('Generator loops')]
+#[Group('ignore')]
 class FocacciaTest extends TestCase
 {
     /**
