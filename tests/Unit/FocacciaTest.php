@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace AlexanderAllen\Panettone\Test\Unit;
 
-use AlexanderAllen\Panettone\Bread\BreadGenerator;
+use AlexanderAllen\Panettone\Bread\Focaccia;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Depends;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestDox;
+use Symfony\Component\Console\Output\ConsoleOutput;
+use Consolidation\Log\Logger;
 
 /**
  * Class for understanding PHP Generators.
@@ -36,44 +38,25 @@ use PHPUnit\Framework\Attributes\TestDox;
  *
  * @package AlexanderAllen\Panettone\Test
  */
-#[CoversClass(BreadGenerator::class)]
-#[TestDox('Generator test')]
-class BreadTest extends TestCase
+#[CoversClass(Focaccia::class)]
+#[TestDox('Generator loops')]
+class FocacciaTest extends TestCase
 {
-    protected static \Generator $generator;
-
-    protected function setUp(): void
-    {
-        $class = new BreadGenerator();
-
-        // Initial call does not output anything.
-        self::$generator = $class->generate();
-    }
-
     /**
-     * Call to current() resumes the generator, thus "start" is echo'd.
+     * Simple loop test.
      */
     #[Test]
-    #[TestDox('Test first yield')]
+    #[TestDox('Test yield loop')]
     public function first(): void
     {
-        $this->expectOutputString('start');
-        $yield = self::$generator->current();
-        self::assertEquals($yield, 'middle');
-    }
+        $class = new Focaccia();
+        $output = new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG);
+        $class->setLogger(new Logger($output));
 
-    /**
-     * Then the yield expression is hit and the string "middle" is returned
-     * as the result of current() and then echo'd.
-     *
-     * @return void
-     */
-    #[Test]
-    #[TestDox('Test second yield')]
-    #[Depends('first')]
-    public function second(): void
-    {
-        $this->expectOutputString('startend');
-        self::$generator->next();
+        foreach ($class->generate() as $key => $value) {
+            // echo $key, ' => ', $value, "\n";
+            // self::assertIsInt($value);
+            self::assertNotNull($value);
+        }
     }
 }

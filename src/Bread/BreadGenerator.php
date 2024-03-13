@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace AlexanderAllen\Panettone;
+namespace AlexanderAllen\Panettone\Bread;
 
 use cebe\openapi\spec\OpenApi;
 use Psr\Log\LoggerAwareTrait;
