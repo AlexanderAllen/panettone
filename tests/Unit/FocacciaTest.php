@@ -43,10 +43,10 @@ use Consolidation\Log\Logger;
 class FocacciaTest extends TestCase
 {
     /**
-     * Simple loop test.
+     * Simple loop test w/ logger insider generator.
      */
     #[Test]
-    #[TestDox('Test yield loop')]
+    #[TestDox('Generator loop using foreach')]
     public function first(): void
     {
         $class = new Focaccia();
@@ -57,6 +57,29 @@ class FocacciaTest extends TestCase
             // echo $key, ' => ', $value, "\n";
             // self::assertIsInt($value);
             self::assertNotNull($value);
+        }
+    }
+
+    /**
+     * Alternative loop using while instead of foreach.
+     */
+    #[Test]
+    #[TestDox('Generator loop using while')]
+    public function second(): void
+    {
+        $class = new Focaccia();
+
+        // Initial call does not output anything
+        $gen = $class->generate();
+
+        // Returns true while the generator is open.
+        while ($gen->valid()) {
+            // Current resumes generator.
+            $current = $gen->current();
+
+            // Invoke the generator to move forward the internal pointer.
+            $gen->next();
+            self::assertNotNull($current);
         }
     }
 }
