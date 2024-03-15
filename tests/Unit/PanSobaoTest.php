@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace AlexanderAllen\Panettone\Test\Unit;
 
-use AlexanderAllen\Panettone\ClassGenerator;
+// use AlexanderAllen\Panettone\ClassGenerator;
 use AlexanderAllen\Panettone\Bread\PanSobao;
 use cebe\openapi\{Reader, ReferenceContext};
 use cebe\openapi\spec\{OpenApi, Schema, Reference};
@@ -15,19 +15,28 @@ use Symfony\Component\Console\Logger\ConsoleLogger;
 use ApiPlatform\SchemaGenerator\OpenApi\Model\Class_;
 use ApiPlatform\SchemaGenerator\OpenApi\PropertyGenerator\PropertyGenerator;
 use ApiPlatform\SchemaGenerator\PropertyGenerator\PropertyGeneratorInterface;
+use Psr\Log\LoggerAwareTrait;
 
 /**
  * Class for understanding Open API Generators.
  *
  * @package AlexanderAllen\Panettone\Test
  */
-#[CoversClass(PanSobao::class), CoversClass(ClassGenerator::class)]
+#[CoversClass(PanSobao::class)]
 #[TestDox('Generator loops')]
 #[Group('proof')]
 #[Large]
 class PanSobaoTest extends TestCase
 {
+    use LoggerAwareTrait;
+
     private PropertyGeneratorInterface $propertyGenerator;
+
+    public function setUp(): void
+    {
+        $output = new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG);
+        self::setLogger(new ConsoleLogger($output));
+    }
 
     /**
      * Simple loop test w/ logger insider generator.
@@ -37,9 +46,6 @@ class PanSobaoTest extends TestCase
     public function first(): void
     {
         $class = new PanSobao();
-        $output = new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG);
-        $class->setLogger(new ConsoleLogger($output));
-
         foreach ($class->generate() as $key => $value) {
             // echo $key, ' => ', $value, "\n";
             // self::assertIsInt($value);
@@ -92,7 +98,7 @@ class PanSobaoTest extends TestCase
         $classes = [];
         try {
             foreach ($openapi->components->schemas as $name => $schema) {
-                // $this->logger->info(sprintf('Source schema "%s"', $name));
+                $this->logger->info(sprintf('Source schema "%s"', $name));
                 \assert($schema instanceof Schema);
                 $classes[] = $this->buildClassFromSchema($name, $schema);
             }
@@ -110,42 +116,27 @@ class PanSobaoTest extends TestCase
      * Moved to a smaller function to reduce the unit complexity.
      * Also creates a cleaner, more encapsulated logical unit.
      *
-     * @param \Generator<int, Schema|Reference> $gen
+     * @param \Generator<int, Schema|Reference> $generator
      *
      * @return list<Schema|Reference>
      *   Array containing the properties of a given Schema component.
      */
-    private function iterateGenerator(\Generator $gen): array
+    private function iterateGenerator(\Generator $generator): array
     {
         $schemaProperties = [];
-        // foreach ($genclass->generator($schema) as $schemaItem) {
-        //     // References are lacking the properties prop.
-        //     // Can we dereference references from within getSchemaItem?
-
-        //     // My generator uses SpecObjectInterface b.c. it is Reference friendy.
-        //     // But it runs into this properties issue.
-        //     if (isset($schemaItem->properties)) {
-        //         $schemaProperties = array_merge($schemaProperties, $schemaItem->properties);
-        //     }
-        // }
-
         // Returns true while the generator is open.
-        while ($gen->valid()) {
+        while ($generator->valid()) {
             // Current resumes generator.
-            $schemaItem = $gen->current();
-
-            // self::assertNotNull($current);
+            $schemaItem = $generator->current();
 
             // Only Schema types have properties, Reference types do not.
             if ($schemaItem instanceof Schema) {
+                self::assertObjectHasProperty('properties', $schemaItem);
                 $schemaProperties = array_merge($schemaProperties, $schemaItem->properties);
             }
-
             // Invoke the generator to move forward the internal pointer.
-            $gen->next();
+            $generator->next();
         }
-
-
         return $schemaProperties;
     }
 
@@ -157,7 +148,7 @@ class PanSobaoTest extends TestCase
         $output = new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG);
         $pan->setLogger(new ConsoleLogger($output));
 
-        // Initial call does not output anything.
+        // Initial generator call should not yield.
         $gen = $pan->generator($schema);
         $schemaProperties = $this->iterateGenerator($gen);
 
