@@ -74,7 +74,7 @@ class PanSobaoTest extends TestCase
         $openapi = Reader::readFromYamlFile(
             realpath('schema/soundcloud/oas-1.0.1.yml'),
             OpenAPI::class,
-            ReferenceContext::RESOLVE_MODE_INLINE
+            true,
         );
 
         $classes = [];
@@ -87,6 +87,7 @@ class PanSobaoTest extends TestCase
         } catch (\Throwable $source) {
             $this->logger->error(sprintf('Error sourcing schema "%s"', $name));
         }
+        $test = null;
     }
 
     /**
