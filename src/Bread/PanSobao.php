@@ -56,7 +56,7 @@ class PanSobao
      *
      * @param SpecLikeObject $schema
      *
-     * @return \Generator<int, SpecObjectInterface>
+     * @return \Generator<int, \cebe\openapi\SpecObjectInterface>
      */
     public function generator($schema): \Generator
     {

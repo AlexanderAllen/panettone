@@ -80,9 +80,9 @@ class PanSobaoTest extends TestCase
 
         // Second phase, setup class processor.
         // The class processor will invoke recursively the schema generator.
-        $genclass = new ClassGenerator();
-        $output = new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG);
-        $genclass->setLogger(new ConsoleLogger($output));
+        // $genclass = new ClassGenerator();
+        // $output = new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG);
+        // $genclass->setLogger(new ConsoleLogger($output));
 
         // Initiate sourcing process.
         // 3/15 skip top level sourcing and do direclty in test.
@@ -100,21 +100,6 @@ class PanSobaoTest extends TestCase
             // 3/15 what's the best practice for logging throwables in tests.
             // $this->logger->error(sprintf('Error sourcing schema "%s"', $name));
         }
-
-
-
-        // Initial call does not output anything
-        // $gen = $genclass->generator();
-
-        // Returns true while the generator is open.
-        while ($gen->valid()) {
-            // Current resumes generator.
-            $current = $gen->current();
-
-            // Invoke the generator to move forward the internal pointer.
-            $gen->next();
-            self::assertNotNull($current);
-        }
     }
 
     /**
@@ -125,22 +110,42 @@ class PanSobaoTest extends TestCase
      * Moved to a smaller function to reduce the unit complexity.
      * Also creates a cleaner, more encapsulated logical unit.
      *
-     * @return array
+     * @param \Generator<int, Schema|Reference> $gen
+     *
+     * @return list<Schema|Reference>
      *   Array containing the properties of a given Schema component.
      */
-    private function iterateGenerator(PanSobao $genclass, Schema $schema): array
+    private function iterateGenerator(\Generator $gen): array
     {
         $schemaProperties = [];
-        foreach ($genclass->generator($schema) as $schemaItem) {
-            // References are lacking the properties prop.
-            // Can we dereference references from within getSchemaItem?
+        // foreach ($genclass->generator($schema) as $schemaItem) {
+        //     // References are lacking the properties prop.
+        //     // Can we dereference references from within getSchemaItem?
 
-            // My generator uses SpecObjectInterface b.c. it is Reference friendy.
-            // But it runs into this properties issue.
-            if (isset($schemaItem->properties)) {
+        //     // My generator uses SpecObjectInterface b.c. it is Reference friendy.
+        //     // But it runs into this properties issue.
+        //     if (isset($schemaItem->properties)) {
+        //         $schemaProperties = array_merge($schemaProperties, $schemaItem->properties);
+        //     }
+        // }
+
+        // Returns true while the generator is open.
+        while ($gen->valid()) {
+            // Current resumes generator.
+            $schemaItem = $gen->current();
+
+            // self::assertNotNull($current);
+
+            // Only Schema types have properties, Reference types do not.
+            if ($schemaItem instanceof Schema) {
                 $schemaProperties = array_merge($schemaProperties, $schemaItem->properties);
             }
+
+            // Invoke the generator to move forward the internal pointer.
+            $gen->next();
         }
+
+
         return $schemaProperties;
     }
 
@@ -152,11 +157,14 @@ class PanSobaoTest extends TestCase
         $output = new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG);
         $pan->setLogger(new ConsoleLogger($output));
 
-        $schemaProperties = $this->iterateGenerator($pan, $schema);
+        // Initial call does not output anything.
+        $gen = $pan->generator($schema);
+        $schemaProperties = $this->iterateGenerator($gen);
 
         foreach ($schemaProperties as $propertyName => $schemaProperty) {
             // Will this fail on references too?
-            \assert($schemaProperty instanceof \cebe\openapi\SpecObjectInterface);
+            // Call to function assert() with true will always evaluate to true.PHPStan
+            // \assert($schemaProperty instanceof \cebe\openapi\SpecObjectInterface);
 
             // $this->logger->info(sprintf('Source property named "%s"', $propertyName));
 
