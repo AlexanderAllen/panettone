@@ -43,11 +43,13 @@
         "phpunit/phpunit": "^10.0",
         "slevomat/coding-standard": "^8.15",
         "phpstan/phpstan-strict-rules": "^1.5",
-        "phpstan/phpstan-phpunit": "^1.3"
+        "phpstan/phpstan-phpunit": "^1.3",
+        "cweagans/composer-patches": "^1.7"
     },
     "config": {
         "allow-plugins": {
-            "dealerdirect/phpcodesniffer-composer-installer": true
+            "dealerdirect/phpcodesniffer-composer-installer": true,
+            "cweagans/composer-patches": true
         }
     }
 }
