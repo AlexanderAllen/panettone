@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace AlexanderAllen\Panettone\Test\Unit;
 
-// use AlexanderAllen\Panettone\ClassGenerator;
 use AlexanderAllen\Panettone\Bread\PanSobao;
 use ApiPlatform\SchemaGenerator\OpenApi\Model\Type\PrimitiveType;
 use cebe\openapi\{Reader, ReferenceContext};
