@@ -99,8 +99,9 @@ class PanSobaoTest extends TestCase
      *
      * Simple refs are not part of any/allOf, arrays, etc.
      *
-     * In order for this test to succeed a patch needs to be applied to
-     * vendor/api-platform/schema-generator/src/OpenApi/PropertyGenerator/PropertyGenerator.php
+     * The test passes when `PropertyGenerator.php` is patched (see composer.json).
+     * post-patch references are properties without a 'PrimitiveType' property,
+     * which remain unresolved and unwritable to file.
      *
      * @return void
      * @throws TypeErrorException
@@ -123,18 +124,8 @@ class PanSobaoTest extends TestCase
 
         self::assertCount(2, $classes, 'In-memory classes are generated');
         self::assertContainsOnlyInstancesOf(Class_::class, $classes, 'Instance formed from correct class');
-        [$user, $contact] = $classes;
 
-        /**
-         * 3/16
-         * TODO: Is the contact_info prop a ref?
-         * prop-gen code cannot handle simple refs without a patch.
-         * post-patch references are properties without a 'PrimitiveType' property,
-         * which remain unresolved and unwritable to file.
-         *
-         * Is there a cebe or apiplat method that forces ref resolution at this point?
-         * EXPLORE.
-         */
+        [$user, $contact] = $classes;
         self::assertTrue($user->hasProperty('id'));
         self::assertTrue($user->hasProperty('contact_info'));
         self::assertTrue($contact->hasProperty('phone'));
@@ -145,6 +136,9 @@ class PanSobaoTest extends TestCase
      *
      * Reading from file will not resolve simple schema references, even with the
      * `true` parameter on `Reader`.
+     *
+     * TODO: Is there a cebe or apiplat method that forces ref resolution at this point?
+     * EXPLORE!
      */
     #[Test]
     #[TestDox('Simple ref test with file source')]
