@@ -132,15 +132,6 @@ class PanSobaoTest extends TestCase
         self::assertTrue($contact->hasProperty('phone'));
     }
 
-    /**
-     * Same as the simpleRefsTest but using a file.
-     *
-     * Reading from file will not resolve simple schema references, even with the
-     * `true` parameter on `Reader`.
-     *
-     * TODO: Is there a cebe or apiplat method that forces ref resolution at this point?
-     * EXPLORE!
-     */
     #[Test]
     #[TestDox('References in schema properties are resolved')]
     public function simpleRefsFileTest(): void
@@ -151,21 +142,9 @@ class PanSobaoTest extends TestCase
             ReferenceContext::RESOLVE_MODE_ALL,
         );
 
-        /**
-         * 3/16 Attempt to resolve references, see Reader.
-         *
-         * So when this is done by reader, only the top-level elements seem to be resolved? IDK.
-         * What happens if we call resolveReferences at a lower level,
-         * such as components or schema elements themselves?
-         *
-         * References are down at the prop level, FYI.
-         */
         // $context = new ReferenceContext($spec, realpath('tests/fixtures/reference.yml'));
         // $spec->setReferenceContext($context);
         // $spec->setDocumentContext($spec, new JsonPointer(''));
-
-        // Resolve does iterate through the current element, though.
-        // So maybe pointing it to a schema will iterate through the props.
         // $spec->resolveReferences();
 
         $result_user = $spec->components->schemas['User'];
@@ -173,6 +152,25 @@ class PanSobaoTest extends TestCase
             Schema::class,
             $result_user->properties,
             'All references in a schema should be resolved'
+        );
+    }
+
+    #[Test]
+    #[TestDox('References in schema remain unresolved')]
+    public function simpleRefsFileFailTest(): void
+    {
+        $spec = Reader::readFromYamlFile(
+            realpath('tests/fixtures/reference.yml'),
+            OpenAPI::class,
+            ReferenceContext::RESOLVE_MODE_INLINE,
+        );
+
+        $result_user = $spec->components->schemas['User'];
+        self::assertNotContainsOnly(
+            Schema::class,
+            $result_user->properties,
+            false,
+            'Schema still contains Reference properties'
         );
     }
 
