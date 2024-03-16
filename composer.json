@@ -34,7 +34,7 @@
         "symfony/console": "^6.0"
     },
     "require-dev": {
-        "api-platform/schema-generator": "^5.2",
+        "api-platform/schema-generator": "5.2.2",
         "myclabs/php-enum": "^1.8",
         "cebe/php-openapi": "^1.7",
         "nette/neon":"^3.4",
