@@ -106,13 +106,16 @@ class PanSobaoTest extends TestCase
      * 3/16 should add to this test the assertion that refernces in string sources
      * remain unresolved (and the test should pass).
      *
+     * 3/16.b : This test is an example of what you SHOULD NOT do with cebe: using
+     * a string source with references.
+     *
      * @throws TypeErrorException
      * @throws UnresolvableReferenceException
      * @throws IOException
      */
     #[Test]
-    #[TestDox('String sauce references are not resolved')]
-    public function simpleRefsTest(): void
+    #[TestDox('Prop references from string sources remain resolved')]
+    public function propRefsFromStringTest(): void
     {
         $spec = Reader::readFromYaml(
             $this->fixtureSchemaError,
@@ -131,6 +134,25 @@ class PanSobaoTest extends TestCase
             Reference::class,
             $schema_user->properties['contact_info'],
             'All references in a schema should be resolved'
+        );
+    }
+
+    #[Test]
+    #[TestDox('References in schema remain unresolved')]
+    public function simpleRefsFileFailTest(): void
+    {
+        $spec = Reader::readFromYamlFile(
+            realpath('tests/fixtures/reference.yml'),
+            OpenAPI::class,
+            ReferenceContext::RESOLVE_MODE_INLINE,
+        );
+
+        $result_user = $spec->components->schemas['User'];
+        self::assertNotContainsOnly(
+            Schema::class,
+            $result_user->properties,
+            false,
+            'Schema still contains Reference properties'
         );
     }
 
@@ -154,25 +176,6 @@ class PanSobaoTest extends TestCase
             Schema::class,
             $result_user->properties,
             'All references in a schema should be resolved'
-        );
-    }
-
-    #[Test]
-    #[TestDox('References in schema remain unresolved')]
-    public function simpleRefsFileFailTest(): void
-    {
-        $spec = Reader::readFromYamlFile(
-            realpath('tests/fixtures/reference.yml'),
-            OpenAPI::class,
-            ReferenceContext::RESOLVE_MODE_INLINE,
-        );
-
-        $result_user = $spec->components->schemas['User'];
-        self::assertNotContainsOnly(
-            Schema::class,
-            $result_user->properties,
-            false,
-            'Schema still contains Reference properties'
         );
     }
 
