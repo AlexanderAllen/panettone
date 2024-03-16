@@ -143,11 +143,6 @@ class PanSobaoTest extends TestCase
             ReferenceContext::RESOLVE_MODE_ALL,
         );
 
-        // $context = new ReferenceContext($spec, realpath('tests/fixtures/reference.yml'));
-        // $spec->setReferenceContext($context);
-        // $spec->setDocumentContext($spec, new JsonPointer(''));
-        // $spec->resolveReferences();
-
         $result_user = $spec->components->schemas['User'];
         self::assertContainsOnlyInstancesOf(
             Schema::class,
@@ -189,13 +184,25 @@ class PanSobaoTest extends TestCase
             ReferenceContext::RESOLVE_MODE_ALL,
         );
 
+        self::setLogger(new ConsoleLogger(new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG)));
+
+        // $context = new ReferenceContext($spec, realpath('tests/fixtures/reference.yml'));
+        // $spec->setReferenceContext($context);
+        // $spec->setDocumentContext($spec, new JsonPointer(''));
+        // $spec->resolveReferences();
+
+        // Before proceeding to the class generator, this assertion tests that
+        // all schema properties are instances of Schema and not Reference.
         $result_user = $spec->components->schemas['User'];
         self::assertContainsOnlyInstancesOf(
             Schema::class,
             $result_user->properties,
             'All references in a schema should be resolved'
         );
+        $this->logger->info('All User schema prop references are resolved');
+        $this->logger->debug(get_class($result_user->properties['contact_info']));
 
+        // Invoke class generator with fully resolved schema (no references).
         $classes = [];
         foreach ($spec->components->schemas as $name => $schema) {
             $this->logger->info(sprintf('Source schema "%s"', $name));
@@ -203,6 +210,9 @@ class PanSobaoTest extends TestCase
         }
 
         // Test for resolved properties in schema generator results.
+        // 3/16 4:27 : With another patch on propgen an 'object' PrimitiveType
+        // is returned and this test passes, but is that enough to generate the physical
+        // class with correct props? I need a test for physical classes, then.
         [$user, $contact] = $classes;
         foreach ($user->properties() as $prop => $value) {
             self::assertInstanceOf(
@@ -239,8 +249,6 @@ class PanSobaoTest extends TestCase
 
             // Only Schema types have properties, Reference types do not.
             if ($schemaItem instanceof Schema) {
-                // Maybe dont run test assertions in inner scopes?
-                // self::assertObjectHasProperty('properties', $schemaItem);
                 $schemaProperties = array_merge($schemaProperties, $schemaItem->properties);
             }
             // Invoke the generator to move forward the internal pointer.
@@ -266,7 +274,7 @@ class PanSobaoTest extends TestCase
         // Initial generator call should not yield.
         $gen = $pan->generator($schema);
         $schemaProperties = $this->iterateGenerator($gen);
-
+        // OK: 3.16/3:54pm contact info seems resolved as an object (not reference)
         foreach ($schemaProperties as $propertyName => $schemaProperty) {
             $this->logger->info(sprintf('Source property named "%s"', $propertyName));
 
@@ -279,7 +287,7 @@ class PanSobaoTest extends TestCase
                 ['schema' => $schema, 'property' => $schemaProperty]
             );
 
-            if ($property !== null) {
+            if ($property->type !== null) {
                 \assert($property instanceof Property);
                 $class->addProperty($property);
             }
