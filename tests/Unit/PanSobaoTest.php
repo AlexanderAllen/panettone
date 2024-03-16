@@ -7,7 +7,9 @@ namespace AlexanderAllen\Panettone\Test\Unit;
 // use AlexanderAllen\Panettone\ClassGenerator;
 use AlexanderAllen\Panettone\Bread\PanSobao;
 use cebe\openapi\{Reader, ReferenceContext};
+use cebe\openapi\json\JsonPointer;
 use cebe\openapi\spec\{OpenApi, Schema, Reference};
+use cebe\openapi\exceptions\{TypeErrorException, UnresolvableReferenceException, IOException};
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\{CoversClass, Group, Test, TestDox, Large};
 use Symfony\Component\Console\Output\ConsoleOutput;
@@ -16,8 +18,6 @@ use ApiPlatform\SchemaGenerator\OpenApi\Model\Class_;
 use ApiPlatform\SchemaGenerator\OpenApi\PropertyGenerator\PropertyGenerator;
 use ApiPlatform\SchemaGenerator\PropertyGenerator\PropertyGeneratorInterface;
 use ApiPlatform\SchemaGenerator\OpenApi\Model\Property;
-use cebe\openapi\exceptions\TypeErrorException;
-use cebe\openapi\exceptions\UnresolvableReferenceException;
 use Psr\Log\{LoggerAwareTrait, NullLogger};
 
 /**
@@ -103,10 +103,11 @@ class PanSobaoTest extends TestCase
      * post-patch references are properties without a 'PrimitiveType' property,
      * which remain unresolved and unwritable to file.
      *
-     * @return void
      * @throws TypeErrorException
+     * @throws UnresolvableReferenceException
+     * @throws IOException
      */
-    #[Test]
+    // #[Test]
     #[TestDox('Simple ref test with string source')]
     public function simpleRefsTest(): void
     {
@@ -144,24 +145,44 @@ class PanSobaoTest extends TestCase
     #[TestDox('Simple ref test with file source')]
     public function simpleRefsFileTest(): void
     {
-        try {
-            $classes = [];
+        $classes = [];
+        $spec = Reader::readFromYamlFile(
+            realpath('tests/fixtures/reference.yml'),
+            OpenAPI::class,
+            'all',
+        );
 
-            $openapi = Reader::readFromYamlFile(
-                realpath('tests/fixtures/reference.yml'),
-                OpenAPI::class,
-                true,
-            );
+        /**
+         * 3/16 Attempt to resolve references, see Reader.
+         *
+         * So when this is done by reader, only the top-level elements seem to be resolved? IDK.
+         * What happens if we call resolveReferences at a lower level,
+         * such as components or schema elements themselves?
+         *
+         * References are down at the prop level, FYI.
+         */
+        $context = new ReferenceContext($spec, realpath('tests/fixtures/reference.yml'));
+        $spec->setReferenceContext($context);
+        $spec->setDocumentContext($spec, new JsonPointer('/components/schemas'));
 
-            foreach ($openapi->components->schemas as $name => $schema) {
-                $this->logger->info(sprintf('Source schema "%s"', $name));
-                \assert($schema instanceof Schema);
-                $classes[] = $this->buildClassFromSchema($name, $schema);
-            }
-        } catch (\Throwable $source) {
-            $this->logger->error('Error sourcing schema');
+        // Resolve does iterate through the current element, though.
+        // So maybe pointing it to a schema will iterate through the props.
+        $spec->resolveReferences();
+
+        foreach ($spec->components->schemas as $name => $schema) {
+            $this->logger->info(sprintf('Source schema "%s"', $name));
+
+            // $schema->resolveReferences();
+
+            $classes[] = $schema;
+
+            // $classes[] = $this->buildClassFromSchema($name, $schema);
         }
-        $test = null;
+
+        // WOA WOA WOA!!
+        // All the references in the User schema should be resolved.
+        $result_user = $spec->components->schemas['User'];
+        self::assertContainsOnlyInstancesOf(Schema::class, $result_user->properties);
     }
 
     /**
