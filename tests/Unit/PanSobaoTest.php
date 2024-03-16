@@ -6,6 +6,7 @@ namespace AlexanderAllen\Panettone\Test\Unit;
 
 // use AlexanderAllen\Panettone\ClassGenerator;
 use AlexanderAllen\Panettone\Bread\PanSobao;
+use ApiPlatform\SchemaGenerator\OpenApi\Model\Type\PrimitiveType;
 use cebe\openapi\{Reader, ReferenceContext};
 use cebe\openapi\json\JsonPointer;
 use cebe\openapi\spec\{OpenApi, Schema, Reference};
@@ -18,6 +19,9 @@ use ApiPlatform\SchemaGenerator\OpenApi\Model\Class_;
 use ApiPlatform\SchemaGenerator\OpenApi\PropertyGenerator\PropertyGenerator;
 use ApiPlatform\SchemaGenerator\PropertyGenerator\PropertyGeneratorInterface;
 use ApiPlatform\SchemaGenerator\OpenApi\Model\Property;
+use PHPUnit\Framework\Exception;
+use PHPUnit\Framework\ExpectationFailedException;
+use PHPUnit\Framework\UnknownClassOrInterfaceException;
 use Psr\Log\{LoggerAwareTrait, NullLogger};
 
 /**
@@ -26,7 +30,7 @@ use Psr\Log\{LoggerAwareTrait, NullLogger};
  * @package AlexanderAllen\Panettone\Test
  */
 #[CoversClass(PanSobao::class)]
-#[TestDox('Generator loops')]
+#[TestDox('OpenApi package tests')]
 #[Group('proof')]
 #[Large]
 class PanSobaoTest extends TestCase
@@ -91,27 +95,8 @@ class PanSobaoTest extends TestCase
     }
 
     /**
-     * Simple test for string literal OpenApi schema, contains reference.
-     *
-     * This unit tests how simple references are processed. Currently simple
-     * refs are a source of grief because there isn't any code to handle them,
-     * (only more complex refs are handled).
-     *
-     * Simple refs are not part of any/allOf, arrays, etc.
-     *
-     * The test passes when `PropertyGenerator.php` is patched (see composer.json).
-     * post-patch references are properties without a 'PrimitiveType' property,
-     * which remain unresolved and unwritable to file.
-     *
-     * 3/16 should add to this test the assertion that refernces in string sources
-     * remain unresolved (and the test should pass).
-     *
-     * 3/16.b : This test is an example of what you SHOULD NOT do with cebe: using
-     * a string source with references.
-     *
-     * @throws TypeErrorException
-     * @throws UnresolvableReferenceException
-     * @throws IOException
+     * This test is an example of why you should not use string sources with
+     * references.
      */
     #[Test]
     #[TestDox('Prop references from string sources remain resolved')]
@@ -122,18 +107,11 @@ class PanSobaoTest extends TestCase
             OpenApi::class,
         );
 
-        // $classes = [];
-        // foreach ($openapi->components->schemas as $name => $schema) {
-        //     $this->logger->info(sprintf('Source schema "%s"', $name));
-        //     \assert($schema instanceof Schema);
-        //     $classes[] = $this->buildClassFromSchema($name, $schema);
-        // }
-
         $schema_user = $spec->components->schemas['User'];
         self::assertInstanceOf(
             Reference::class,
             $schema_user->properties['contact_info'],
-            'All references in a schema should be resolved'
+            'Property of OpenApi type "Reference" should remain unresolved'
         );
     }
 
@@ -178,6 +156,71 @@ class PanSobaoTest extends TestCase
             'All references in a schema should be resolved'
         );
     }
+
+    /**
+     * Simple test for string literal OpenApi schema, contains reference.
+     *
+     * This unit tests how simple references are processed. Currently simple
+     * refs are a source of grief because there isn't any code to handle them,
+     * (only more complex refs are handled).
+     *
+     * Simple refs are not part of any/allOf, arrays, etc.
+     *
+     * The test can only run if `PropertyGenerator.php` is patched (see composer.json).
+     * post-patch references are properties without a 'PrimitiveType' property,
+     * which remain unresolved and unwritable to file.
+     *
+     * 3/16.c : Currently even after the spec is fully resolved in the cebe graph, the class
+     * builder still returns props with missing primitive type. It's as the
+     * memory reference that classbuilder is accessing is outdated, maybe? As long as this is
+     * the case this test will FAIL.
+     *
+     * @throws TypeErrorException
+     * @throws Exception
+     * @throws ExpectationFailedException
+     * @throws UnknownClassOrInterfaceException
+     */
+    #[Test]
+    #[TestDox('Class builder succeeds using resolved properties')]
+    public function classBuilderTest(): void
+    {
+        $spec = Reader::readFromYamlFile(
+            realpath('tests/fixtures/reference.yml'),
+            OpenAPI::class,
+            ReferenceContext::RESOLVE_MODE_ALL,
+        );
+
+        $result_user = $spec->components->schemas['User'];
+        self::assertContainsOnlyInstancesOf(
+            Schema::class,
+            $result_user->properties,
+            'All references in a schema should be resolved'
+        );
+
+        $classes = [];
+        foreach ($spec->components->schemas as $name => $schema) {
+            $this->logger->info(sprintf('Source schema "%s"', $name));
+            $classes[] = $this->buildClassFromSchema($name, $schema);
+        }
+
+        // Test for resolved properties in schema generator results.
+        [$user, $contact] = $classes;
+        foreach ($user->properties() as $prop => $value) {
+            self::assertInstanceOf(
+                PrimitiveType::class,
+                $value->type,
+                sprintf("Schema property %s contains PrimitiveType instance", $prop)
+            );
+        }
+    }
+
+    /**
+     * @TODO FINAL TEST(s): How to have working, physical references between types.
+     * I know I've seen plat-gen do it before, where some props reference HARD,
+     * valid filesystem types.
+     *
+     * For this we'll have to wait till I get to the nette physical output bits.
+     */
 
     /**
      * Iterate external generator.
