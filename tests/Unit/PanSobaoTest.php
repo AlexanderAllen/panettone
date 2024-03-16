@@ -18,7 +18,6 @@ use ApiPlatform\SchemaGenerator\PropertyGenerator\PropertyGeneratorInterface;
 use ApiPlatform\SchemaGenerator\OpenApi\Model\Property;
 use cebe\openapi\exceptions\TypeErrorException;
 use cebe\openapi\exceptions\UnresolvableReferenceException;
-use cebe\openapi\exceptions\IOException;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\NullLogger;
 
@@ -81,6 +80,9 @@ class PanSobaoTest extends TestCase
                 phone:
                   type: string
         schemaFixture;
+
+        // Set up propgen.
+        $this->propertyGenerator = new PropertyGenerator();
     }
 
     #[Test]
@@ -111,7 +113,7 @@ class PanSobaoTest extends TestCase
      * @throws TypeErrorException
      */
     #[Test]
-    #[TestDox('Simple reference test from string')]
+    #[TestDox('Simple ref test with string source')]
     public function simpleRefsTest(): void
     {
         $this->propertyGenerator = new PropertyGenerator();
@@ -158,38 +160,28 @@ class PanSobaoTest extends TestCase
     }
 
     /**
-     * Alternative loop using while instead of foreach.
-     *
-     * 3/14
-     * This test is waaay too large.
-     * I need to test the inner components of the schema generators, and doing
-     * so from the upper ClassGenerator is not gonna cut it.
-     *
-     * For example: make sure that a compoment containing a reference has the
-     * reference replaced in the result.
+     * Same as the simpleRefsTest but using a file.
      */
-    // #[Test]
-    #[TestDox('test class generator')]
-    public function second(): void
+    #[Test]
+    #[TestDox('Simple ref test with file source')]
+    public function simpleRefsFileTest(): void
     {
-        $this->propertyGenerator = new PropertyGenerator();
-
-        // First phase, read in schema file.
-        $openapi = Reader::readFromYamlFile(
-            realpath('schema/soundcloud/oas-1.0.1.yml'),
-            OpenAPI::class,
-            true,
-        );
-
-        $classes = [];
         try {
+            $classes = [];
+
+            $openapi = Reader::readFromYamlFile(
+                realpath('tests/fixtures/reference.yml'),
+                OpenAPI::class,
+                true,
+            );
+
             foreach ($openapi->components->schemas as $name => $schema) {
                 $this->logger->info(sprintf('Source schema "%s"', $name));
                 \assert($schema instanceof Schema);
                 $classes[] = $this->buildClassFromSchema($name, $schema);
             }
         } catch (\Throwable $source) {
-            $this->logger->error(sprintf('Error sourcing schema "%s"', $name));
+            $this->logger->error('Error sourcing schema');
         }
         $test = null;
     }
