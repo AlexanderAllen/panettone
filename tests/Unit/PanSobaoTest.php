@@ -142,14 +142,13 @@ class PanSobaoTest extends TestCase
      * EXPLORE!
      */
     #[Test]
-    #[TestDox('Simple ref test with file source')]
+    #[TestDox('References in schema properties are resolved')]
     public function simpleRefsFileTest(): void
     {
-        $classes = [];
         $spec = Reader::readFromYamlFile(
             realpath('tests/fixtures/reference.yml'),
             OpenAPI::class,
-            'all',
+            ReferenceContext::RESOLVE_MODE_ALL,
         );
 
         /**
@@ -161,28 +160,20 @@ class PanSobaoTest extends TestCase
          *
          * References are down at the prop level, FYI.
          */
-        $context = new ReferenceContext($spec, realpath('tests/fixtures/reference.yml'));
-        $spec->setReferenceContext($context);
-        $spec->setDocumentContext($spec, new JsonPointer('/components/schemas'));
+        // $context = new ReferenceContext($spec, realpath('tests/fixtures/reference.yml'));
+        // $spec->setReferenceContext($context);
+        // $spec->setDocumentContext($spec, new JsonPointer(''));
 
         // Resolve does iterate through the current element, though.
         // So maybe pointing it to a schema will iterate through the props.
-        $spec->resolveReferences();
+        // $spec->resolveReferences();
 
-        foreach ($spec->components->schemas as $name => $schema) {
-            $this->logger->info(sprintf('Source schema "%s"', $name));
-
-            // $schema->resolveReferences();
-
-            $classes[] = $schema;
-
-            // $classes[] = $this->buildClassFromSchema($name, $schema);
-        }
-
-        // WOA WOA WOA!!
-        // All the references in the User schema should be resolved.
         $result_user = $spec->components->schemas['User'];
-        self::assertContainsOnlyInstancesOf(Schema::class, $result_user->properties);
+        self::assertContainsOnlyInstancesOf(
+            Schema::class,
+            $result_user->properties,
+            'All references in a schema should be resolved'
+        );
     }
 
     /**
