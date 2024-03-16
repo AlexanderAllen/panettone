@@ -7,7 +7,7 @@ namespace AlexanderAllen\Panettone\Test\Unit;
 // use AlexanderAllen\Panettone\ClassGenerator;
 use AlexanderAllen\Panettone\Bread\PanSobao;
 use cebe\openapi\{Reader, ReferenceContext};
-use cebe\openapi\spec\{OpenApi, Schema, Reference, Components};
+use cebe\openapi\spec\{OpenApi, Schema, Reference};
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\{CoversClass, Group, Test, TestDox, Large};
 use Symfony\Component\Console\Output\ConsoleOutput;
@@ -20,6 +20,7 @@ use cebe\openapi\exceptions\TypeErrorException;
 use cebe\openapi\exceptions\UnresolvableReferenceException;
 use cebe\openapi\exceptions\IOException;
 use Psr\Log\LoggerAwareTrait;
+use Psr\Log\NullLogger;
 
 /**
  * Class for understanding Open API Generators.
@@ -37,22 +38,16 @@ class PanSobaoTest extends TestCase
     private PropertyGeneratorInterface $propertyGenerator;
     private string $fixtureSchemaError;
 
-    /**
-     * Simple references will always give
-     * [error] Error sourcing schema: "ApiPlatform\SchemaGenerator\OpenApi\Model\Type\PrimitiveType::__construct(): Argument #1 ($name) must be of type string, null given, called in ...src/OpenApi/PropertyGenerator/PropertyGenerator.php on line 116"
-     * @return void
-     */
     public function setUp(): void
     {
-        $output = new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG);
-        self::setLogger(new ConsoleLogger($output));
+        self::setLogger(new NullLogger());
+        // self::setLogger(new ConsoleLogger(new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG)));
 
         /**
-         * Simple reference test / example from SmartBear.
-         * See "Nested Objects" in https://swagger.io/docs/specification/data-models/data-types/
+         * Simple reference test. See https://swagger.io/docs/specification/data-models/data-types/
          *
-         * 3/15
-         * cebe doesn't have any problem reading this, it's the api-platform prop generator.
+         * 3/15: cebe doesn't have any problem reading this, it's the api-platform prop generator.
+         * 3/16: works as long as propgen is patched.
          */
         $this->fixtureSchemaError = <<<'schemaFixture'
         openapi: 3.0.1
@@ -101,39 +96,65 @@ class PanSobaoTest extends TestCase
     }
 
     /**
-     * All `Reference` objects will be replaced with their referenced spec objects.
+     * Simple test for string literal OpenApi schema, contains reference.
+     *
+     * This unit tests how simple references are processed. Currently simple
+     * refs are a source of grief because there isn't any code to handle them,
+     * (only more complex refs are handled).
+     *
+     * Simple refs are not part of any/allOf, arrays, etc.
+     *
+     * In order for this test to succeed a patch needs to be applied to
+     * vendor/api-platform/schema-generator/src/OpenApi/PropertyGenerator/PropertyGenerator.php
      *
      * @return void
      * @throws TypeErrorException
      */
     #[Test]
-    #[TestDox('Component references are replaced')]
-    public function third(): void
+    #[TestDox('Simple reference test from string')]
+    public function simpleRefsTest(): void
     {
         $this->propertyGenerator = new PropertyGenerator();
 
         $openapi = Reader::readFromYaml(
             $this->fixtureSchemaError,
             OpenApi::class,
-            true
         );
 
         $classes = [];
-        try {
-            foreach ($openapi->components->schemas as $name => $schema) {
-                $this->logger->info(sprintf('Source schema "%s"', $name));
-                \assert($schema instanceof Schema);
-                $classes[] = $this->buildClassFromSchema($name, $schema);
-            }
-            $test = null;
-        } catch (\cebe\openapi\exceptions\TypeErrorException $error) {
-            $this->logger->error('The YAML provided is whack');
-            throw $error;
-        } catch (\Throwable $source) {
-            $this->logger->error(sprintf('Error sourcing schema: "%s"', $source->getMessage()));
+        foreach ($openapi->components->schemas as $name => $schema) {
+            $this->logger->info(sprintf('Source schema "%s"', $name));
+            \assert($schema instanceof Schema);
+            $classes[] = $this->buildClassFromSchema($name, $schema);
         }
 
-        $test = null;
+        self::assertCount(2, $classes, 'In-memory classes are generated');
+        self::assertContainsOnlyInstancesOf(Class_::class, $classes, 'Instance formed from correct class');
+        [$user, $contact] = $classes;
+
+        /**
+         * 3/16
+         * TODO: Is the contact_info prop a ref?
+         * prop-gen code cannot handle simple refs without a patch.
+         *
+         * what's the final representatin for 'contact_info' ref prop here?
+         *
+         * TODO: does using the resolve param when reading from file (instead of string)
+         * change the ref prop resolution here (do in another test).
+         *
+         * Is there a cebe or apiplat method that forces ref resolution at this point?
+         * EXPLORE.
+         *
+         * So the main difference in representatino between 'id' and 'contact_info' is that
+         * id has a PrimityType assigned to it, which then gets converted to physical manifestation.
+         *
+         * contact_info, being a unresolved ref, does not have PrimitiveType, b.c. propgen
+         * dies when attempting to generate one, therefore would not get final
+         * representation in a file I assume.
+         */
+        self::assertTrue($user->hasProperty('id'));
+        self::assertTrue($user->hasProperty('contact_info'));
+        self::assertTrue($contact->hasProperty('phone'));
     }
 
     /**
@@ -143,11 +164,6 @@ class PanSobaoTest extends TestCase
      * This test is waaay too large.
      * I need to test the inner components of the schema generators, and doing
      * so from the upper ClassGenerator is not gonna cut it.
-     *
-     * 3/15
-     * ClassGenerator brought inline for better control and visibility.
-     * Next step is to source reproducible, atomic schemas that can be actually
-     * be unit tested, as opposed to production behemoths.
      *
      * For example: make sure that a compoment containing a reference has the
      * reference replaced in the result.
@@ -223,8 +239,7 @@ class PanSobaoTest extends TestCase
         $class = new Class_($name);
 
         $pan = new PanSobao();
-        $output = new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG); // setup logger for generator
-        $pan->setLogger(new ConsoleLogger($output));
+        // $pan->setLogger(new ConsoleLogger(new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG)));
 
         // Initial generator call should not yield.
         /**
@@ -238,6 +253,7 @@ class PanSobaoTest extends TestCase
             $this->logger->info(sprintf('Source property named "%s"', $propertyName));
 
             // 3/15 prop generator is external because it is not exactly small.
+            // prop generator cannot resolve simple schema references (must be commented out).
             $property =
             ($this->propertyGenerator)(
                 $propertyName,
