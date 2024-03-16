@@ -79,7 +79,7 @@ class PanSobaoTest extends TestCase
     }
 
     #[Test]
-    #[TestDox('Dummy generator loop with foreach')]
+    #[TestDox('PHPUnit sanity check with dummy generator')]
     public function first(): void
     {
         $class = new PanSobao();
@@ -103,33 +103,35 @@ class PanSobaoTest extends TestCase
      * post-patch references are properties without a 'PrimitiveType' property,
      * which remain unresolved and unwritable to file.
      *
+     * 3/16 should add to this test the assertion that refernces in string sources
+     * remain unresolved (and the test should pass).
+     *
      * @throws TypeErrorException
      * @throws UnresolvableReferenceException
      * @throws IOException
      */
-    // #[Test]
-    #[TestDox('Simple ref test with string source')]
+    #[Test]
+    #[TestDox('String sauce references are not resolved')]
     public function simpleRefsTest(): void
     {
-        $openapi = Reader::readFromYaml(
+        $spec = Reader::readFromYaml(
             $this->fixtureSchemaError,
             OpenApi::class,
         );
 
-        $classes = [];
-        foreach ($openapi->components->schemas as $name => $schema) {
-            $this->logger->info(sprintf('Source schema "%s"', $name));
-            \assert($schema instanceof Schema);
-            $classes[] = $this->buildClassFromSchema($name, $schema);
-        }
+        // $classes = [];
+        // foreach ($openapi->components->schemas as $name => $schema) {
+        //     $this->logger->info(sprintf('Source schema "%s"', $name));
+        //     \assert($schema instanceof Schema);
+        //     $classes[] = $this->buildClassFromSchema($name, $schema);
+        // }
 
-        self::assertCount(2, $classes, 'In-memory classes are generated');
-        self::assertContainsOnlyInstancesOf(Class_::class, $classes, 'Instance formed from correct class');
-
-        [$user, $contact] = $classes;
-        self::assertTrue($user->hasProperty('id'));
-        self::assertTrue($user->hasProperty('contact_info'));
-        self::assertTrue($contact->hasProperty('phone'));
+        $schema_user = $spec->components->schemas['User'];
+        self::assertInstanceOf(
+            Reference::class,
+            $schema_user->properties['contact_info'],
+            'All references in a schema should be resolved'
+        );
     }
 
     #[Test]
