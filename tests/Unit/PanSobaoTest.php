@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace AlexanderAllen\Panettone\Test\Unit;
 
 use AlexanderAllen\Panettone\Bread\PanSobao;
-use ApiPlatform\SchemaGenerator\OpenApi\Model\Type\PrimitiveType;
 use cebe\openapi\{Reader, ReferenceContext};
 use cebe\openapi\json\JsonPointer;
 use cebe\openapi\spec\{OpenApi, Schema, Reference};
@@ -14,14 +13,18 @@ use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\{CoversClass, Group, Test, TestDox, Large};
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Logger\ConsoleLogger;
-use ApiPlatform\SchemaGenerator\OpenApi\Model\Class_;
-use ApiPlatform\SchemaGenerator\OpenApi\PropertyGenerator\PropertyGenerator;
 use ApiPlatform\SchemaGenerator\PropertyGenerator\PropertyGeneratorInterface;
+use ApiPlatform\SchemaGenerator\OpenApi\PropertyGenerator\PropertyGenerator;
+use ApiPlatform\SchemaGenerator\OpenApi\Model\Class_;
 use ApiPlatform\SchemaGenerator\OpenApi\Model\Property;
+use ApiPlatform\SchemaGenerator\OpenApi\Model\Type\PrimitiveType;
 use PHPUnit\Framework\Exception;
 use PHPUnit\Framework\ExpectationFailedException;
 use PHPUnit\Framework\UnknownClassOrInterfaceException;
 use Psr\Log\{LoggerAwareTrait, NullLogger};
+
+// use EasyRdf\Resource as RdfResource;
+
 
 /**
  * Class for understanding Open API Generators.
