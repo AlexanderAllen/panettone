@@ -1,3 +1,4 @@
+# Simple reference test. See https://swagger.io/docs/specification/data-models/data-types/
 openapi: 3.0.1
 info:
   title: Panettone
