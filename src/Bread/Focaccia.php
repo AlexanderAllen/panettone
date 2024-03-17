@@ -7,7 +7,7 @@ namespace AlexanderAllen\Panettone\Bread;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\NullLogger;
 
-class Focaccia
+final class Focaccia
 {
     use LoggerAwareTrait;
 
