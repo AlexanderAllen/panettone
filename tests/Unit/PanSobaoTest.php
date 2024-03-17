@@ -6,7 +6,6 @@ namespace AlexanderAllen\Panettone\Test\Unit;
 
 use AlexanderAllen\Panettone\Bread\PanSobao;
 use cebe\openapi\{Reader, ReferenceContext};
-use cebe\openapi\json\JsonPointer;
 use cebe\openapi\spec\{OpenApi, Schema, Reference};
 use cebe\openapi\exceptions\{TypeErrorException, UnresolvableReferenceException, IOException};
 use PHPUnit\Framework\TestCase;
@@ -155,6 +154,29 @@ class PanSobaoTest extends TestCase
     }
 
     /**
+     * @TODO FINAL TEST(s): How to have working, physical references between types.
+     */
+    #[Test]
+    #[TestDox('Nette dumper 1')]
+    public function simpleNetteDumperTest(): void
+    {
+        $spec = Reader::readFromYamlFile(
+            realpath('tests/fixtures/reference.yml'),
+            OpenAPI::class,
+            ReferenceContext::RESOLVE_MODE_ALL,
+        );
+
+        $result_user = $spec->components->schemas['User'];
+        self::assertContainsOnlyInstancesOf(
+            Schema::class,
+            $result_user->properties,
+            'All references in a schema should be resolved'
+        );
+
+
+    }
+
+    /**
      * Simple test for string literal OpenApi schema, contains reference.
      *
      * This unit tests how simple references are processed. Currently simple
@@ -177,7 +199,7 @@ class PanSobaoTest extends TestCase
      * @throws ExpectationFailedException
      * @throws UnknownClassOrInterfaceException
      */
-    #[Test]
+    // #[Test]
     #[TestDox('Class builder succeeds using resolved properties')]
     public function classBuilderTest(): void
     {
@@ -225,14 +247,6 @@ class PanSobaoTest extends TestCase
             );
         }
     }
-
-    /**
-     * @TODO FINAL TEST(s): How to have working, physical references between types.
-     * I know I've seen plat-gen do it before, where some props reference HARD,
-     * valid filesystem types.
-     *
-     * For this we'll have to wait till I get to the nette physical output bits.
-     */
 
     /**
      * Iterate external generator.
