@@ -107,6 +107,16 @@
       "isBackground": false,
       "icon": {"id": "server-process", "color": "terminal.ansiGreen"},
     },
+    {
+        "label": "PHP Insights",
+        "detail": "Run PHP Insights tool",
+        "type": "shell",
+        "problemMatcher": "$eslint-compact",
+        "command": "./vendor/bin/phpinsights analyse tests src",
+        "group": "none",
+        "isBackground": false,
+        "icon": {"id": "server-process", "color": "terminal.ansiGreen"},
+      },
   ],
   "inputs": [
     {
