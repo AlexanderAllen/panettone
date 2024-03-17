@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace AlexanderAllen\Panettone\Command;
 
 use AlexanderAllen\Panettone\ClassGenerator;
@@ -17,7 +19,7 @@ use Symfony\Component\Console\Output\{OutputInterface, ConsoleOutput};
     hidden: false,
     aliases: ['panettone:generate']
 )]
-class BakeCommand extends Command
+final class BakeCommand extends Command
 {
     protected function configure(): void
     {

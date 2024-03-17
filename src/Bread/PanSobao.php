@@ -16,7 +16,7 @@ use Psr\Log\{NullLogger, LoggerAwareTrait};
  *
  * @package AlexanderAllen\Panettone\Bread
  */
-class PanSobao
+final class PanSobao
 {
     use LoggerAwareTrait;
 

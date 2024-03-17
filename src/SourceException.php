@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace AlexanderAllen\Panettone;
 
 /**
@@ -8,9 +10,9 @@ namespace AlexanderAllen\Panettone;
  */
 
 
-class SourceException extends \UnexpectedValueException
+final class SourceException extends \UnexpectedValueException
 {
-    public function __construct(string $message = "", \Throwable $source = null)
+    public function __construct(string $message = "", ?\Throwable $source = null)
     {
         // some code
 

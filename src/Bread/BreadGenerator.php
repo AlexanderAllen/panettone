@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace AlexanderAllen\Panettone\Bread;
 
-use cebe\openapi\spec\OpenApi;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\NullLogger;
 
@@ -18,11 +17,9 @@ class BreadGenerator
     }
 
     /**
-     *
-     * @param OpenApi $openapi
-     * @return \Generator<int, string, mixed, void>
+     * @return \Generator<int, string, void, void>
      */
-    public function generate(OpenApi $openapi = null): \Generator
+    public function generate(): \Generator
     {
         echo 'start';
         yield 'middle';
