@@ -115,7 +115,7 @@
         "command": "./vendor/bin/phpinsights analyse tests src",
         "group": "none",
         "isBackground": false,
-        "icon": {"id": "server-process", "color": "terminal.ansiGreen"},
+        "icon": {"id": "wand", "color": "terminal.ansiYellow"},
       },
   ],
   "inputs": [
