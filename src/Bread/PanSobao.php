@@ -12,8 +12,6 @@ use Psr\Log\{NullLogger, LoggerAwareTrait};
  * The purpose of this class is to understand and iterate the design of open api
  * `\Generator` components.
  *
- * @phpstan-type SpecLikeObject Schema|Reference
- *
  * @package AlexanderAllen\Panettone\Bread
  */
 final class PanSobao
@@ -38,53 +36,38 @@ final class PanSobao
     }
 
     /**
-     * Returns a `Generator` object.
-     *
-     * The interface does not have ->properties, the subclasses Schema and Ref do.
-     * Should the return val be resolved to one of those ? (probably)
-     *
-     * 3/14
-     * The problem is Schema does not support references. So maybe an union type?
-     * PHPStan types and union types are not accurate, and type hinting limited.
+     * Recursive iterator for cebe\openapi schema objects.
      *
      * 3/14
      * The beefs I have with the implemenation are:
      *  - nested fors
      *  - dynamic variable access on for loop
      *  - recursive function to top it all
+     *
      * I can live with recursion if the other two are cleaned up.
      *
-     * @param SpecLikeObject $schema
+     * 3/18 Removing assertions from generator. Worst possible place to do assertions.
+     * Either you know what you're passing down (validate elsewhere), or don't call it.
      *
-     * @return \Generator<int, \cebe\openapi\SpecObjectInterface>
+     * @return \Generator<int, Schema|Reference, null, void>
      */
-    public function generator($schema): \Generator
+    public function generator(Schema|Reference $schema): \Generator
     {
         if (!isset($schema->oneOf) && !isset($schema->allOf)) {
             yield $schema;
             return;
         }
 
-        // Validate schema ?
-        // $schema->validate();
-
         // Resolve references ?
+        // References are resolved beforehand by cebe.
 
         if ($schema->oneOf) {
             // Only use the first oneOf item. Needs to be improved.
             $oneOfSchema = $schema->oneOf[0];
-            // \assert($oneOfSchema instanceof \cebe\openapi\SpecObjectInterface);
             foreach ($this->generator($oneOfSchema) as $schemaItem) {
                 yield $schemaItem;
             }
         }
-
-        // $schema->resolveReferences();
-        // $allOfSchema->resolveReferences();
-        // $allOfSchema->resolveReferences($schema);
-
-        // TODO References are not being resolved and getting muted at the OAS source.
-        // Mixed objects that have their own plus external references are not merging.
 
         foreach ($schema->allOf ?? [] as $allOfSchema) {
             // \assert($allOfSchema instanceof \cebe\openapi\SpecObjectInterface);
