@@ -25,6 +25,7 @@ final class MediaNoche
      * Recursive property generator for Nette.
      *
      * Creates nette class `Property` objects from cebe `Schema` objects.
+     * Uses a flatten/merge recursive pattern to retrieve nested object properties.
      *
      * @return \Generator<string, Property, null, void>
      */
@@ -33,12 +34,6 @@ final class MediaNoche
         foreach ($schema->properties as $name => $property) {
             $this->logger->debug(sprintf('Parsing property: %s', $name));
 
-            /**
-             * What to do about internal and/or recursive objects (no References).
-             *
-             * 3/18 Ideally I'd want a physical reference to another Type.
-             * 3/19 This is the flattened/merged recursive design.
-             */
             if ($property->type == 'object') {
                 // Start a new internal, recursive generator.
                 $this->logger->debug(sprintf('Recursing object property: %s', $name));
