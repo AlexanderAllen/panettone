@@ -101,8 +101,10 @@ class MedianocheTest extends TestCase
         $schema = $spec->components->schemas['User'];
 
         // Transform cebe props to nette props.
-        foreach ($this->generator($schema->properties) as $key => $nette_prop) {
-            $class->addMember($nette_prop);
+        foreach ($this->generator($schema) as $key => $nette_prop) {
+            $test = null;
+            $props[$key] = $nette_prop;
+            //$class->addMember($nette_prop);
         }
 
         $class
@@ -120,46 +122,47 @@ class MedianocheTest extends TestCase
     /**
      * Nette property generator.
      *
-     * @param array<string, Schema|Reference> $props
      * @return \Generator<string, Property, null, void>
      */
-    public function generator(array $props): \Generator
+    public function generator(Schema $schema): \Generator
     {
-        foreach ($props as $name => $schema) {
-            $type = $this->nativeType($schema);
+        foreach ($schema->properties as $name => $property) {
+            $this->logger->debug(sprintf('Parsing property: %s', $name));
 
             /**
-             * I might need to iterate recursively objects?
-             * Here a reference is flattened into a Schema object, and the object has it's own properties.
-             * 3/18 Do I:
-             * Flatten the object properties and merge them?
-             * Ideally I'd want a physical reference to another Type.
+             * What to do about internal and/or recursive objects (no References).
+             *
+             * 3/18 Ideally I'd want a physical reference to another Type.
+             * 3/19 This is the flattened/merged recursive design.
              */
-            if ($schema->type == 'object') {
-                // return;
+            if ($property->type == 'object') {
+                // Start a new internal, recursive generator.
+                $this->logger->debug(sprintf('Recursing object property: %s', $name));
+                foreach ($this->generator($property) as $key => $nette_prop) {
+                    yield $key => $nette_prop;
+                }
+                // Do not return Schema items, only Property items.
+                return;
             }
+
+            /* @see https://swagger.io/specification/#data-types */
+            $type = match ($property->type) {
+                'string' => 'string',
+                'integer' => 'int',
+                'boolean' => 'bool',
+                'float', 'double' => 'float',
+                // 'object' => Schema::class,
+                'date', 'dateTime' => \DateTimeInterface::class,
+                default => throw new \UnhandledMatchError(),
+            };
 
             yield $name =>
             (new Property($name))
                 ->setType($type)
                 ->setReadOnly(true)
-                ->setComment($schema->description)
-                ->setNullable($schema->nullable)
-                ->setValue($schema->default);
+                ->setComment($property->description)
+                ->setNullable($property->nullable)
+                ->setValue($property->default);
         }
-    }
-
-    public function nativeType(Schema|Reference $property): string
-    {
-        /* @see https://swagger.io/specification/#data-types */
-        return match ($property->type) {
-            'string' => 'string',
-            'integer' => 'int',
-            'boolean' => 'bool',
-            'float', 'double' => 'float',
-            'object' => Schema::class,
-            'date', 'dateTime' => \DateTimeInterface::class,
-            default => throw new \UnhandledMatchError(),
-        };
     }
 }
