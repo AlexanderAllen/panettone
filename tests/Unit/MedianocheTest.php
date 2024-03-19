@@ -70,7 +70,8 @@ class MedianocheTest extends TestCase
     #[TestDox('Dump cebe graph into class string')]
     public function simpleRefsFileTest(): void
     {
-        self::setLogger(new ConsoleLogger(new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG)));
+        $logger = new ConsoleLogger(new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG));
+        self::setLogger($logger);
 
         $spec = Reader::readFromYamlFile(
             realpath('tests/fixtures/reference.yml'),
@@ -91,7 +92,8 @@ class MedianocheTest extends TestCase
         // Transform cebe props to nette props.
         $class = new ClassType('User');
         $schema = $spec->components->schemas['User'];
-        foreach ($this->generator($schema) as $name => $nette_prop) {
+
+        foreach ((new MediaNoche($logger))->propertyGenerator($schema) as $name => $nette_prop) {
             self::assertInstanceOf(Property::class, $nette_prop);
             $class->addMember($nette_prop);
         }
@@ -102,52 +104,5 @@ class MedianocheTest extends TestCase
 
         $printer = new Printer();
         $this->logger->debug($printer->printClass($class));
-    }
-
-    /**
-     * Nette property generator.
-     *
-     * @return \Generator<string, Property, null, void>
-     */
-    public function generator(Schema $schema): \Generator
-    {
-        foreach ($schema->properties as $name => $property) {
-            $this->logger->debug(sprintf('Parsing property: %s', $name));
-
-            /**
-             * What to do about internal and/or recursive objects (no References).
-             *
-             * 3/18 Ideally I'd want a physical reference to another Type.
-             * 3/19 This is the flattened/merged recursive design.
-             */
-            if ($property->type == 'object') {
-                // Start a new internal, recursive generator.
-                $this->logger->debug(sprintf('Recursing object property: %s', $name));
-                foreach ($this->generator($property) as $key => $nette_prop) {
-                    yield $key => $nette_prop;
-                }
-                // Do not yield Schema items, only Property items.
-                return;
-            }
-
-            /* @see https://swagger.io/specification/#data-types */
-            $type = match ($property->type) {
-                'string' => 'string',
-                'integer' => 'int',
-                'boolean' => 'bool',
-                'float', 'double' => 'float',
-                // 'object' => Schema::class,
-                'date', 'dateTime' => \DateTimeInterface::class,
-                default => throw new \UnhandledMatchError(),
-            };
-
-            yield $name =>
-            (new Property($name))
-                ->setType($type)
-                ->setReadOnly(true)
-                ->setComment($property->description)
-                ->setNullable(true)
-                ->setValue($property->default);
-        }
     }
 }
