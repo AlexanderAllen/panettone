@@ -133,6 +133,64 @@ class MedianocheTest extends TestCase
             'Results contain unresolved reference'
         );
 
-        $this->logger->debug(get_class($result_user->properties['contact_info']));
+        // Test first schema only.
+        $class = new ClassType('User');
+        $schema = $spec->components->schemas['User'];
+
+        foreach ((new MediaNoche($logger))->propertyGenerator($schema) as $name => $nette_prop) {
+            self::assertInstanceOf(Property::class, $nette_prop, 'Generator yields Property objects');
+            $class->addMember($nette_prop);
+        }
+
+        $class
+            ->setFinal()
+            ->addComment("Class description.\nSecond line\n");
+
+        $printer = new Printer();
+        $this->logger->debug($printer->printClass($class));
+    }
+
+    /**
+     * Properties in internal objects are not resolved inline.
+     *
+     * @return \Generator<string, Property, null, void>
+     */
+    public function propertyGenerator(Schema $schema): \Generator
+    {
+        foreach ($schema->properties as $name => $property) {
+            $this->logger->debug(sprintf('Parsing property: %s', $name));
+
+            /**
+             * 3/18 - I want a physical reference to another Type.
+             */
+            if ($property->type == 'object') {
+                // Start a new internal, recursive generator.
+                $this->logger->debug(sprintf('Recursing object property: %s', $name));
+                foreach ($this->propertyGenerator($property) as $key => $nette_prop) {
+                    yield $key => $nette_prop;
+                }
+                // Do not yield Schema items, only Property items.
+                return;
+            }
+
+            /* @see https://swagger.io/specification/#data-types */
+            $type = match ($property->type) {
+                'string' => 'string',
+                'integer' => 'int',
+                'boolean' => 'bool',
+                'float', 'double' => 'float',
+                // 'object' => Schema::class,
+                'date', 'dateTime' => \DateTimeInterface::class,
+                default => throw new \UnhandledMatchError(),
+            };
+
+            yield $name =>
+            (new Property($name))
+                ->setType($type)
+                ->setReadOnly(true)
+                ->setComment($property->description)
+                ->setNullable(true)
+                ->setValue($property->default);
+        }
     }
 }
