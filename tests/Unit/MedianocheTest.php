@@ -67,7 +67,7 @@ class MedianocheTest extends TestCase
      * @throws ExpectationFailedException
      */
     #[Test]
-    #[TestDox('Dump cebe graph into nette files')]
+    #[TestDox('Dump cebe graph into class string')]
     public function simpleRefsFileTest(): void
     {
         self::setLogger(new ConsoleLogger(new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG)));
@@ -87,24 +87,13 @@ class MedianocheTest extends TestCase
         $this->logger->info('All User schema prop references are resolved');
         $this->logger->debug(get_class($result_user->properties['contact_info']));
 
-
-        // List schemas.
-        // $schemas = [];
-        // foreach ($spec->components->schemas as $name => $schema) {
-        //     $this->logger->info(sprintf('Source schema "%s"', $name));
-        //     $schemas[$name] = $schema;
-        // }
-
-        $class = new ClassType('User');
-
         // Test first schema only.
-        $schema = $spec->components->schemas['User'];
-
         // Transform cebe props to nette props.
-        foreach ($this->generator($schema) as $key => $nette_prop) {
-            $test = null;
-            $props[$key] = $nette_prop;
-            //$class->addMember($nette_prop);
+        $class = new ClassType('User');
+        $schema = $spec->components->schemas['User'];
+        foreach ($this->generator($schema) as $name => $nette_prop) {
+            self::assertInstanceOf(Property::class, $nette_prop);
+            $class->addMember($nette_prop);
         }
 
         $class
@@ -112,11 +101,7 @@ class MedianocheTest extends TestCase
             ->addComment("Class description.\nSecond line\n");
 
         $printer = new Printer();
-        // echo $printer->printClass($class);
         $this->logger->debug($printer->printClass($class));
-
-
-        $test = null;
     }
 
     /**
@@ -141,7 +126,7 @@ class MedianocheTest extends TestCase
                 foreach ($this->generator($property) as $key => $nette_prop) {
                     yield $key => $nette_prop;
                 }
-                // Do not return Schema items, only Property items.
+                // Do not yield Schema items, only Property items.
                 return;
             }
 
@@ -161,7 +146,7 @@ class MedianocheTest extends TestCase
                 ->setType($type)
                 ->setReadOnly(true)
                 ->setComment($property->description)
-                ->setNullable($property->nullable)
+                ->setNullable(true)
                 ->setValue($property->default);
         }
     }
