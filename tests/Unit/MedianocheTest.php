@@ -6,7 +6,7 @@ namespace AlexanderAllen\Panettone\Test\Unit;
 
 use AlexanderAllen\Panettone\Bread\MediaNoche;
 use PHPUnit\Framework\TestCase;
-use PHPUnit\Framework\Attributes\{CoversClass, Group, Test, TestDox};
+use PHPUnit\Framework\Attributes\{CoversClass, Group, Test, TestDox, Depends};
 use Psr\Log\{LoggerAwareTrait, NullLogger};
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Logger\ConsoleLogger;
@@ -68,7 +68,7 @@ class MedianocheTest extends TestCase
      */
     #[Test]
     #[TestDox('Dump cebe graph into nette class string')]
-    public function simpleRefsFileTest(): void
+    public function cebeToNetteString(): void
     {
         $logger = new ConsoleLogger(new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG));
         self::setLogger($logger);
@@ -104,5 +104,35 @@ class MedianocheTest extends TestCase
 
         $printer = new Printer();
         $this->logger->debug($printer->printClass($class));
+    }
+
+    /**
+     * Try linking from physical class User to physical class ContactInfo.
+     *
+     * Avoid resolving properties recursively in order to get a link from one
+     * class Type to another Type.
+     */
+    #[Test]
+    #[Depends('cebeToNetteString')]
+    #[TestDox('Dump cebe graph into nette class file')]
+    public function cebeToNetteFile(): void
+    {
+        $logger = new ConsoleLogger(new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG));
+        self::setLogger($logger);
+        $spec = Reader::readFromYamlFile(
+            realpath('tests/fixtures/reference.yml'),
+            OpenAPI::class,
+            false,
+        );
+
+        $result_user = $spec->components->schemas['User'];
+        self::assertNotContainsOnly(
+            Schema::class,
+            $result_user->properties,
+            false,
+            'Results contain unresolved reference'
+        );
+
+        $this->logger->debug(get_class($result_user->properties['contact_info']));
     }
 }
