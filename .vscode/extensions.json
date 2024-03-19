@@ -17,6 +17,7 @@
     "william-voyek.vscode-nginx",
     "ahmadalli.vscode-nginx-conf",
     "kumar-harsh.graphql-for-vscode",
-    "eamodio.gitlens"
+    "eamodio.gitlens",
+    "ryanluker.vscode-coverage-gutters"
   ]
 }

@@ -67,7 +67,7 @@ class MedianocheTest extends TestCase
      * @throws ExpectationFailedException
      */
     #[Test]
-    #[TestDox('Dump cebe graph into class string')]
+    #[TestDox('Dump cebe graph into nette class string')]
     public function simpleRefsFileTest(): void
     {
         $logger = new ConsoleLogger(new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG));
@@ -94,7 +94,7 @@ class MedianocheTest extends TestCase
         $schema = $spec->components->schemas['User'];
 
         foreach ((new MediaNoche($logger))->propertyGenerator($schema) as $name => $nette_prop) {
-            self::assertInstanceOf(Property::class, $nette_prop);
+            self::assertInstanceOf(Property::class, $nette_prop, 'Generator yields Property objects');
             $class->addMember($nette_prop);
         }
 
