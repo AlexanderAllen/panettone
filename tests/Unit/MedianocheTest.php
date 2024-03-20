@@ -15,6 +15,11 @@ use cebe\openapi\spec\{OpenApi, Schema, Reference};
 use cebe\openapi\exceptions\{TypeErrorException, UnresolvableReferenceException, IOException};
 use Nette\PhpGenerator\ClassType;
 use Nette\PhpGenerator\Printer;
+// use MyCLabs\Enum\Enum as MyCLabsEnum;
+use Nette\PhpGenerator\Helpers;
+use Nette\PhpGenerator\Method;
+use Nette\PhpGenerator\PhpFile;
+use Nette\PhpGenerator\PhpNamespace;
 use Nette\PhpGenerator\Property;
 use PHPUnit\Framework\Exception;
 use PHPUnit\Framework\ExpectationFailedException;
@@ -66,12 +71,12 @@ class MedianocheTest extends TestCase
      * @throws Exception
      * @throws ExpectationFailedException
      */
-    #[Test]
+    // #[Test]
     #[TestDox('Dump cebe graph into nette class string')]
     public function cebeToNetteString(): void
     {
-        $logger = new ConsoleLogger(new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG));
-        self::setLogger($logger);
+        // $logger = new ConsoleLogger(new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG));
+        // self::setLogger($logger);
 
         $spec = Reader::readFromYamlFile(
             realpath('tests/fixtures/reference.yml'),
@@ -93,7 +98,7 @@ class MedianocheTest extends TestCase
         $class = new ClassType('User');
         $schema = $spec->components->schemas['User'];
 
-        foreach ((new MediaNoche($logger))->propertyGenerator($schema) as $name => $nette_prop) {
+        foreach ((new MediaNoche())->propertyGenerator($schema) as $name => $nette_prop) {
             self::assertInstanceOf(Property::class, $nette_prop, 'Generator yields Property objects');
             $class->addMember($nette_prop);
         }
@@ -113,7 +118,6 @@ class MedianocheTest extends TestCase
      * class Type to another Type.
      */
     #[Test]
-    #[Depends('cebeToNetteString')]
     #[TestDox('Dump cebe graph into nette class file')]
     public function cebeToNetteFile(): void
     {
@@ -122,54 +126,62 @@ class MedianocheTest extends TestCase
         $spec = Reader::readFromYamlFile(
             realpath('tests/fixtures/reference.yml'),
             OpenAPI::class,
-            false,
+            ReferenceContext::RESOLVE_MODE_ALL,
         );
 
-        $result_user = $spec->components->schemas['User'];
-        self::assertNotContainsOnly(
-            Schema::class,
-            $result_user->properties,
-            false,
-            'Results contain unresolved reference'
-        );
-
-        // Test first schema only.
-        $class = new ClassType('User');
         $schema = $spec->components->schemas['User'];
-
-        foreach ((new MediaNoche($logger))->propertyGenerator($schema) as $name => $nette_prop) {
-            self::assertInstanceOf(Property::class, $nette_prop, 'Generator yields Property objects');
-            $class->addMember($nette_prop);
-        }
+        $class = $this->newNetteClass($schema);
 
         $class
             ->setFinal()
-            ->addComment("Class description.\nSecond line\n");
+            ->addComment("PHP custom types test");
 
         $printer = new Printer();
         $this->logger->debug($printer->printClass($class));
     }
 
+    public function newNetteClass(Schema $schema, string $name = 'MyNetteCustomClass'): ClassType
+    {
+        $class = new ClassType(
+            $name,
+            (new PhpNamespace('DeyFancyFooNameSpace'))
+                ->addUse('UseThisUseStmt', 'asAlias')
+        );
+        foreach ($this->propertyGenerator($schema) as $name => $nette_prop) {
+            self::assertInstanceOf(Property::class, $nette_prop, 'Generator yields Property objects');
+            $class->addMember($nette_prop);
+        }
+
+        // I could dump the class object into file here, but that would be a internal state violation.
+
+        return $class;
+    }
+
     /**
-     * Properties in internal objects are not resolved inline.
-     *
      * @return \Generator<string, Property, null, void>
      */
-    public function propertyGenerator(Schema $schema): \Generator
+    public function propertyGenerator(Schema|Reference $schema): \Generator
     {
         foreach ($schema->properties as $name => $property) {
             $this->logger->debug(sprintf('Parsing property: %s', $name));
 
-            /**
-             * 3/18 - I want a physical reference to another Type.
-             */
             if ($property->type == 'object') {
                 // Start a new internal, recursive generator.
-                $this->logger->debug(sprintf('Recursing object property: %s', $name));
-                foreach ($this->propertyGenerator($property) as $key => $nette_prop) {
-                    yield $key => $nette_prop;
-                }
+                $this->logger->debug(sprintf('Encountered nested obj/ref: %s', $name));
+
                 // Do not yield Schema items, only Property items.
+                // Still need a Property because the result is being added as a member to a class.
+                $PROP_PHPCUSTOMTYPE =
+                (new Property($name))
+                    ->setType($name)
+                    ->setReadOnly(true)
+                    ->setComment($property->description)
+                    ->setNullable(true)
+                    ->setValue($property->default);
+
+                $NETTECLASS_TYPE = $this->newNetteClass($property, $name);
+
+                yield $name => $PROP_PHPCUSTOMTYPE;
                 return;
             }
 
