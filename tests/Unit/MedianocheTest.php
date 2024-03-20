@@ -130,37 +130,54 @@ class MedianocheTest extends TestCase
         );
 
         $schema = $spec->components->schemas['User'];
-        $class = $this->newNetteClass($schema);
+        $extra = [];
+        $class = $this->newNetteClass($schema, 'User', $extra);
 
-        $class
-            ->setFinal()
-            ->addComment("PHP custom types test");
+        $test = null;
 
-        $printer = new Printer();
-        $this->logger->debug($printer->printClass($class));
+        // $class
+        //     ->setFinal()
+        //     ->addComment("PHP custom types test");
+
+        // $printer = new Printer();
+        // $this->logger->debug($printer->printClass($class));
     }
 
-    public function newNetteClass(Schema $schema, string $name = 'MyNetteCustomClass'): ClassType
+    /**
+     *
+     */
+    public function newNetteClass(Schema $schema, string $name, array &$classes = []): ClassType
     {
         $class = new ClassType(
             $name,
             (new PhpNamespace('DeyFancyFooNameSpace'))
                 ->addUse('UseThisUseStmt', 'asAlias')
         );
-        foreach ($this->propertyGenerator($schema) as $name => $nette_prop) {
-            self::assertInstanceOf(Property::class, $nette_prop, 'Generator yields Property objects');
-            $class->addMember($nette_prop);
+
+        // $classes = [];
+        // $props = [];
+
+        // In the process of going through props, we might come acrsos new class applications.
+        // We need to be able to receive and store those classes somewhere.
+        foreach ($this->propertyGenerator($schema, $classes) as $name => $nette_prop) {
+            // self::assertInstanceOf(Property::class, $nette_prop, 'Generator yields Property objects');
+            // $props[$name] = $nette_prop;
+            if ($nette_prop instanceof Property) {
+                $class->addMember($nette_prop);
+            }
         }
 
+
+        // $class->addMember($nette_prop);
         // I could dump the class object into file here, but that would be a internal state violation.
 
         return $class;
     }
 
     /**
-     * @return \Generator<string, Property, null, void>
+     * @return \Generator<string, Property|ClassType, null, void|ClassType>
      */
-    public function propertyGenerator(Schema|Reference $schema): \Generator
+    public function propertyGenerator(Schema|Reference $schema, &$extra = []): \Generator
     {
         foreach ($schema->properties as $name => $property) {
             $this->logger->debug(sprintf('Parsing property: %s', $name));
@@ -180,8 +197,12 @@ class MedianocheTest extends TestCase
                     ->setValue($property->default);
 
                 $NETTECLASS_TYPE = $this->newNetteClass($property, $name);
+                $extra[$name] = $NETTECLASS_TYPE;
 
                 yield $name => $PROP_PHPCUSTOMTYPE;
+                // return $NETTECLASS_TYPE;
+
+                // yield $name => $PROP_PHPCUSTOMTYPE;
                 return;
             }
 
@@ -203,6 +224,8 @@ class MedianocheTest extends TestCase
                 ->setComment($property->description)
                 ->setNullable(true)
                 ->setValue($property->default);
+
+            // return;
         }
     }
 }
