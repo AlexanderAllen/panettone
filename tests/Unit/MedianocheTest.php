@@ -23,6 +23,10 @@ use Nette\PhpGenerator\PhpNamespace;
 use Nette\PhpGenerator\Property;
 use PHPUnit\Framework\Exception;
 use PHPUnit\Framework\ExpectationFailedException;
+use loophp\collection\Collection;
+use PhpParser\Node\Expr\Instanceof_;
+
+use function PHPUnit\Framework\callback;
 
 /**
  * Test suite for nette generators.
@@ -130,23 +134,15 @@ class MedianocheTest extends TestCase
         );
 
         $schema = $spec->components->schemas['User'];
-        $extra = [];
-        $class = $this->newNetteClass($schema, 'User', $extra);
+        $class = $this->newNetteClass($schema, 'User');
 
         $test = null;
 
-        // $class
-        //     ->setFinal()
-        //     ->addComment("PHP custom types test");
-
-        // $printer = new Printer();
-        // $this->logger->debug($printer->printClass($class));
+        $printer = new Printer();
+        $this->logger->debug($printer->printClass($class));
     }
 
-    /**
-     *
-     */
-    public function newNetteClass(Schema $schema, string $name, array &$classes = []): ClassType
+    public function newNetteClass(Schema $schema, string $name): ClassType
     {
         $class = new ClassType(
             $name,
@@ -154,55 +150,60 @@ class MedianocheTest extends TestCase
                 ->addUse('UseThisUseStmt', 'asAlias')
         );
 
-        // $classes = [];
-        // $props = [];
+        $new_prop = fn (Schema $property, string $name): Property =>
+            /* @see https://swagger.io/specification/#data-types */
+            (new Property($name))
+                ->setReadOnly(true)
+                ->setComment($property->description)
+                ->setNullable(true)
+                ->setValue($property->default)
+                ->setType(
+                    match ($property->type) {
+                        'string' => 'string',
+                        'integer' => 'int',
+                        'boolean' => 'bool',
+                        'float', 'double' => 'float',
+                        'object' => 'MahCustomObjType',
+                        'date', 'dateTime' => \DateTimeInterface::class,
+                        default => throw new \UnhandledMatchError(),
+                    }
+                );
+        ;
 
-        // In the process of going through props, we might come acrsos new class applications.
-        // We need to be able to receive and store those classes somewhere.
-        foreach ($this->propertyGenerator($schema, $classes) as $name => $nette_prop) {
-            // self::assertInstanceOf(Property::class, $nette_prop, 'Generator yields Property objects');
-            // $props[$name] = $nette_prop;
-            if ($nette_prop instanceof Property) {
-                $class->addMember($nette_prop);
-            }
+        // Set aside nested cebe objects for additional processing.
+        static $nested_objects = [];
+        $new_obj = static function (Schema $property, string $name) use ($new_prop, $nested_objects): Property {
+            $nested_objects[$name] = $property;
+            return $new_prop($property, $name);
+        };
+
+        $filter = static fn ($p, $n) => 'object' !== $p->type;
+        /**
+         * Convert all schema props to cebe props.
+         * @var Collection<string, Property> $nette_props
+         */
+        $nette_props = Collection::fromIterable($schema->properties)->ifThenElse($filter, $new_prop, $new_obj);
+        foreach ($nette_props as $name => $prop) {
+            $this->logger->debug(sprintf('Add class property: %s', $name));
+            $class->addMember($prop);
         }
-
-
-        // $class->addMember($nette_prop);
-        // I could dump the class object into file here, but that would be a internal state violation.
 
         return $class;
     }
 
-    /**
-     * @return \Generator<string, Property|ClassType, null, void|ClassType>
-     */
-    public function propertyGenerator(Schema|Reference $schema, &$extra = []): \Generator
+
+    public function propertyGenerator(Schema $schema): \Generator
     {
         foreach ($schema->properties as $name => $property) {
             $this->logger->debug(sprintf('Parsing property: %s', $name));
 
             if ($property->type == 'object') {
                 // Start a new internal, recursive generator.
-                $this->logger->debug(sprintf('Encountered nested obj/ref: %s', $name));
-
+                $this->logger->debug(sprintf('Recursing object property: %s', $name));
+                foreach ($this->propertyGenerator($property) as $key => $nette_prop) {
+                    yield $key => $nette_prop;
+                }
                 // Do not yield Schema items, only Property items.
-                // Still need a Property because the result is being added as a member to a class.
-                $PROP_PHPCUSTOMTYPE =
-                (new Property($name))
-                    ->setType($name)
-                    ->setReadOnly(true)
-                    ->setComment($property->description)
-                    ->setNullable(true)
-                    ->setValue($property->default);
-
-                $NETTECLASS_TYPE = $this->newNetteClass($property, $name);
-                $extra[$name] = $NETTECLASS_TYPE;
-
-                yield $name => $PROP_PHPCUSTOMTYPE;
-                // return $NETTECLASS_TYPE;
-
-                // yield $name => $PROP_PHPCUSTOMTYPE;
                 return;
             }
 
@@ -212,7 +213,7 @@ class MedianocheTest extends TestCase
                 'integer' => 'int',
                 'boolean' => 'bool',
                 'float', 'double' => 'float',
-                // 'object' => Schema::class,
+                'object' => $name,
                 'date', 'dateTime' => \DateTimeInterface::class,
                 default => throw new \UnhandledMatchError(),
             };
@@ -224,8 +225,6 @@ class MedianocheTest extends TestCase
                 ->setComment($property->description)
                 ->setNullable(true)
                 ->setValue($property->default);
-
-            // return;
         }
     }
 }
