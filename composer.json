@@ -32,7 +32,9 @@
     "require": {
         "psr/log": "^3.0",
         "symfony/console": "^6.0",
-        "api-platform/schema-generator": "5.2.2"
+        "api-platform/schema-generator": "5.2.2",
+        "loophp/collection": "^7.5",
+        "nikic/iter": "^2.4"
     },
     "require-dev": {
         "myclabs/php-enum": "^1.8",
