@@ -221,7 +221,14 @@ class MedianocheTest extends TestCase
                         'float', 'double' => 'float',
                         'object' => $normalizer($name),
                         'date', 'dateTime' => \DateTimeInterface::class,
-                        default => throw new \UnhandledMatchError(),
+                        default => throw new \UnhandledMatchError(
+                            sprintf(
+                                'Unhandled type "%s" for property "%s" on schema "%s"',
+                                $property->type,
+                                $name,
+                                $class_name
+                            )
+                        ),
                     }
                 );
         ;
