@@ -123,7 +123,7 @@ class MedianocheTest extends TestCase
         $logger = new ConsoleLogger(new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG));
         self::setLogger($logger);
         $spec = Reader::readFromYamlFile(
-            realpath('tests/fixtures/medianoche.yml'),
+            realpath('tests/fixtures/medianoche-1.yml'),
             OpenAPI::class,
             ReferenceContext::RESOLVE_MODE_ALL,
         );
