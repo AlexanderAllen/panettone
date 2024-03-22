@@ -81,7 +81,7 @@ class MedianocheTest extends TestCase
     public function cebeToNetteString(): void
     {
         $spec = Reader::readFromYamlFile(
-            realpath('tests/fixtures/reference.yml'),
+            realpath('tests/fixtures/medianoche.yml'),
             OpenAPI::class,
             ReferenceContext::RESOLVE_MODE_ALL,
         );
@@ -123,7 +123,7 @@ class MedianocheTest extends TestCase
         $logger = new ConsoleLogger(new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG));
         self::setLogger($logger);
         $spec = Reader::readFromYamlFile(
-            realpath('tests/fixtures/reference.yml'),
+            realpath('tests/fixtures/medianoche.yml'),
             OpenAPI::class,
             ReferenceContext::RESOLVE_MODE_ALL,
         );

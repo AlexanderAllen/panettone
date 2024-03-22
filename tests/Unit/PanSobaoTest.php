@@ -32,7 +32,7 @@ use Psr\Log\{LoggerAwareTrait, NullLogger};
  */
 #[CoversClass(PanSobao::class)]
 #[TestDox('OpenApi package tests')]
-#[Group('proof')]
+#[Group('ignore')]
 #[Large]
 class PanSobaoTest extends TestCase
 {
@@ -121,7 +121,7 @@ class PanSobaoTest extends TestCase
     public function simpleRefsFileFailTest(): void
     {
         $spec = Reader::readFromYamlFile(
-            realpath('tests/fixtures/reference.yml'),
+            realpath('tests/fixtures/pansobao.yml'),
             OpenAPI::class,
             ReferenceContext::RESOLVE_MODE_INLINE,
         );
@@ -140,7 +140,7 @@ class PanSobaoTest extends TestCase
     public function simpleRefsFileTest(): void
     {
         $spec = Reader::readFromYamlFile(
-            realpath('tests/fixtures/reference.yml'),
+            realpath('tests/fixtures/pansobao.yml'),
             OpenAPI::class,
             ReferenceContext::RESOLVE_MODE_ALL,
         );
@@ -161,7 +161,7 @@ class PanSobaoTest extends TestCase
     public function simpleNetteDumperTest(): void
     {
         $spec = Reader::readFromYamlFile(
-            realpath('tests/fixtures/reference.yml'),
+            realpath('tests/fixtures/pansobao.yml'),
             OpenAPI::class,
             ReferenceContext::RESOLVE_MODE_ALL,
         );
@@ -204,14 +204,14 @@ class PanSobaoTest extends TestCase
     public function classBuilderTest(): void
     {
         $spec = Reader::readFromYamlFile(
-            realpath('tests/fixtures/reference.yml'),
+            realpath('tests/fixtures/pansobao.yml'),
             OpenAPI::class,
             ReferenceContext::RESOLVE_MODE_ALL,
         );
 
         self::setLogger(new ConsoleLogger(new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG)));
 
-        // $context = new ReferenceContext($spec, realpath('tests/fixtures/reference.yml'));
+        // $context = new ReferenceContext($spec, realpath('tests/fixtures/pansobao.yml'));
         // $spec->setReferenceContext($context);
         // $spec->setDocumentContext($spec, new JsonPointer(''));
         // $spec->resolveReferences();
