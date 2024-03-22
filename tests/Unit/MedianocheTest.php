@@ -26,7 +26,8 @@ use PHPUnit\Framework\ExpectationFailedException;
 use loophp\collection\Collection;
 use PhpParser\Node\Expr\Instanceof_;
 
-use function PHPUnit\Framework\callback;
+use function iter\split;
+use function Symfony\Component\String\u;
 
 /**
  * Test suite for nette generators.
@@ -79,9 +80,6 @@ class MedianocheTest extends TestCase
     #[TestDox('Dump cebe graph into nette class string')]
     public function cebeToNetteString(): void
     {
-        // $logger = new ConsoleLogger(new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG));
-        // self::setLogger($logger);
-
         $spec = Reader::readFromYamlFile(
             realpath('tests/fixtures/reference.yml'),
             OpenAPI::class,
@@ -118,11 +116,35 @@ class MedianocheTest extends TestCase
     /**
      * Proceduralish class resolver with recursion.
      */
-    // #[Test]
-    #[TestDox('Recursive class resolver')]
-    public function testA(): void
+    #[Test]
+    #[TestDox('Proceduralish class resolver')]
+    public function proceduralish(): void
     {
-        // ...
+        $logger = new ConsoleLogger(new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG));
+        self::setLogger($logger);
+        $spec = Reader::readFromYamlFile(
+            realpath('tests/fixtures/reference.yml'),
+            OpenAPI::class,
+            ReferenceContext::RESOLVE_MODE_ALL,
+        );
+        $printer = new Printer();
+
+        $callback = fn ($k = null, $v = null) => $this->logger->debug(sprintf('%s: ima call u back, %s', $k, $v));
+
+        $classes = [];
+        $expected_count = count($spec->components->schemas);
+        foreach ($spec->components->schemas as $name => $schema) {
+            $class = $this->newNetteClass($schema, $name);
+            self::assertInstanceOf(ClassType::class, $class, 'Generator yields ClassType object(s)');
+            $classes[] = $class;
+            $this->logger->debug($printer->printClass($class));
+        }
+
+        self::assertCount(
+            $expected_count,
+            $classes,
+            'The given and yielded object amount is an exact match'
+        );
     }
 
     /**
@@ -133,37 +155,49 @@ class MedianocheTest extends TestCase
      * a bucket of nested classes / types to be generated?s
      */
     // #[Test]
-    #[TestDox('Functional class resolver')]
-    public function testB(): void
+    #[TestDox('Functionalish class resolver')]
+    public function functionalish(): void
     {
         // ...
     }
 
     #[Test]
-    #[TestDox('Create nette class object')]
+    #[TestDox('Create nette class object(s)')]
     public function cebeToNetteObject(): void
     {
-        $logger = new ConsoleLogger(new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG));
-        self::setLogger($logger);
         $spec = Reader::readFromYamlFile(
-            realpath('tests/fixtures/reference.yml'),
+            realpath('tests/fixtures/medianoche.yml'),
             OpenAPI::class,
             ReferenceContext::RESOLVE_MODE_ALL,
         );
 
+        $classes = [];
+        $expected_count = count($spec->components->schemas);
         foreach ($spec->components->schemas as $name => $schema) {
             $class = $this->newNetteClass($schema, $name);
-            self::assertInstanceOf(ClassType::class, $class, 'Generator yields ClassType objects');
+            self::assertInstanceOf(ClassType::class, $class, 'Generator yields ClassType object(s)');
+            $classes[] = $class;
         }
+
+        self::assertCount(
+            $expected_count,
+            $classes,
+            'The given and yielded object amount is an exact match'
+        );
     }
 
-    public function newNetteClass(Schema $schema, string $name): ClassType
+    public function newNetteClass(Schema $schema, string $class_name, callable $callback = null): ClassType
     {
         $class = new ClassType(
-            $name,
+            $class_name,
             (new PhpNamespace('DeyFancyFooNameSpace'))
                 ->addUse('UseThisUseStmt', 'asAlias')
         );
+
+        // Custom type identifier.
+        // Physical type filename and class name must match.
+        // Credit: api-platform/schema-generator/src/AttributeGenerator/GenerateIdentifierNameTrait.php
+        $normalizer = static fn (string $name) => u($name)->snake()->toString();
 
         $new_prop = static fn (Schema $property, string $name): Property =>
             /* @see https://swagger.io/specification/#data-types */
@@ -178,7 +212,7 @@ class MedianocheTest extends TestCase
                         'integer' => 'int',
                         'boolean' => 'bool',
                         'float', 'double' => 'float',
-                        'object' => 'MahCustomObjType',
+                        'object' => $normalizer($name),
                         'date', 'dateTime' => \DateTimeInterface::class,
                         default => throw new \UnhandledMatchError(),
                     }
@@ -191,6 +225,10 @@ class MedianocheTest extends TestCase
 
             // TODO: Do I create new nested class RECURSIVELY here?
             $nested_objects[$name] = $property;
+
+            // $callback()
+
+            // This will create a new class property with a custom type.
             return $new_prop($property, $name);
         };
 
