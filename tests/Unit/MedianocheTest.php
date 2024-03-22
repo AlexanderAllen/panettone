@@ -24,9 +24,7 @@ use Nette\PhpGenerator\Property;
 use PHPUnit\Framework\Exception;
 use PHPUnit\Framework\ExpectationFailedException;
 use loophp\collection\Collection;
-use PhpParser\Node\Expr\Instanceof_;
 
-use function iter\split;
 use function Symfony\Component\String\u;
 
 /**
@@ -113,6 +111,31 @@ class MedianocheTest extends TestCase
         $this->logger->debug($printer->printClass($class));
     }
 
+    #[Test]
+    #[TestDox('Create nette class object(s)')]
+    public function cebeToNetteObject(): void
+    {
+        $spec = Reader::readFromYamlFile(
+            realpath('tests/fixtures/medianoche.yml'),
+            OpenAPI::class,
+            ReferenceContext::RESOLVE_MODE_ALL,
+        );
+
+        $classes = [];
+        $expected_count = count($spec->components->schemas);
+        foreach ($spec->components->schemas as $name => $schema) {
+            $class = $this->newNetteClass($schema, $name);
+            self::assertInstanceOf(ClassType::class, $class, 'Generator yields ClassType object(s)');
+            $classes[] = $class;
+        }
+
+        self::assertCount(
+            $expected_count,
+            $classes,
+            'The given and yielded object amount is an exact match'
+        );
+    }
+
     /**
      * Proceduralish class resolver with recursion.
      */
@@ -161,31 +184,6 @@ class MedianocheTest extends TestCase
         // ...
     }
 
-    #[Test]
-    #[TestDox('Create nette class object(s)')]
-    public function cebeToNetteObject(): void
-    {
-        $spec = Reader::readFromYamlFile(
-            realpath('tests/fixtures/medianoche.yml'),
-            OpenAPI::class,
-            ReferenceContext::RESOLVE_MODE_ALL,
-        );
-
-        $classes = [];
-        $expected_count = count($spec->components->schemas);
-        foreach ($spec->components->schemas as $name => $schema) {
-            $class = $this->newNetteClass($schema, $name);
-            self::assertInstanceOf(ClassType::class, $class, 'Generator yields ClassType object(s)');
-            $classes[] = $class;
-        }
-
-        self::assertCount(
-            $expected_count,
-            $classes,
-            'The given and yielded object amount is an exact match'
-        );
-    }
-
     public function newNetteClass(Schema $schema, string $class_name, callable $callback = null): ClassType
     {
         $this->logger->debug(sprintf('Creating new class: %s', $class_name));
@@ -204,7 +202,18 @@ class MedianocheTest extends TestCase
          *
          * @see api-platform/schema-generator/src/AttributeGenerator/GenerateIdentifierNameTrait.php
          */
-        $normalizer = static fn (string $name) => ucfirst(u($name)->camel()->toString());
+        $normalizer = static fn ($name) => ucfirst(u($name)->camel()->toString());
+
+        $unhandled_type = static fn (Schema $property, $name, $class_name): \UnhandledMatchError =>
+            new \UnhandledMatchError(
+                sprintf(
+                    'Unhandled type "%s" for property "%s" on schema "%s"',
+                    $property->type,
+                    $name,
+                    $class_name
+                )
+            );
+
 
         $new_prop = static fn (Schema $property, string $name): Property =>
             /* @see https://swagger.io/specification/#data-types */
@@ -221,14 +230,7 @@ class MedianocheTest extends TestCase
                         'float', 'double' => 'float',
                         'object' => $normalizer($name),
                         'date', 'dateTime' => \DateTimeInterface::class,
-                        default => throw new \UnhandledMatchError(
-                            sprintf(
-                                'Unhandled type "%s" for property "%s" on schema "%s"',
-                                $property->type,
-                                $name,
-                                $class_name
-                            )
-                        ),
+                        default => throw $unhandled_type($property, $name, $class_name),
                     }
                 );
         ;
