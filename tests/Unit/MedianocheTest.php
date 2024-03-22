@@ -188,16 +188,23 @@ class MedianocheTest extends TestCase
 
     public function newNetteClass(Schema $schema, string $class_name, callable $callback = null): ClassType
     {
+        $this->logger->debug(sprintf('Creating new class: %s', $class_name));
         $class = new ClassType(
             $class_name,
             (new PhpNamespace('DeyFancyFooNameSpace'))
                 ->addUse('UseThisUseStmt', 'asAlias')
         );
 
-        // Custom type identifier.
-        // Physical type filename and class name must match.
-        // Credit: api-platform/schema-generator/src/AttributeGenerator/GenerateIdentifierNameTrait.php
-        $normalizer = static fn (string $name) => u($name)->snake()->toString();
+        /**
+         * Custom type identifier.
+         *
+         * The physical type filename and class name must match.
+         * Usually the type (schema/class) is capitalized CamelCase,
+         * whereas class properties that reference the types are camel_case.
+         *
+         * @see api-platform/schema-generator/src/AttributeGenerator/GenerateIdentifierNameTrait.php
+         */
+        $normalizer = static fn (string $name) => ucfirst(u($name)->camel()->toString());
 
         $new_prop = static fn (Schema $property, string $name): Property =>
             /* @see https://swagger.io/specification/#data-types */
