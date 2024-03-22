@@ -115,14 +115,8 @@ class MedianocheTest extends TestCase
         $this->logger->debug($printer->printClass($class));
     }
 
-    /**
-     * Try linking from physical class User to physical class ContactInfo.
-     *
-     * Avoid resolving properties recursively in order to get a link from one
-     * class Type to another Type.
-     */
     #[Test]
-    #[TestDox('Dump cebe graph into nette class file')]
+    #[TestDox('Create nette class object')]
     public function cebeToNetteFile(): void
     {
         $logger = new ConsoleLogger(new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG));
@@ -133,13 +127,16 @@ class MedianocheTest extends TestCase
             ReferenceContext::RESOLVE_MODE_ALL,
         );
 
-        $schema = $spec->components->schemas['User'];
-        $class = $this->newNetteClass($schema, 'User');
-
+        $classes = [];
+        foreach ($spec->components->schemas as $name => $schema) {
+            $class = $this->newNetteClass($schema, $name);
+            self::assertInstanceOf(ClassType::class, $class, 'Generator yields ClassType objects');
+            $classes[] = $class;
+        }
         $test = null;
 
         $printer = new Printer();
-        $this->logger->debug($printer->printClass($class));
+        // $this->logger->debug($printer->printClass($class));
     }
 
     public function newNetteClass(Schema $schema, string $name): ClassType
