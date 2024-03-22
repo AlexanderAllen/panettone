@@ -115,9 +115,33 @@ class MedianocheTest extends TestCase
         $this->logger->debug($printer->printClass($class));
     }
 
+    /**
+     * Proceduralish class resolver with recursion.
+     */
+    // #[Test]
+    #[TestDox('Recursive class resolver')]
+    public function testA(): void
+    {
+        // ...
+    }
+
+    /**
+     * Functionalish class resolver without recursion.
+     *
+     * I've been aiming to avoid procedural recursion at all costs.
+     * What if the upper scope / stack member becomes a collection and receive
+     * a bucket of nested classes / types to be generated?s
+     */
+    // #[Test]
+    #[TestDox('Functional class resolver')]
+    public function testB(): void
+    {
+        // ...
+    }
+
     #[Test]
     #[TestDox('Create nette class object')]
-    public function cebeToNetteFile(): void
+    public function cebeToNetteObject(): void
     {
         $logger = new ConsoleLogger(new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG));
         self::setLogger($logger);
@@ -127,16 +151,10 @@ class MedianocheTest extends TestCase
             ReferenceContext::RESOLVE_MODE_ALL,
         );
 
-        $classes = [];
         foreach ($spec->components->schemas as $name => $schema) {
             $class = $this->newNetteClass($schema, $name);
             self::assertInstanceOf(ClassType::class, $class, 'Generator yields ClassType objects');
-            $classes[] = $class;
         }
-        $test = null;
-
-        $printer = new Printer();
-        // $this->logger->debug($printer->printClass($class));
     }
 
     public function newNetteClass(Schema $schema, string $name): ClassType
@@ -147,7 +165,7 @@ class MedianocheTest extends TestCase
                 ->addUse('UseThisUseStmt', 'asAlias')
         );
 
-        $new_prop = fn (Schema $property, string $name): Property =>
+        $new_prop = static fn (Schema $property, string $name): Property =>
             /* @see https://swagger.io/specification/#data-types */
             (new Property($name))
                 ->setReadOnly(true)
@@ -170,11 +188,14 @@ class MedianocheTest extends TestCase
         // Set aside nested cebe objects for additional processing.
         static $nested_objects = [];
         $new_obj = static function (Schema $property, string $name) use ($new_prop, $nested_objects): Property {
+
+            // TODO: Do I create new nested class RECURSIVELY here?
             $nested_objects[$name] = $property;
             return $new_prop($property, $name);
         };
 
-        $filter = static fn ($p, $n) => 'object' !== $p->type;
+        $filter = static fn ($p) => 'object' !== $p->type;
+
         /**
          * Convert all schema props to cebe props.
          * @var Collection<string, Property> $nette_props
