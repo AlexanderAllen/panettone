@@ -13,6 +13,7 @@ use Symfony\Component\Console\Logger\ConsoleLogger;
 use cebe\openapi\{Reader, ReferenceContext};
 use cebe\openapi\spec\{OpenApi, Schema, Reference};
 use cebe\openapi\exceptions\{TypeErrorException, UnresolvableReferenceException, IOException};
+use cebe\openapi\json\JsonPointer;
 use Nette\PhpGenerator\ClassType;
 use Nette\PhpGenerator\Printer;
 // use MyCLabs\Enum\Enum as MyCLabsEnum;
@@ -204,6 +205,7 @@ class MedianocheTest extends TestCase
          */
         $normalizer = static fn ($name) => ucfirst(u($name)->camel()->toString());
 
+        // @TODO Exception needs it's own small unit test for coverage.
         $unhandled_type = static fn (Schema $property, $name, $class_name): \UnhandledMatchError =>
             new \UnhandledMatchError(
                 sprintf(
@@ -214,49 +216,72 @@ class MedianocheTest extends TestCase
                 )
             );
 
-
-        $new_prop = static fn (Schema $property, string $name): Property =>
-            /* @see https://swagger.io/specification/#data-types */
-            (new Property($name))
+        $native_prop = static fn (
+            Schema $property,
+            string $propName,
+            ?Collection $collection = null,
+            ?string $typeName = null
+            ): Property =>
+            (new Property($propName))
                 ->setReadOnly(true)
                 ->setComment($property->description)
                 ->setNullable(true)
                 ->setValue($property->default)
                 ->setType(
                     match ($property->type) {
+                        /* @see https://swagger.io/specification/#data-types */
                         'string' => 'string',
                         'integer' => 'int',
                         'boolean' => 'bool',
                         'float', 'double' => 'float',
-                        'object' => $normalizer($name),
+                        'object' => $normalizer($typeName ?? $propName),
                         'date', 'dateTime' => \DateTimeInterface::class,
-                        default => throw $unhandled_type($property, $name, $class_name),
+                        default => throw $unhandled_type($property, $propName, $class_name),
                     }
                 );
         ;
 
         // Set aside nested cebe objects for additional processing.
         static $nested_objects = [];
-        $new_obj = static function (Schema $property, string $name) use ($new_prop, $nested_objects): Property {
+        $new_obj = static function (Schema $property, string $propName, ?Collection $collection = null) use ($native_prop, $nested_objects): Property {
 
-            // TODO: Do I create new nested class RECURSIVELY here?
-            $nested_objects[$name] = $property;
+            $nested_objects[$propName] = $property;
+            // @TODO tests for these use cases:
+            // $property->allOf;
+            // $property->anyOf;
+            // $property->enum;
+            // $property->oneOf;
+            // $property->uniqueItems;
+            // $property->additionalProperties;
 
-            // $callback()
+
+            if ($property->type == 'array') {
+                // OAS shape: Schema (type object)->property (type array)->items (single reference)
+                // PHP shape: Type -> CustomType $propertyName
+                // The type of the property must match the referenced type (class).
+                if ($property->items instanceof \cebe\openapi\spec\Schema) {
+                    // Use the referenced schema as the type for the property.
+                    $pointer = $property->items->getDocumentPosition();
+                    $refd_array = $pointer->getPath();
+                    $refd_schema = array_pop($refd_array);
+
+                    return $native_prop($property->items, $propName, null, $refd_schema);
+                }
+            }
 
             // This will create a new class property with a custom type.
-            return $new_prop($property, $name);
+            return $native_prop($property, $propName);
         };
 
-        $filter = static fn ($p) => 'object' !== $p->type;
+        $natives = static fn ($p) => ! in_array($p->type, ['object', 'array'], true);
 
         /**
          * Convert all schema props to cebe props.
          * @var Collection<string, Property> $nette_props
          */
-        $nette_props = Collection::fromIterable($schema->properties)->ifThenElse($filter, $new_prop, $new_obj);
+        $nette_props = Collection::fromIterable($schema->properties)->ifThenElse($natives, $native_prop, $new_obj);
         foreach ($nette_props as $name => $prop) {
-            $this->logger->debug(sprintf('Add class property: %s', $name));
+            $this->logger->debug(sprintf('[%s/%s] Add class property', $class_name, $name));
             $class->addMember($prop);
         }
 
