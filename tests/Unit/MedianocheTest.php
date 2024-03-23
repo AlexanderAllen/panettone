@@ -216,7 +216,7 @@ class MedianocheTest extends TestCase
                 )
             );
 
-        $native_prop = static fn (
+        $_native_prop = static fn (
             Schema $property,
             string $propName,
             ?Collection $collection = null,
@@ -234,16 +234,20 @@ class MedianocheTest extends TestCase
                         'integer' => 'int',
                         'boolean' => 'bool',
                         'float', 'double' => 'float',
-                        'object' => $normalizer($typeName ?? $propName),
+                        'object', 'array' => $normalizer($typeName ?? $propName),
                         'date', 'dateTime' => \DateTimeInterface::class,
                         default => throw $unhandled_type($property, $propName, $class_name),
                     }
                 );
         ;
 
+        $refdSchema = static fn (Schema $schema) =>
+            Collection::fromIterable($schema->items->getDocumentPosition()->getPath())->last();
+
         // Set aside nested cebe objects for additional processing.
+        // I'd be nice to have an injectable rules matcher/executor for unit testing.
         static $nested_objects = [];
-        $new_obj = static function (Schema $property, string $propName, ?Collection $collection = null) use ($native_prop, $nested_objects): Property {
+        $new_obj = static function (Schema $property, string $propName, ?Collection $collection = null) use ($_native_prop, $refdSchema, $nested_objects): Property {
 
             $nested_objects[$propName] = $property;
             // @TODO tests for these use cases:
@@ -256,21 +260,17 @@ class MedianocheTest extends TestCase
 
 
             if ($property->type == 'array') {
-                // OAS shape: Schema (type object)->property (type array)->items (single reference)
+                // Shape: "object schema, has array property, items have single reference
                 // PHP shape: Type -> CustomType $propertyName
                 // The type of the property must match the referenced type (class).
                 if ($property->items instanceof \cebe\openapi\spec\Schema) {
                     // Use the referenced schema as the type for the property.
-                    $pointer = $property->items->getDocumentPosition();
-                    $refd_array = $pointer->getPath();
-                    $refd_schema = array_pop($refd_array);
-
-                    return $native_prop($property->items, $propName, null, $refd_schema);
+                    return $_native_prop($property->items, $propName, null, $refdSchema($property));
                 }
             }
 
             // This will create a new class property with a custom type.
-            return $native_prop($property, $propName);
+            return $_native_prop($property, $propName);
         };
 
         $natives = static fn ($p) => ! in_array($p->type, ['object', 'array'], true);
@@ -279,9 +279,18 @@ class MedianocheTest extends TestCase
          * Convert all schema props to cebe props.
          * @var Collection<string, Property> $nette_props
          */
-        $nette_props = Collection::fromIterable($schema->properties)->ifThenElse($natives, $native_prop, $new_obj);
+        $nette_props = Collection::fromIterable($schema->properties)->ifThenElse($natives, $_native_prop, $new_obj);
         foreach ($nette_props as $name => $prop) {
             $this->logger->debug(sprintf('[%s/%s] Add class property', $class_name, $name));
+            $class->addMember($prop);
+        }
+
+        // Schema has type array.
+        // Shape: "array schema, items point to single ref"
+        if ($schema->type === 'array') {
+            // Don't flatten or inline the reference, instead reference the schema as a type.
+            $this->logger->debug(sprintf('[%s/%s] Add array class property', $class_name, 'items'));
+            $prop = $_native_prop($schema, 'items', null, $refdSchema($schema));
             $class->addMember($prop);
         }
 
