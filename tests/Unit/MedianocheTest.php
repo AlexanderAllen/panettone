@@ -187,7 +187,57 @@ class MedianocheTest extends TestCase
 
     public function newNetteClass(Schema $schema, string $class_name, callable $callback = null): ClassType
     {
-        $this->logger->debug(sprintf('Creating new class: %s', $class_name));
+        $unhandled_type = static fn ($type, $name, $class_name): \UnhandledMatchError =>
+            new \UnhandledMatchError(
+                sprintf(
+                    'Unhandled type "%s" for property "%s" of schema "%s"',
+                    $type,
+                    $name,
+                    $class_name
+                )
+            );
+
+        $unhandled_class = static fn ($type, $class_name): \UnhandledMatchError =>
+            new \UnhandledMatchError(
+                sprintf(
+                    'Unhandled type "%s" for schema "%s"',
+                    $type,
+                    $class_name
+                )
+            );
+
+        $advanced = static function (Schema $schema) use ($unhandled_class, $class_name): string {
+            // @TODO tests for these use cases:
+            // $schema->enum;
+            // $schema->uniqueItems;
+            // $schema->additionalProperties;
+
+            // TooManyRequests is a hard one bc it contains 1. AllOf(ref), 2.add'tProps w/ object.
+            // An even more hardcore test would be add'tProps object w/ ref or even more w/ all/anyOfs (refs)
+            $kind = Collection::fromIterable(['allOf', 'anyOf', 'oneOf'])
+                ->reject(static fn ($v) => is_null($schema->{$v}))
+                ->first('');
+            if (empty($kind)) {
+                // Out of schema types to match, time to throw an exception.
+                throw $unhandled_class('unknown', $class_name);
+            }
+            return $kind;
+        };
+
+        $schemaType = static fn ($schema): string =>
+            match ($schema->type) {
+                /* @see https://swagger.io/specification/#data-types */
+                'string' => 'string',
+                'integer' => 'int',
+                'boolean' => 'bool',
+                'float', 'double' => 'float',
+                'object' => 'object',
+                'array' => 'array',
+                'date', 'dateTime' => \DateTimeInterface::class,
+                default => $advanced($schema),
+            };
+
+        $this->logger->debug(sprintf('Creating new class for "%s" schema "%s"', $schemaType($schema), $class_name));
         $class = new ClassType(
             $class_name,
             (new PhpNamespace('DeyFancyFooNameSpace'))
@@ -204,17 +254,6 @@ class MedianocheTest extends TestCase
          * @see api-platform/schema-generator/src/AttributeGenerator/GenerateIdentifierNameTrait.php
          */
         $normalizer = static fn ($name) => ucfirst(u($name)->camel()->toString());
-
-        // @TODO Exception needs it's own small unit test for coverage.
-        $unhandled_type = static fn (Schema $property, $name, $class_name): \UnhandledMatchError =>
-            new \UnhandledMatchError(
-                sprintf(
-                    'Unhandled type "%s" for property "%s" on schema "%s"',
-                    $property->type,
-                    $name,
-                    $class_name
-                )
-            );
 
         $_native_prop = static fn (
             Schema $property,
@@ -236,13 +275,13 @@ class MedianocheTest extends TestCase
                         'float', 'double' => 'float',
                         'object', 'array' => $normalizer($typeName ?? $propName),
                         'date', 'dateTime' => \DateTimeInterface::class,
-                        default => throw $unhandled_type($property, $propName, $class_name),
+                        default => throw $unhandled_type($property->type, $propName, $class_name),
                     }
                 );
         ;
 
-        $refdSchema = static fn (Schema $schema) =>
-            Collection::fromIterable($schema->items->getDocumentPosition()->getPath())->last();
+        $refdSchema = static fn (Schema $schema): string =>
+            Collection::fromIterable($schema->items->getDocumentPosition()->getPath())->last('');
 
         // Set aside nested cebe objects for additional processing.
         // I'd be nice to have an injectable rules matcher/executor for unit testing.
@@ -250,15 +289,6 @@ class MedianocheTest extends TestCase
         $new_obj = static function (Schema $property, string $propName, ?Collection $collection = null) use ($_native_prop, $refdSchema, $nested_objects): Property {
 
             $nested_objects[$propName] = $property;
-            // @TODO tests for these use cases:
-            // $property->allOf;
-            // $property->anyOf;
-            // $property->enum;
-            // $property->oneOf;
-            // $property->uniqueItems;
-            // $property->additionalProperties;
-
-
             if ($property->type == 'array') {
                 // Shape: "object schema, has array property, items have single reference
                 // PHP shape: Type -> CustomType $propertyName
