@@ -185,6 +185,18 @@ class MedianocheTest extends TestCase
         // ...
     }
 
+    /**
+     * Test for schema with a Type of "allOf".
+     *
+     * @see https://swagger.io/docs/specification/data-models/oneof-anyof-allof-not/
+     */
+    #[Test]
+    #[TestDox('Schema of type allOf w/ a single ref item')]
+    public function schemaTypeAllOf(): void
+    {
+        // ...
+    }
+
     public function newNetteClass(Schema $schema, string $class_name, callable $callback = null): ClassType
     {
         $unhandled_type = static fn ($type, $name, $class_name): \UnhandledMatchError =>
@@ -206,15 +218,17 @@ class MedianocheTest extends TestCase
                 )
             );
 
-        $advanced = static function (Schema $schema) use ($unhandled_class, $class_name): string {
+        $adv_types = ['allOf', 'anyOf', 'oneOf'];
+        $advanced = static function (Schema $schema) use ($unhandled_class, $class_name, $adv_types): string {
             // @TODO tests for these use cases:
             // $schema->enum;
             // $schema->uniqueItems;
             // $schema->additionalProperties;
+            // $schema->not
 
             // TooManyRequests is a hard one bc it contains 1. AllOf(ref), 2.add'tProps w/ object.
             // An even more hardcore test would be add'tProps object w/ ref or even more w/ all/anyOfs (refs)
-            $kind = Collection::fromIterable(['allOf', 'anyOf', 'oneOf'])
+            $kind = Collection::fromIterable($adv_types)
                 ->reject(static fn ($v) => is_null($schema->{$v}))
                 ->first('');
             if (empty($kind)) {
@@ -224,7 +238,9 @@ class MedianocheTest extends TestCase
             return $kind;
         };
 
-        $schemaType = static fn ($schema): string =>
+        // The root schema type.
+        $schemaType = (static fn ($schema): string =>
+            // @TODO This is ripe for conversion into an enum match.
             match ($schema->type) {
                 /* @see https://swagger.io/specification/#data-types */
                 'string' => 'string',
@@ -235,9 +251,9 @@ class MedianocheTest extends TestCase
                 'array' => 'array',
                 'date', 'dateTime' => \DateTimeInterface::class,
                 default => $advanced($schema),
-            };
+            })($schema);
 
-        $this->logger->debug(sprintf('Creating new class for "%s" schema "%s"', $schemaType($schema), $class_name));
+        $this->logger->debug(sprintf('Creating new class for "%s" schema "%s"', $schemaType, $class_name));
         $class = new ClassType(
             $class_name,
             (new PhpNamespace('DeyFancyFooNameSpace'))
@@ -281,7 +297,8 @@ class MedianocheTest extends TestCase
         ;
 
         $refdSchema = static fn (Schema $schema): string =>
-            Collection::fromIterable($schema->items->getDocumentPosition()->getPath())->last('');
+            Collection::fromIterable($schema->items->getDocumentPosition()->getPath())
+            ->last('');
 
         // Set aside nested cebe objects for additional processing.
         // I'd be nice to have an injectable rules matcher/executor for unit testing.
@@ -303,6 +320,64 @@ class MedianocheTest extends TestCase
             return $_native_prop($property, $propName);
         };
 
+        /**
+         * Advanced type parsing.
+         * I'd be cool to have an engine that can dictate on the fly how to interpret *Ofs.
+         * Maybe by breaking the *Of logic into a swappable callable.
+         * This might be a good point for recursion since the reference could be referencing anything.
+         *
+         * For example
+         * allOf could be interpreted as a merge op
+         */
+        $starOfs = static fn ($schema) =>
+            (
+                in_array($schemaType, $adv_types, true) &&
+                property_exists($schema, $schemaType) &&
+                is_array($schema->{$schemaType})
+            )
+            ? $schema->{$schemaType}
+            : [];
+            $test = null;
+
+        // Cat:     # "Cat" is a value for the pet_type property (the discriminator value)
+        // allOf: # Combines the main `Pet` schema with `Cat`-specific properties
+        //   - $ref: '#/components/schemas/Pet'
+        //   - type: object
+        //     # all other properties specific to a `Cat`
+        //     properties:
+        //       hunts:
+        //         type: boolean
+        //       age:
+        //         type: integer
+
+        // TooManyRequests:
+        // allOf:
+        //   - $ref: '#/components/schemas/Error'
+        //   - type: object
+        //     properties:
+        //       spam_warning_urn:
+        //         type: string
+
+        // TooManyRequests:
+        // allOf:
+        //   - $ref: '#/components/schemas/Error'
+        //   - $ref: '#/components/schemas/Error'
+        //   - type: object
+        //     properties:
+        //       spam_warning_urn:
+        //         type: string
+        //       some_other_ref:
+        //         $ref: '#/components/schemas/Error'
+
+        // Class TooManyRequests
+        //  // Should allOfs be referenced or inlined?
+        //  public readonly ?Error $error = null
+        //  public ?string $spam_warning_urn = null
+        //
+        //
+
+
+        // Native type parsing.
         $natives = static fn ($p) => ! in_array($p->type, ['object', 'array'], true);
 
         /**
