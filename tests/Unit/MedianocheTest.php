@@ -27,6 +27,8 @@ use PHPUnit\Framework\Exception;
 use PHPUnit\Framework\ExpectationFailedException;
 use loophp\collection\Collection;
 use loophp\collection\Operation\Nullsy;
+use UnhandledMatchError;
+use Nette\InvalidArgumentException;
 
 use function Symfony\Component\String\u;
 
@@ -371,7 +373,7 @@ class MedianocheTest extends TestCase
         // Set aside nested cebe objects for additional processing.
         // I'd be nice to have an injectable rules matcher/executor for unit testing.
         static $nested_objects = [];
-        $new_obj = static function (Schema $property, string $propName, ?Collection $collection = null) use ($_native_prop, $refdSchema, $nested_objects, $class_name): Property {
+        $new_obj = static function (Schema $property, string $propName, ?Collection $collection = null) use ($refdSchema, $nested_objects, $class_name): Property {
 
             $nested_objects[$propName] = $property;
             if ($property->type == 'array') {
@@ -425,17 +427,17 @@ class MedianocheTest extends TestCase
         if ($schema->type === 'array') {
             // Don't flatten or inline the reference, instead reference the schema as a type.
             $this->logger->debug(sprintf('[%s/%s] Add array class property', $class_name, 'items'));
-            $prop = $_native_prop($schema, 'items', null, $refdSchema($schema));
+            $prop = native_prop($schema, 'items', null, $refdSchema($schema), $class_name);
             $class->addMember($prop);
         }
 
-        $compositeGenerator = function ($array) use ($new_obj, $_native_prop): Generator {
+        $compositeGenerator = function ($array) use ($new_obj, $class_name): Generator {
             foreach ($array as $key => $property) {
                 $lastRef = last($property);
 
                 // Pointer path with string ending is a reference to another schema.
                 if (! is_numeric($lastRef)) {
-                     $q = $_native_prop($property, strtolower($lastRef), null, $lastRef);
+                     $q = native_prop($property, strtolower($lastRef), null, $lastRef, $class_name);
                      yield $lastRef => $q;
                 }
 
@@ -469,12 +471,24 @@ function last(Schema $p): string {
 }
 
 
+/**
+ * Converts a property from a cebe to a nette object.
+ *
+ * @param Schema $property
+ * @param string $propName
+ * @param null|Collection<Property, string> $collection Present when calling from a `Collection::method()`.
+ * @param null|string $typeName
+ * @param null|string $class_name
+ * @return Property
+ * @throws UnhandledMatchError
+ * @throws InvalidArgumentException
+ */
 function native_prop(
     Schema $property,
     string $propName,
     ?Collection $collection = null,
     ?string $typeName = null,
-    string $class_name = null,
+    ?string $class_name = null,
 ): Property {
 
     $unhandled_type = static fn ($type, $name, $class_name): \UnhandledMatchError =>
