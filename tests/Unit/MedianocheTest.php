@@ -385,7 +385,7 @@ class MedianocheTest extends TestCase
             }
 
             // This will create a new class property with a custom type.
-            return $_native_prop($property, $propName);
+            return native_prop($property, $propName, null, null, $class_name);
         };
 
         /**
