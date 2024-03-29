@@ -157,8 +157,6 @@ class MedianocheTest extends TestCase
         );
         $printer = new Printer();
 
-        $callback = fn ($k = null, $v = null) => $this->logger->debug(sprintf('%s: ima call u back, %s', $k, $v));
-
         $classes = [];
         $expected_count = count($spec->components->schemas);
         foreach ($spec->components->schemas as $name => $schema) {
@@ -341,7 +339,7 @@ class MedianocheTest extends TestCase
         return $schemaType;
     }
 
-    public function newNetteClass(Schema $schema, string $class_name, callable $callback = null): ClassType
+    public function newNetteClass(Schema $schema, string $class_name): ClassType
     {
         $schemaType = $this->typeMatcher2000($schema, $class_name);
 
