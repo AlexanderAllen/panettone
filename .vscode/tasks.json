@@ -4,7 +4,7 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "generator debug script",
+      "label": "Lando: panettone debug",
       "type": "shell",
       "command": "./lando ssh --command 'cd /app/docroot/web/modules/contrib/musica/tools/schema-generator/schema/soundcloud && ./generate'",
       "detail": "Execute generator script inside Lando with XDebug on",
@@ -34,7 +34,7 @@
       },
     },
     {
-      "label": "typegen",
+      "label": "Lando: typegen",
       "type": "shell",
       "command": "./lando ssh --command 'export XDEBUG_MODE=debug && export XDEBUG_SESSION=1 && cd /app/docroot/web/modules/contrib/musica/tools/schema-generator && php typegen.php'",
       "detail": "Execute generator script inside Lando with XDebug on",
@@ -42,8 +42,8 @@
         "env": {
           "XDEBUG_CONFIG": "idekey=VSCODE",
           "XDEBUG_MODE": "debug",
-          "XDEBUG_SESSION": "1",
-        },
+          "XDEBUG_SESSION": "1"
+        }
       },
       "linux": {
         "options": {
@@ -51,7 +51,7 @@
         }
       },
       "isBackground": false,
-      "icon": {"id": "server-process", "color": "terminal.ansiYellow"},
+      "icon": {"id": "terminal-linux", "color": "terminal.ansiCyan"},
       "presentation": {
         "echo": true,
         "reveal": "silent",
@@ -66,14 +66,14 @@
       },
     },
     {
-      "label": "phpunit local",
+      "label": "Local: phpunit",
       "type": "shell",
-      // "command": "./lando php docroot/vendor/bin/phpunit docroot/web/modules/custom --testdox --exclude-group ignore",
-      "command": "docroot/web/modules/contrib/musica/tools/phpunit/test",
+      "command": "./test",
       "detail": "Executes PHPUnit on the local system",
       "options": {
         "env": {
-          "XDEBUG_CONFIG": "idekey=VSCODE"
+          "XDEBUG_CONFIG": "idekey=VSCODE",
+          "XDEBUG_SESSION": "1"
         },
       },
       "group": {
@@ -84,7 +84,7 @@
       "icon": {"id": "beaker", "color": "terminal.ansiYellow"},
       "presentation": {
         "echo": true,
-        "reveal": "silent",
+        "reveal": "always",
         "focus": false,
         "panel": "shared",
         "showReuseMessage": true,
@@ -92,19 +92,38 @@
       }
     },
     {
-      "label": "OAS: Generate",
-      "detail": "Run OAS generator",
+      "label": "Local: panettone",
+      "detail": "Run type generator locally without Docker",
       "type": "shell",
-      "linux": {
-        "options": {
-          "cwd": "/home/wsl/dreamy-ritchie/docroot/web/modules/contrib/musica/tools/schema-generator"
+      "options": {
+        "env": {
+          "XDEBUG_CONFIG": "idekey=VSCODE",
+          "XDEBUG_SESSION": "1"
         }
       },
       "problemMatcher": "$eslint-compact",
-      "command": "./generate",
+      "command": "php typegen.php ${input:source}",
       "group": "none",
       "isBackground": false,
       "icon": {"id": "server-process", "color": "terminal.ansiGreen"},
     },
+    {
+        "label": "PHP Insights",
+        "detail": "Run PHP Insights tool",
+        "type": "shell",
+        "problemMatcher": "$eslint-compact",
+        "command": "./vendor/bin/phpinsights analyse tests src",
+        "group": "none",
+        "isBackground": false,
+        "icon": {"id": "wand", "color": "terminal.ansiYellow"},
+      },
+  ],
+  "inputs": [
+    {
+        "id": "source",
+        "type": "promptString",
+        "description": "Open API source",
+        "default": "schema/soundcloud/oas-1.0.1.yml"
+    }
   ]
 }

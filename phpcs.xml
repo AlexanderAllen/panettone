@@ -10,7 +10,23 @@
 
   <autoload>./vendor/autoload.php</autoload>
 
+  <!-- See https://github.com/slevomat/coding-standard -->
+  <config name="installed_paths" value="vendor/slevomat/coding-standard"/>
+
   <rule ref="PSR12" />
+
+  <rule ref="Generic.Metrics.CyclomaticComplexity">
+      <properties>
+          <property name="complexity" value="10"/>
+          <property name="absoluteComplexity" value="15"/>
+      </properties>
+  </rule>
+
+  <rule ref="SlevomatCodingStandard.TypeHints.DeclareStrictTypes">
+      <properties>
+          <property name="spacesCountAroundEqualsSign" value="0"/>
+      </properties>
+  </rule>
 
   <exclude-pattern>*/vendor/*</exclude-pattern>
 

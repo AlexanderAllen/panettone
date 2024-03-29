@@ -1,0 +1,64 @@
+openapi: 3.0.1
+info:
+  title: Panettone allOf schema
+  version: 1.0.1
+  description: |
+    Simple use case for the `allOf` schema type.
+
+    Features both "anonymous" objects with inline properties and schema `$ref` references
+    (wihin the same document).
+
+servers:
+  - url: https://localhost
+paths:
+  /me:
+    get:
+      summary: Returns the authenticated user’s information.
+      responses:
+        '200':
+          $ref: '#/components/responses/Me'
+components:
+  schemas:
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+        link:
+          type: string
+        error:
+          type: string
+          deprecated: true
+        status:
+          type: string
+          deprecated: true
+    TooManyRequests:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+        - type: object
+          properties:
+            spam_warning_urn:
+              type: string
+    Me:
+      type: object
+      description: SoundCloud Me object
+      properties:
+        avatar_url:
+          description: URL to a JPEG image.
+          type: string
+        city:
+          description: city.
+          type: string
+        comments_count:
+          description: comments count. From now on, the field always has a `0` value.
+          type: integer
+          deprecated: true
+  responses:
+    Me:
+      description: Success
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Me'

@@ -4,15 +4,14 @@
   "workbench.colorCustomizations": {
     "editorError.foreground": "#ffef0f",
     "editorWarning.foreground": "#3777ff"
-  },
-
-  "phpstan.configFile": "phpstan.neon",
+},
   "phpstan.showProgress": true,
-  "phpstan.rootDir": "",
-  "phpstan.binPath": "/home/wsl/.composer/vendor/bin/phpstan",
+"phpstan.rootDir": "",
 
   "phpcs.showSources": true,
   "phpcs.standard": "./phpcs.xml",
   "phpcs.executablePath": "./vendor/bin/phpcs",
   "phpcs.enable": true,
+  "editor.tabSize": 4,
+  "editor.detectIndentation": false,
 }

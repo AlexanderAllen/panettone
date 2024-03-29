@@ -1,0 +1,15 @@
+diff --git a/src/OpenApi/PropertyGenerator/PropertyGenerator.php b/src/OpenApi/PropertyGenerator/PropertyGenerator.php
+index d7ab22d..b541f83 100644
+--- a/src/OpenApi/PropertyGenerator/PropertyGenerator.php
++++ b/src/OpenApi/PropertyGenerator/PropertyGenerator.php
+@@ -110,6 +110,10 @@ final class PropertyGenerator implements PropertyGeneratorInterface
+             return new ArrayType($schemaProperty->items instanceof Schema ? $this->getType($schemaProperty->items) : null);
+         }
+ 
++        if ($schemaProperty instanceof \cebe\openapi\spec\Reference) {
++            return null;
++        }
++
+         $type = $schemaProperty->type;
+         $format = $schemaProperty->format;
+ 

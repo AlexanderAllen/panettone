@@ -22,40 +22,11 @@ declare(strict_types=1);
 
 require __DIR__ . '/vendor/autoload.php';
 
-use cebe\openapi\Reader;
-use cebe\openapi\ReferenceContext;
-use cebe\openapi\spec\OpenApi;
-use Consolidation\Log\Logger;
-use Symfony\Component\Console\Output\ConsoleOutput;
+use Symfony\Component\Console\Application;
+use AlexanderAllen\Panettone\Command\BakeCommand;
 
-use AlexanderAllen\Panettone\ClassGenerator;
-
-
-
-$openapi = Reader::readFromYamlFile(
-    realpath('schema/soundcloud/oas-1.0.1.yml'),
-    OpenAPI::class,
-    ReferenceContext::RESOLVE_MODE_INLINE
-);
-
-$cake = new ClassGenerator();
-
-$output = new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG);
-$cake->setLogger(new Logger($output));
-
-$cake->kneadSchema($openapi);
-
-// Inspiration from vendor/api-platform/schema-generator/src/OpenApi/ClassGenerator.php
-
-// $showClass = null;
-// if ($showSchema instanceof Schema) {
-//     $showClass = $this->buildClassFromSchema($showSchema, $name, $config);
-//     $classes = array_merge($this->buildEnumClasses($showSchema, $showClass, $config), $classes);
-// }
-
-
-
-
-
-
-echo "hi" . PHP_EOL;
+$application = new Application();
+$baker = new BakeCommand();
+$application->add($baker);
+$application->setDefaultCommand($baker->getName(), true);
+$application->run();

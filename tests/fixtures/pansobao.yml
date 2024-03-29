@@ -1,0 +1,31 @@
+# Simple reference test. See https://swagger.io/docs/specification/data-models/data-types/
+openapi: 3.0.1
+info:
+  title: Panettone
+  version: 1.0.0
+  description: Test schema for Panettone
+servers:
+  - url: https://localhost
+paths:
+  /me:
+    get:
+      summary: Returns the authenticated users information.
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        contact_info:
+          $ref: '#/components/schemas/ContactInfo'
+    ContactInfo:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
