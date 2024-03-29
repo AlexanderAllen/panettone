@@ -40,5 +40,13 @@ jobs:
     # Add a test script to composer.json, for instance: "test": "vendor/bin/phpunit"
     # Docs: https://getcomposer.org/doc/articles/scripts.md
 
-    # - name: Run test suite
-    #   run: composer run-script test
+    - name: Run PHPUnit tests
+      run: |
+        php vendor/bin/phpunit --no-progress \
+            tests \
+            --testdox \
+            --log-junit $PWD/junit.xml \
+            --coverage-text \
+            --coverage-cobertura $PWD/coverage.cobertura.xml \
+            --exclude-group ignore \
+            --coverage-filter src
