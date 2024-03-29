@@ -146,8 +146,8 @@ class MedianocheTest extends TestCase
     #[TestDox('Proceduralish class resolver')]
     public function proceduralish(): void
     {
-        $logger = new ConsoleLogger(new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG));
-        self::setLogger($logger);
+        // $logger = new ConsoleLogger(new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG));
+        // self::setLogger($logger);
         $spec = Reader::readFromYamlFile(
             realpath('tests/fixtures/medianoche-1.yml'),
             OpenAPI::class,
@@ -187,16 +187,80 @@ class MedianocheTest extends TestCase
         // ...
     }
 
+    // ADV_ALLOF_EDGECASE
+    // TooManyRequests:
+    // allOf:
+    //   - $ref: '#/components/schemas/Error'
+    //   - $ref: '#/components/schemas/Error'
+    //   - type: object
+    //     properties:
+    //       spam_warning_urn:
+    //         type: string
+    //       some_other_ref:
+    //         $ref: '#/components/schemas/Error'
+
     /**
      * Test for schema with a Type of "allOf".
      *
+     * # This ...
+     * TooManyRequests:
+     *   allOf:
+     *     - $ref: '#/components/schemas/Error'
+     *     - type: object
+     *       properties:
+     *         spam_warning_urn:
+     *           type: string
+     *
+     * # Should translate to this ...
+     *   Class TooManyRequests
+     *     public readonly ?Error $error = null
+     *     public ?string $spam_warning_urn = null
+     *
+     * Notes:
+     *   - cebe interprets the first $ref as an object, complete with inline properties ready for use
+     *     when using `RESOLVE_MODE_ALL`. Adding these props straight away would result in inlined props
+     *     and therefore duplicate props between types!
+     *   - Both the first $ref Schema item and the second 'anonymous' Schema item have a cebe
+     *     Schema type of `object`. Keep an eye on the conditions on the prop generator
+     *     to prevent these getting mixed up.
+     *
+     * @TODO Test more complex edge cases w/ multiple and nested references. See ADV_ALLOF_EDGECASE above.
+     *
      * @see https://swagger.io/docs/specification/data-models/oneof-anyof-allof-not/
      */
-    # #[Test]
+    #[Test]
+    #[Depends('proceduralish')]
     #[TestDox('Schema of type allOf w/ a single ref item')]
     public function schemaTypeAllOf(): void
     {
-        // ...
+        $logger = new ConsoleLogger(new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG));
+        self::setLogger($logger);
+        $spec = Reader::readFromYamlFile(
+            realpath('tests/fixtures/allOf-simple.yml'),
+            OpenAPI::class,
+            ReferenceContext::RESOLVE_MODE_ALL,
+        );
+        $printer = new Printer();
+
+        $classes = [];
+        foreach ($spec->components->schemas as $name => $schema) {
+            $class = $this->newNetteClass($schema, $name);
+            $classes[$name] = $class;
+            $this->logger->debug($printer->printClass($class));
+        }
+
+        self::assertCount(
+            2,
+            $classes['TooManyRequests']->getProperties(),
+            'Schemas of type allOf should not inline properties of Referenced objects'
+        );
+
+        self::assertEquals(
+            'Error',
+            $classes['TooManyRequests']->getProperty('error')->getType(),
+            'The type on properties that reference other types should match the referenced type'
+        );
+
     }
 
     public function newNetteClass(Schema $schema, string $class_name, callable $callback = null): ClassType
@@ -342,44 +406,6 @@ class MedianocheTest extends TestCase
             ? $schema->{$schemaType}
             : [];
             $test = null;
-
-        // Cat:     # "Cat" is a value for the pet_type property (the discriminator value)
-        // allOf: # Combines the main `Pet` schema with `Cat`-specific properties
-        //   - $ref: '#/components/schemas/Pet'
-        //   - type: object
-        //     # all other properties specific to a `Cat`
-        //     properties:
-        //       hunts:
-        //         type: boolean
-        //       age:
-        //         type: integer
-
-        // TooManyRequests:
-        // allOf:
-        //   - $ref: '#/components/schemas/Error'
-        //   - type: object
-        //     properties:
-        //       spam_warning_urn:
-        //         type: string
-
-        // TooManyRequests:
-        // allOf:
-        //   - $ref: '#/components/schemas/Error'
-        //   - $ref: '#/components/schemas/Error'
-        //   - type: object
-        //     properties:
-        //       spam_warning_urn:
-        //         type: string
-        //       some_other_ref:
-        //         $ref: '#/components/schemas/Error'
-
-        // Class TooManyRequests
-        //  // Should allOfs be referenced or inlined?
-        //  public readonly ?Error $error = null
-        //  public ?string $spam_warning_urn = null
-        //
-        //
-
 
         // Native type parsing.
         $natives = static fn ($p) => ! in_array($p->type, ['object', 'array'], true);
