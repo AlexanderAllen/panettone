@@ -14,6 +14,7 @@ use cebe\openapi\{Reader, ReferenceContext};
 use cebe\openapi\spec\{OpenApi, Schema, Reference};
 use cebe\openapi\exceptions\{TypeErrorException, UnresolvableReferenceException, IOException};
 use cebe\openapi\json\JsonPointer;
+use Generator;
 use Nette\PhpGenerator\ClassType;
 use Nette\PhpGenerator\Printer;
 // use MyCLabs\Enum\Enum as MyCLabsEnum;
@@ -25,6 +26,7 @@ use Nette\PhpGenerator\Property;
 use PHPUnit\Framework\Exception;
 use PHPUnit\Framework\ExpectationFailedException;
 use loophp\collection\Collection;
+use loophp\collection\Operation\Nullsy;
 
 use function Symfony\Component\String\u;
 
@@ -190,7 +192,7 @@ class MedianocheTest extends TestCase
      *
      * @see https://swagger.io/docs/specification/data-models/oneof-anyof-allof-not/
      */
-    #[Test]
+    # #[Test]
     #[TestDox('Schema of type allOf w/ a single ref item')]
     public function schemaTypeAllOf(): void
     {
@@ -228,6 +230,8 @@ class MedianocheTest extends TestCase
 
             // TooManyRequests is a hard one bc it contains 1. AllOf(ref), 2.add'tProps w/ object.
             // An even more hardcore test would be add'tProps object w/ ref or even more w/ all/anyOfs (refs)
+
+            //  Could you have a schema with multiple of these?
             $kind = Collection::fromIterable($adv_types)
                 ->reject(static fn ($v) => is_null($schema->{$v}))
                 ->first('');
@@ -324,7 +328,7 @@ class MedianocheTest extends TestCase
          * Advanced type parsing.
          * I'd be cool to have an engine that can dictate on the fly how to interpret *Ofs.
          * Maybe by breaking the *Of logic into a swappable callable.
-         * This might be a good point for recursion since the reference could be referencing anything.
+         * This might be a good point for recursion since the reference could be referencing anything adf asdasd
          *
          * For example
          * allOf could be interpreted as a merge op
@@ -398,6 +402,89 @@ class MedianocheTest extends TestCase
             $prop = $_native_prop($schema, 'items', null, $refdSchema($schema));
             $class->addMember($prop);
         }
+
+        $last = fn (Schema $p): string =>
+            Collection::fromIterable($p->getDocumentPosition()->getPath())->last('');
+
+        $propGenerator = function (Schema $property) use ($new_obj): Generator {
+            foreach ($property->properties as $key => $value) {
+                yield $key => $new_obj($value, $key);
+            }
+        };
+
+        $compositeGenerator = function ($array) use ($new_obj, $last, $_native_prop): Generator {
+            foreach ($array as $key => $property) {
+                $lastRef = $last($property);
+
+                // Reference with string ending points to another schema/object.
+                if (! is_numeric($lastRef)) {
+                     $q = $_native_prop($property, $lastRef);
+                     yield $lastRef => $q;
+                }
+
+                // Otherwise, we have additional properties to deal with and yield.
+                if (
+                    $property->type === 'object'
+                    && isset($property->properties)
+                    && !empty($property->properties)
+                ) {
+                    foreach ($property->properties as $key => $value) {
+                        yield $key => $new_obj($value, $key);
+                    }
+                }
+            }
+        };
+
+
+        // $propGenerator($prop)->send()
+
+        if ($schema->allOf) {
+            $test = null;
+            $_ofprops = Collection::fromIterable($schema->allOf)->ifThenElse(
+                static fn ($property) => ! $last($property),
+                // String endings, referencing another schema.
+                static function (Schema $property, mixed $propKey, ?Collection $collection = null) use ($last, $_native_prop) {
+                    $test = null;
+                    $refType = $last($property);
+
+                    // This will return an "object" type to reference.
+                    $q = $_native_prop($property, $refType);
+                    return $q;
+                },
+                static function (Schema $property, mixed $propKey, ?Collection $collection = null) use ($last, $_native_prop, $propGenerator) {
+                    $test = null;
+                    $refType = $last($property);
+
+                    Collection::fromGenerator($propGenerator($property))->map(
+                        fn ($T, $TKey, $iterable) =>
+                            null
+                    )->all();
+
+                    // this is an object, must iterate through it's properties.
+                     $q = $_native_prop($property, 'foo');
+                    return $q;
+                },
+            );
+            // foreach ($_ofprops as $name => $prop) {
+            //     $this->logger->debug(sprintf('[%s/%s] Add class property', $class_name, $name));
+            //     $class->addMember($prop);
+            //     $test = null;
+            // }
+
+            $props = Collection::fromGenerator($compositeGenerator($schema->allOf))->map(
+                fn ($T, $TKey, $iterable) =>
+                    null
+            )->all();
+
+            $test = null;
+
+            // foreach ($compositeGenerator($schema->allOf) as $name => $prop) {
+            //     $this->logger->debug(sprintf('[%s/%s] Add class property', $class_name, $name));
+            //     $class->addMember($prop);
+            //     $test = null;
+            // }
+        }
+
 
         return $class;
     }
