@@ -406,25 +406,20 @@ class MedianocheTest extends TestCase
         $last = fn (Schema $p): string =>
             Collection::fromIterable($p->getDocumentPosition()->getPath())->last('');
 
-        $propGenerator = function (Schema $property) use ($new_obj): Generator {
-            foreach ($property->properties as $key => $value) {
-                yield $key => $new_obj($value, $key);
-            }
-        };
-
         $compositeGenerator = function ($array) use ($new_obj, $last, $_native_prop): Generator {
             foreach ($array as $key => $property) {
                 $lastRef = $last($property);
 
-                // Reference with string ending points to another schema/object.
+                // Pointer path with string ending is a reference to another schema.
                 if (! is_numeric($lastRef)) {
-                     $q = $_native_prop($property, $lastRef);
+                     $q = $_native_prop($property, strtolower($lastRef), null, $lastRef);
                      yield $lastRef => $q;
                 }
 
-                // Otherwise, we have additional properties to deal with and yield.
+                // Pointer path with numerical ending is an internal property.
                 if (
                     $property->type === 'object'
+                    && is_numeric($lastRef)
                     && isset($property->properties)
                     && !empty($property->properties)
                 ) {
@@ -435,56 +430,12 @@ class MedianocheTest extends TestCase
             }
         };
 
-
-        // $propGenerator($prop)->send()
-
         if ($schema->allOf) {
-            $test = null;
-            $_ofprops = Collection::fromIterable($schema->allOf)->ifThenElse(
-                static fn ($property) => ! $last($property),
-                // String endings, referencing another schema.
-                static function (Schema $property, mixed $propKey, ?Collection $collection = null) use ($last, $_native_prop) {
-                    $test = null;
-                    $refType = $last($property);
-
-                    // This will return an "object" type to reference.
-                    $q = $_native_prop($property, $refType);
-                    return $q;
-                },
-                static function (Schema $property, mixed $propKey, ?Collection $collection = null) use ($last, $_native_prop, $propGenerator) {
-                    $test = null;
-                    $refType = $last($property);
-
-                    Collection::fromGenerator($propGenerator($property))->map(
-                        fn ($T, $TKey, $iterable) =>
-                            null
-                    )->all();
-
-                    // this is an object, must iterate through it's properties.
-                     $q = $_native_prop($property, 'foo');
-                    return $q;
-                },
-            );
-            // foreach ($_ofprops as $name => $prop) {
-            //     $this->logger->debug(sprintf('[%s/%s] Add class property', $class_name, $name));
-            //     $class->addMember($prop);
-            //     $test = null;
-            // }
-
-            $props = Collection::fromGenerator($compositeGenerator($schema->allOf))->map(
-                fn ($T, $TKey, $iterable) =>
-                    null
-            )->all();
-
-            $test = null;
-
-            // foreach ($compositeGenerator($schema->allOf) as $name => $prop) {
-            //     $this->logger->debug(sprintf('[%s/%s] Add class property', $class_name, $name));
-            //     $class->addMember($prop);
-            //     $test = null;
-            // }
+            foreach ($compositeGenerator($schema->allOf) as $name => $prop) {
+                $this->logger->debug(sprintf('[%s/%s] Add class property', $class_name, $name));
+                $class->addMember($prop);
+            }
         }
-
 
         return $class;
     }
