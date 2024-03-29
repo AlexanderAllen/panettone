@@ -371,7 +371,7 @@ class MedianocheTest extends TestCase
         // Set aside nested cebe objects for additional processing.
         // I'd be nice to have an injectable rules matcher/executor for unit testing.
         static $nested_objects = [];
-        $new_obj = static function (Schema $property, string $propName, ?Collection $collection = null) use ($_native_prop, $refdSchema, $nested_objects): Property {
+        $new_obj = static function (Schema $property, string $propName, ?Collection $collection = null) use ($_native_prop, $refdSchema, $nested_objects, $class_name): Property {
 
             $nested_objects[$propName] = $property;
             if ($property->type == 'array') {
@@ -380,7 +380,7 @@ class MedianocheTest extends TestCase
                 // The type of the property must match the referenced type (class).
                 if ($property->items instanceof \cebe\openapi\spec\Schema) {
                     // Use the referenced schema as the type for the property.
-                    return $_native_prop($property->items, $propName, null, $refdSchema($property));
+                    return native_prop($property->items, $propName, null, $refdSchema($property), $class_name);
                 }
             }
 
@@ -466,4 +466,53 @@ class MedianocheTest extends TestCase
 
 function last(Schema $p): string {
     return Collection::fromIterable($p->getDocumentPosition()->getPath())->last('');
+}
+
+
+function native_prop(
+    Schema $property,
+    string $propName,
+    ?Collection $collection = null,
+    ?string $typeName = null,
+    string $class_name = null,
+): Property {
+
+    $unhandled_type = static fn ($type, $name, $class_name): \UnhandledMatchError =>
+    new \UnhandledMatchError(
+        sprintf(
+            'Unhandled type "%s" for property "%s" of schema "%s"',
+            $type,
+            $name,
+            $class_name
+        )
+    );
+
+    /**
+     * Custom type identifier.
+     *
+     * The physical type filename and class name must match.
+     * Usually the type (schema/class) is capitalized CamelCase,
+     * whereas class properties that reference the types are camel_case.
+     *
+     * @see api-platform/schema-generator/src/AttributeGenerator/GenerateIdentifierNameTrait.php
+     */
+    $normalizer = static fn ($name) => ucfirst(u($name)->camel()->toString());
+
+    return (new Property($propName))
+        ->setReadOnly(true)
+        ->setComment($property->description)
+        ->setNullable(true)
+        ->setValue($property->default)
+        ->setType(
+            match ($property->type) {
+                /* @see https://swagger.io/specification/#data-types */
+                'string' => 'string',
+                'integer' => 'int',
+                'boolean' => 'bool',
+                'float', 'double' => 'float',
+                'object', 'array' => $normalizer($typeName ?? $propName),
+                'date', 'dateTime' => \DateTimeInterface::class,
+                default => throw $unhandled_type($property->type, $propName, $class_name),
+            }
+        );
 }
