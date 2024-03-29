@@ -429,12 +429,9 @@ class MedianocheTest extends TestCase
             $class->addMember($prop);
         }
 
-        $last = fn (Schema $p): string =>
-            Collection::fromIterable($p->getDocumentPosition()->getPath())->last('');
-
-        $compositeGenerator = function ($array) use ($new_obj, $last, $_native_prop): Generator {
+        $compositeGenerator = function ($array) use ($new_obj, $_native_prop): Generator {
             foreach ($array as $key => $property) {
-                $lastRef = $last($property);
+                $lastRef = last($property);
 
                 // Pointer path with string ending is a reference to another schema.
                 if (! is_numeric($lastRef)) {
@@ -465,4 +462,8 @@ class MedianocheTest extends TestCase
 
         return $class;
     }
+}
+
+function last(Schema $p): string {
+    return Collection::fromIterable($p->getDocumentPosition()->getPath())->last('');
 }
