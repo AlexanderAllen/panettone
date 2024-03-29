@@ -267,16 +267,6 @@ class MedianocheTest extends TestCase
 
     public function newNetteClass(Schema $schema, string $class_name, callable $callback = null): ClassType
     {
-        $unhandled_type = static fn ($type, $name, $class_name): \UnhandledMatchError =>
-            new \UnhandledMatchError(
-                sprintf(
-                    'Unhandled type "%s" for property "%s" of schema "%s"',
-                    $type,
-                    $name,
-                    $class_name
-                )
-            );
-
         $unhandled_class = static fn ($type, $class_name): \UnhandledMatchError =>
             new \UnhandledMatchError(
                 sprintf(
@@ -330,42 +320,6 @@ class MedianocheTest extends TestCase
                 ->addUse('UseThisUseStmt', 'asAlias')
         );
 
-        /**
-         * Custom type identifier.
-         *
-         * The physical type filename and class name must match.
-         * Usually the type (schema/class) is capitalized CamelCase,
-         * whereas class properties that reference the types are camel_case.
-         *
-         * @see api-platform/schema-generator/src/AttributeGenerator/GenerateIdentifierNameTrait.php
-         */
-        $normalizer = static fn ($name) => ucfirst(u($name)->camel()->toString());
-
-        $_native_prop = static fn (
-            Schema $property,
-            string $propName,
-            ?Collection $collection = null,
-            ?string $typeName = null
-            ): Property =>
-            (new Property($propName))
-                ->setReadOnly(true)
-                ->setComment($property->description)
-                ->setNullable(true)
-                ->setValue($property->default)
-                ->setType(
-                    match ($property->type) {
-                        /* @see https://swagger.io/specification/#data-types */
-                        'string' => 'string',
-                        'integer' => 'int',
-                        'boolean' => 'bool',
-                        'float', 'double' => 'float',
-                        'object', 'array' => $normalizer($typeName ?? $propName),
-                        'date', 'dateTime' => \DateTimeInterface::class,
-                        default => throw $unhandled_type($property->type, $propName, $class_name),
-                    }
-                );
-        ;
-
         $refdSchema = static fn (Schema $schema): string =>
             Collection::fromIterable($schema->items->getDocumentPosition()->getPath())
             ->last('');
@@ -373,7 +327,8 @@ class MedianocheTest extends TestCase
         // Set aside nested cebe objects for additional processing.
         // I'd be nice to have an injectable rules matcher/executor for unit testing.
         static $nested_objects = [];
-        $new_obj = static function (Schema $property, string $propName, ?Collection $collection = null) use ($refdSchema, $nested_objects, $class_name): Property {
+        $that = $this;
+        $new_obj = static function (Schema $property, string $propName, ?Collection $collection = null) use ($refdSchema, $nested_objects, $class_name, $that): Property {
 
             $nested_objects[$propName] = $property;
             if ($property->type == 'array') {
@@ -382,12 +337,12 @@ class MedianocheTest extends TestCase
                 // The type of the property must match the referenced type (class).
                 if ($property->items instanceof \cebe\openapi\spec\Schema) {
                     // Use the referenced schema as the type for the property.
-                    return native_prop($property->items, $propName, null, $refdSchema($property), $class_name);
+                    return $that->nativeProp($property->items, $propName, null, $refdSchema($property), $class_name);
                 }
             }
 
             // This will create a new class property with a custom type.
-            return native_prop($property, $propName, null, null, $class_name);
+            return $that->nativeProp($property, $propName, null, null, $class_name);
         };
 
         /**
@@ -416,7 +371,7 @@ class MedianocheTest extends TestCase
          * Convert all schema props to cebe props.
          * @var Collection<string, Property> $nette_props
          */
-        $nette_props = Collection::fromIterable($schema->properties)->ifThenElse($natives, $_native_prop, $new_obj);
+        $nette_props = Collection::fromIterable($schema->properties)->ifThenElse($natives, [$this, 'nativeProp'], $new_obj);
         foreach ($nette_props as $name => $prop) {
             $this->logger->debug(sprintf('[%s/%s] Add class property', $class_name, $name));
             $class->addMember($prop);
@@ -427,7 +382,7 @@ class MedianocheTest extends TestCase
         if ($schema->type === 'array') {
             // Don't flatten or inline the reference, instead reference the schema as a type.
             $this->logger->debug(sprintf('[%s/%s] Add array class property', $class_name, 'items'));
-            $prop = native_prop($schema, 'items', null, $refdSchema($schema), $class_name);
+            $prop = $this->nativeProp($schema, 'items', null, $refdSchema($schema), $class_name);
             $class->addMember($prop);
         }
 
@@ -437,7 +392,7 @@ class MedianocheTest extends TestCase
 
                 // Pointer path with string ending is a reference to another schema.
                 if (! is_numeric($lastRef)) {
-                     $q = native_prop($property, strtolower($lastRef), null, $lastRef, $class_name);
+                     $q = $this->nativeProp($property, strtolower($lastRef), null, $lastRef, $class_name);
                      yield $lastRef => $q;
                 }
 
@@ -464,69 +419,69 @@ class MedianocheTest extends TestCase
 
         return $class;
     }
-}
-
-function last(Schema $p): string {
-    return Collection::fromIterable($p->getDocumentPosition()->getPath())->last('');
-}
-
-
-/**
- * Converts a property from a cebe to a nette object.
- *
- * @param Schema $property
- * @param string $propName
- * @param null|Collection<Property, string> $collection Present when calling from a `Collection::method()`.
- * @param null|string $typeName
- * @param null|string $class_name
- * @return Property
- * @throws UnhandledMatchError
- * @throws InvalidArgumentException
- */
-function native_prop(
-    Schema $property,
-    string $propName,
-    ?Collection $collection = null,
-    ?string $typeName = null,
-    ?string $class_name = null,
-): Property {
-
-    $unhandled_type = static fn ($type, $name, $class_name): \UnhandledMatchError =>
-    new \UnhandledMatchError(
-        sprintf(
-            'Unhandled type "%s" for property "%s" of schema "%s"',
-            $type,
-            $name,
-            $class_name
-        )
-    );
 
     /**
-     * Custom type identifier.
+     * Converts a property from a cebe to a nette object.
      *
-     * The physical type filename and class name must match.
-     * Usually the type (schema/class) is capitalized CamelCase,
-     * whereas class properties that reference the types are camel_case.
-     *
-     * @see api-platform/schema-generator/src/AttributeGenerator/GenerateIdentifierNameTrait.php
+     * @param Schema $property
+     * @param string $propName
+     * @param null|Collection<Property, string> $collection Present when calling from a `Collection::method()`.
+     * @param null|string $typeName
+     * @param null|string $class_name
+     * @return Property
+     * @throws UnhandledMatchError
+     * @throws InvalidArgumentException
      */
-    $normalizer = static fn ($name) => ucfirst(u($name)->camel()->toString());
+    public function nativeProp(
+        Schema $property,
+        string $propName,
+        ?Collection $collection = null,
+        ?string $typeName = null,
+        ?string $class_name = null,
+    ): Property {
 
-    return (new Property($propName))
-        ->setReadOnly(true)
-        ->setComment($property->description)
-        ->setNullable(true)
-        ->setValue($property->default)
-        ->setType(
-            match ($property->type) {
-                /* @see https://swagger.io/specification/#data-types */
-                'string' => 'string',
-                'integer' => 'int',
-                'boolean' => 'bool',
-                'float', 'double' => 'float',
-                'object', 'array' => $normalizer($typeName ?? $propName),
-                'date', 'dateTime' => \DateTimeInterface::class,
-                default => throw $unhandled_type($property->type, $propName, $class_name),
-            }
+        $unhandled_type = static fn ($type, $name, $class_name): \UnhandledMatchError =>
+        new \UnhandledMatchError(
+            sprintf(
+                'Unhandled type "%s" for property "%s" of schema "%s"',
+                $type,
+                $name,
+                $class_name
+            )
         );
+
+        /**
+         * Custom type identifier.
+         *
+         * The physical type filename and class name must match.
+         * Usually the type (schema/class) is capitalized CamelCase,
+         * whereas class properties that reference the types are camel_case.
+         *
+         * @see api-platform/schema-generator/src/AttributeGenerator/GenerateIdentifierNameTrait.php
+         */
+        $normalizer = static fn ($name) => ucfirst(u($name)->camel()->toString());
+
+        return (new Property($propName))
+            ->setReadOnly(true)
+            ->setComment($property->description)
+            ->setNullable(true)
+            ->setValue($property->default)
+            ->setType(
+                match ($property->type) {
+                    /* @see https://swagger.io/specification/#data-types */
+                    'string' => 'string',
+                    'integer' => 'int',
+                    'boolean' => 'bool',
+                    'float', 'double' => 'float',
+                    'object', 'array' => $normalizer($typeName ?? $propName),
+                    'date', 'dateTime' => \DateTimeInterface::class,
+                    default => throw $unhandled_type($property->type, $propName, $class_name),
+                }
+            );
+    }
+}
+
+function last(Schema $p): string
+{
+    return Collection::fromIterable($p->getDocumentPosition()->getPath())->last('');
 }
