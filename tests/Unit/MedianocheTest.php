@@ -265,7 +265,14 @@ class MedianocheTest extends TestCase
 
     }
 
-    public function newNetteClass(Schema $schema, string $class_name, callable $callback = null): ClassType
+    /**
+     * What it says on the tin.
+     *
+     * @param Schema $schema
+     * @param string $class_name
+     * @return string The type of Schema.
+     */
+    public function typeMatcher2000(Schema $schema, string $class_name): string
     {
         $unhandled_class = static fn ($type, $class_name): \UnhandledMatchError =>
             new \UnhandledMatchError(
@@ -298,7 +305,6 @@ class MedianocheTest extends TestCase
             return $kind;
         };
 
-        // The root schema type.
         $schemaType = (static fn ($schema): string =>
             // @TODO This is ripe for conversion into an enum match.
             match ($schema->type) {
@@ -312,6 +318,32 @@ class MedianocheTest extends TestCase
                 'date', 'dateTime' => \DateTimeInterface::class,
                 default => $advanced($schema),
             })($schema);
+
+        /**
+         * Advanced type parsing.
+         * I'd be cool to have an engine that can dictate on the fly how to interpret *Ofs.
+         * Maybe by breaking the *Of logic into a swappable callable.
+         * This might be a good point for recursion since the reference could be referencing anything adf asdasd
+         *
+         * For example
+         * allOf could be interpreted as a merge op
+         */
+        $starOfs = static fn ($schema) =>
+            (
+                in_array($schemaType, $adv_types, true) &&
+                property_exists($schema, $schemaType) &&
+                is_array($schema->{$schemaType})
+            )
+            ? $schema->{$schemaType}
+            : [];
+            $test = null;
+
+        return $schemaType;
+    }
+
+    public function newNetteClass(Schema $schema, string $class_name, callable $callback = null): ClassType
+    {
+        $schemaType = $this->typeMatcher2000($schema, $class_name);
 
         $this->logger->debug(sprintf('Creating new class for "%s" schema "%s"', $schemaType, $class_name));
         $class = new ClassType(
@@ -345,30 +377,11 @@ class MedianocheTest extends TestCase
             return $that->nativeProp($property, $propName, null, null, $class_name);
         };
 
-        /**
-         * Advanced type parsing.
-         * I'd be cool to have an engine that can dictate on the fly how to interpret *Ofs.
-         * Maybe by breaking the *Of logic into a swappable callable.
-         * This might be a good point for recursion since the reference could be referencing anything adf asdasd
-         *
-         * For example
-         * allOf could be interpreted as a merge op
-         */
-        $starOfs = static fn ($schema) =>
-            (
-                in_array($schemaType, $adv_types, true) &&
-                property_exists($schema, $schemaType) &&
-                is_array($schema->{$schemaType})
-            )
-            ? $schema->{$schemaType}
-            : [];
-            $test = null;
-
         // Native type parsing.
         $natives = static fn ($p) => ! in_array($p->type, ['object', 'array'], true);
 
         /**
-         * Convert all schema props to cebe props.
+         * Convert all cebe schema props to nette props.
          * @var Collection<string, Property> $nette_props
          */
         $nette_props = Collection::fromIterable($schema->properties)->ifThenElse($natives, [$this, 'nativeProp'], $new_obj);
