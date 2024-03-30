@@ -3,7 +3,7 @@ info:
   title: Panettone allOf schema
   version: 1.0.1
   description: |
-    Simple use case for the `anyOf` schema type.
+    Simple use cases for the `anyOf` schema type.
 
 servers:
   - url: https://localhost
@@ -40,6 +40,23 @@ components:
           properties:
             spam_warning_urn:
               type: string
+
+    PanettoneAnyOf:
+      anyOf:
+        - $ref: '#/components/schemas/Error'
+        - type: object
+          properties:
+            inline_obj_string_prop:
+              type: string
+
+    PanettoneOneOf:
+      oneOf:
+        - $ref: '#/components/schemas/Error'
+        - type: object
+          properties:
+            inline_obj_string_prop:
+              type: string
+
     Me:
       type: object
       description: SoundCloud Me object
@@ -194,75 +211,6 @@ components:
       properties:
         avatar_url:
           description: URL to a JPEG image
-          type: string
-        city:
-          description: city
-          type: string
-        country:
-          description: country
-          type: string
-        description:
-          description: description
-          type: string
-        discogs_name:
-          description: discogs name
-          type: string
-        first_name:
-          description: first name
-          type: string
-        followers_count:
-          description: number of followers
-          type: integer
-        followings_count:
-          description: number of followed users
-          type: integer
-        full_name:
-          description: first and last name
-          type: string
-        id:
-          description: unique identifier
-          type: integer
-        kind:
-          description: kind of resource
-          type: string
-        created_at:
-          description: profile creation datetime
-          format: date-time
-          type: string
-        last_modified:
-          description: last modified datetime
-          format: date-time
-          type: string
-        last_name:
-          description: last name
-          type: string
-        myspace_name:
-          description: myspace name
-          type: string
-          deprecated: true
-        permalink:
-          description: permalink of the resource
-          type: string
-        permalink_url:
-          description: URL to the SoundCloud.com page
-          type: string
-        plan:
-          description: subscription plan of the user
-          type: string
-        playlist_count:
-          description: number of public playlists
-          type: integer
-        public_favorites_count:
-          description: number of favorited public tracks
-          type: integer
-        reposts_count:
-          description: number of reposts from user
-          type: integer
-        track_count:
-          description: number of public tracks
-          type: integer
-        uri:
-          description: API resource URL
           type: string
         username:
           description: username
