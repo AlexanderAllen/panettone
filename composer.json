@@ -1,6 +1,5 @@
 {
     "name": "alexanderallen/panettone",
-    "version": "0.0.1",
     "type": "library",
     "description": "A lightweight PHP type generator for Open API (formerly Swagger)",
     "keywords": [
