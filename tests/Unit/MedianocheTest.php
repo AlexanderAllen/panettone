@@ -383,6 +383,13 @@ class MedianocheTest extends TestCase
             Collection::fromIterable($schema->items->getDocumentPosition()->getPath())
             ->last('');
 
+        $last = static fn (Schema $p, ?bool $list = false): string =>
+            Collection::fromIterable(
+                $list === false ?
+                $p->getDocumentPosition()->getPath() :
+                $p->items->getDocumentPosition()->getPath()
+            )->last('');
+
         // Native type parsing.
         $natives = static fn ($p) => ! in_array($p->type, ['object', 'array'], true);
 
@@ -409,9 +416,9 @@ class MedianocheTest extends TestCase
             $class->addMember($prop);
         }
 
-        $compositeGenerator = function ($array) use ($class_name): Generator {
+        $compositeGenerator = function ($array) use ($class_name, $last): Generator {
             foreach ($array as $key => $property) {
-                $lastRef = last($property);
+                $lastRef = $last($property);
 
                 // Pointer path with string ending is a reference to another schema.
                 if (! is_numeric($lastRef)) {
@@ -502,9 +509,4 @@ class MedianocheTest extends TestCase
                 }
             );
     }
-}
-
-function last(Schema $p): string
-{
-    return Collection::fromIterable($p->getDocumentPosition()->getPath())->last('');
 }
