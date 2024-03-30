@@ -368,7 +368,12 @@ class MedianocheTest extends TestCase
         return $new_obj;
     }
 
-    public function newNetteClass(Schema $schema, string $class_name): ClassType
+    /**
+     * Nette class generator.
+     *
+     * Does two things: generate the class, populate it with properties.
+     */
+    private function newNetteClass(Schema $schema, string $class_name): ClassType
     {
         $schemaType = $this->typeMatcher2000($schema, $class_name);
 
@@ -378,6 +383,27 @@ class MedianocheTest extends TestCase
             (new PhpNamespace('DeyFancyFooNameSpace'))
                 ->addUse('UseThisUseStmt', 'asAlias')
         );
+
+        $props = $this->propertyGenerator($schema, $class_name);
+        foreach ($props as $key => $value) {
+            $class->addMember($value);
+        }
+
+        return $class;
+    }
+
+    /**
+     * Converts all the properties from a cebe Schema into nette Properties.
+     *
+     * @param Schema $schema
+     * @param string $class_name
+     * @return array<Property>
+     * @throws UnhandledMatchError
+     * @throws InvalidArgumentException
+     */
+    public function propertyGenerator(Schema $schema, string $class_name): array
+    {
+        $__props = [];
 
         $last = static fn (Schema $p, ?bool $list = false): string =>
             Collection::fromIterable(
@@ -400,7 +426,7 @@ class MedianocheTest extends TestCase
         );
         foreach ($nette_props as $name => $prop) {
             $this->logger->debug(sprintf('[%s/%s] Add class property', $class_name, $name));
-            $class->addMember($prop);
+            $__props[$name] = $prop;
         }
 
         // Schema has type array.
@@ -409,7 +435,7 @@ class MedianocheTest extends TestCase
             // Don't flatten or inline the reference, instead reference the schema as a type.
             $this->logger->debug(sprintf('[%s/%s] Add array class property', $class_name, 'items'));
             $prop = $this->nativeProp($schema, 'items', null, $last($schema), $class_name);
-            $class->addMember($prop);
+            $__props[] = $prop;
         }
 
         $compositeGenerator = function ($array) use ($class_name, $last): Generator {
@@ -439,11 +465,11 @@ class MedianocheTest extends TestCase
         if ($schema->allOf) {
             foreach ($compositeGenerator($schema->allOf) as $name => $prop) {
                 $this->logger->debug(sprintf('[%s/%s] Add class property', $class_name, $name));
-                $class->addMember($prop);
+                $__props[] = $prop;
             }
         }
 
-        return $class;
+        return $__props;
     }
 
     /**
