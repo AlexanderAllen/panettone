@@ -379,10 +379,6 @@ class MedianocheTest extends TestCase
                 ->addUse('UseThisUseStmt', 'asAlias')
         );
 
-        $refdSchema = static fn (Schema $schema): string =>
-            Collection::fromIterable($schema->items->getDocumentPosition()->getPath())
-            ->last('');
-
         $last = static fn (Schema $p, ?bool $list = false): string =>
             Collection::fromIterable(
                 $list === false ?
@@ -412,7 +408,7 @@ class MedianocheTest extends TestCase
         if ($schema->type === 'array') {
             // Don't flatten or inline the reference, instead reference the schema as a type.
             $this->logger->debug(sprintf('[%s/%s] Add array class property', $class_name, 'items'));
-            $prop = $this->nativeProp($schema, 'items', null, $refdSchema($schema), $class_name);
+            $prop = $this->nativeProp($schema, 'items', null, $last($schema), $class_name);
             $class->addMember($prop);
         }
 
