@@ -19,24 +19,9 @@ paths:
 components:
 
   schemas:
-    Error:
-      type: object
-      properties:
-        code:
-          type: integer
-        message:
-          type: string
-        link:
-          type: string
-        error:
-          type: string
-          deprecated: true
-        status:
-          type: string
-          deprecated: true
     TooManyRequests:
       allOf:
-        - $ref: '#/components/schemas/Error'
+        - $ref: '#/components/schemas/Me'
         - type: object
           properties:
             spam_warning_urn:

@@ -1,5 +1,6 @@
 {
     "name": "alexanderallen/panettone",
+    "version": "0.0.1",
     "type": "library",
     "description": "A lightweight PHP type generator for Open API (formerly Swagger)",
     "keywords": [
@@ -12,7 +13,7 @@
         "swagger"
     ],
     "homepage": "https://github.com/AlexanderAllen/panettone",
-    "license": "MIT",
+    "license": "GPL-3.0-or-later",
     "authors": [
         {
             "name": "Richard Allen",
