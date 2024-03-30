@@ -1,9 +1,10 @@
 openapi: 3.0.1
 info:
-  title: Panettone allOf schema
+  title: Panettone starOf schemas
   version: 1.0.1
   description: |
-    Simple use cases for the `anyOf` schema type.
+    Simple use cases for `oneOf`, `anyOf`, `allOf`, and `not` schema types.
+
 
 servers:
   - url: https://localhost
@@ -43,18 +44,20 @@ components:
 
     PanettoneAnyOf:
       anyOf:
-        - $ref: '#/components/schemas/Error'
+        - $ref: '#/components/schemas/Me'
+        - $ref: '#/components/schemas/Activities'
         - type: object
           properties:
-            inline_obj_string_prop:
+            inline_obj_string_prop_anyOf:
               type: string
 
     PanettoneOneOf:
       oneOf:
-        - $ref: '#/components/schemas/Error'
+        - $ref: '#/components/schemas/Track'
+        - $ref: '#/components/schemas/User'
         - type: object
           properties:
-            inline_obj_string_prop:
+            inline_obj_string_prop_oneOf:
               type: string
 
     Me:
