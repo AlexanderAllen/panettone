@@ -270,7 +270,7 @@ class MedianocheTest extends TestCase
      * @param string $class_name
      * @return string The type of Schema.
      */
-    public function typeMatcher2000(Schema $schema, string $class_name): string
+    private function typeMatcher2000(Schema $schema, string $class_name): string
     {
         $unhandled_class = static fn ($type, $class_name): \UnhandledMatchError =>
             new \UnhandledMatchError(
@@ -339,17 +339,8 @@ class MedianocheTest extends TestCase
         return $schemaType;
     }
 
-    public function newNetteClass(Schema $schema, string $class_name): ClassType
+    private function newObj(Schema $schema, string $class_name = ''): callable
     {
-        $schemaType = $this->typeMatcher2000($schema, $class_name);
-
-        $this->logger->debug(sprintf('Creating new class for "%s" schema "%s"', $schemaType, $class_name));
-        $class = new ClassType(
-            $class_name,
-            (new PhpNamespace('DeyFancyFooNameSpace'))
-                ->addUse('UseThisUseStmt', 'asAlias')
-        );
-
         $refdSchema = static fn (Schema $schema): string =>
             Collection::fromIterable($schema->items->getDocumentPosition()->getPath())
             ->last('');
@@ -358,7 +349,7 @@ class MedianocheTest extends TestCase
         // I'd be nice to have an injectable rules matcher/executor for unit testing.
         static $nested_objects = [];
         $that = $this;
-        $new_obj = static function (Schema $property, string $propName, ?Collection $collection = null) use ($refdSchema, $nested_objects, $class_name, $that): Property {
+        $new_obj = static function (Schema $property, string $propName) use ($refdSchema, $nested_objects, $class_name, $that): Property {
 
             $nested_objects[$propName] = $property;
             if ($property->type == 'array') {
@@ -374,6 +365,23 @@ class MedianocheTest extends TestCase
             // This will create a new class property with a custom type.
             return $that->nativeProp($property, $propName, null, null, $class_name);
         };
+        return $new_obj;
+    }
+
+    public function newNetteClass(Schema $schema, string $class_name): ClassType
+    {
+        $schemaType = $this->typeMatcher2000($schema, $class_name);
+
+        $this->logger->debug(sprintf('Creating new class for "%s" schema "%s"', $schemaType, $class_name));
+        $class = new ClassType(
+            $class_name,
+            (new PhpNamespace('DeyFancyFooNameSpace'))
+                ->addUse('UseThisUseStmt', 'asAlias')
+        );
+
+        $refdSchema = static fn (Schema $schema): string =>
+            Collection::fromIterable($schema->items->getDocumentPosition()->getPath())
+            ->last('');
 
         // Native type parsing.
         $natives = static fn ($p) => ! in_array($p->type, ['object', 'array'], true);
@@ -382,7 +390,11 @@ class MedianocheTest extends TestCase
          * Convert all cebe schema props to nette props.
          * @var Collection<string, Property> $nette_props
          */
-        $nette_props = Collection::fromIterable($schema->properties)->ifThenElse($natives, [$this, 'nativeProp'], $new_obj);
+        $nette_props = Collection::fromIterable($schema->properties)->ifThenElse(
+            $natives,
+            [$this, 'nativeProp'],
+            [$this, 'nativeProp'],
+        );
         foreach ($nette_props as $name => $prop) {
             $this->logger->debug(sprintf('[%s/%s] Add class property', $class_name, $name));
             $class->addMember($prop);
@@ -397,7 +409,7 @@ class MedianocheTest extends TestCase
             $class->addMember($prop);
         }
 
-        $compositeGenerator = function ($array) use ($new_obj, $class_name): Generator {
+        $compositeGenerator = function ($array) use ($class_name): Generator {
             foreach ($array as $key => $property) {
                 $lastRef = last($property);
 
@@ -415,7 +427,7 @@ class MedianocheTest extends TestCase
                     && !empty($property->properties)
                 ) {
                     foreach ($property->properties as $key => $value) {
-                        yield $key => $new_obj($value, $key);
+                        yield $key => $this->nativeProp($value, $key);
                     }
                 }
             }
