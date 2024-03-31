@@ -266,13 +266,13 @@ class MedianocheTest extends TestCase
 
     #[Test]
     #[Depends('schemaTypeAllOf')]
-    #[TestDox('Unsupported use case for anyOf')]
+    #[TestDox('Assert unsupported use case for anyOf')]
     public function schemaTypeAnyOf(): void
     {
         $logger = new ConsoleLogger(new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG));
         self::setLogger($logger);
         $spec = Reader::readFromYamlFile(
-            realpath('tests/fixtures/anyOf-simple.yml'),
+            realpath('tests/fixtures/anyOf-invalid.yml'),
             OpenAPI::class,
             ReferenceContext::RESOLVE_MODE_ALL,
         );
@@ -554,6 +554,23 @@ class MedianocheTest extends TestCase
             }
         };
 
+        /**
+         * Detect an unsuported use case instance.
+         *
+         * If a starOf is detected in a schema item whose parent is components/schemas
+         * it means it's a top-level starOf schema. While this use case is valid OAS YAML,
+         * it represents a use case I'm not supporting.
+         */
+        $starGuard = function (Schema $schema, string $star) use ($class_name) {
+            if ('/components/schemas' == $schema->getDocumentPosition()->parent()->getPointer()) {
+                throw new UnsupportedSchema(
+                    $schema,
+                    $class_name,
+                    sprintf('Using %s on a top-level schema component', $star)
+                );
+            }
+        };
+
         if ($schema->allOf) {
             foreach ($compositeGenerator($schema->allOf) as $name => $prop) {
                 $this->logger->debug(sprintf('[%s/%s] Add class property', $class_name, $name));
@@ -578,14 +595,7 @@ class MedianocheTest extends TestCase
          * @see https://dev.to/drupalista/dev-log-330-anyof-2jgm
          */
         if ($schema->anyOf) {
-            // Detect unsuported use case.
-            // @TODO: Move to location where it applies to all starOfs.
-            // Error condition: if a starOf is detected in a schema item whose parent is components/schemas
-            // it means it's a top-level starOf schema, which I'm not supporting.
-            if ('/components/schemas' == $schema->getDocumentPosition()->parent()->getPointer()) {
-                $error = 'Using anyOf on a top-level schema component';
-                throw new UnsupportedSchema($schema, $class_name, $error);
-            }
+            $starGuard($schema, 'anyOf');
 
             /** @var Property $prop */
             foreach ($compositeGenerator($schema->anyOf) as $name => $prop) {
