@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace AlexanderAllen\Panettone\Test\Unit;
 
 use AlexanderAllen\Panettone\Bread\MediaNoche;
+use AlexanderAllen\Panettone\UnsupportedSchema;
 use PHPUnit\Framework\TestCase;
-use PHPUnit\Framework\Attributes\{CoversClass, Group, Test, TestDox, Depends};
+use PHPUnit\Framework\Attributes\{CoversClass, CoversFunction, Group, Test, TestDox, Depends};
 use Psr\Log\{LoggerAwareTrait, NullLogger};
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Logger\ConsoleLogger;
@@ -38,6 +39,7 @@ use function Symfony\Component\String\u;
  * @package AlexanderAllen\Panettone\Test
  */
 #[CoversClass(MediaNoche::class)]
+#[CoversClass(UnsupportedSchema::class)]
 #[TestDox('Nette tests')]
 #[Group('nette')]
 class MedianocheTest extends TestCase
@@ -65,7 +67,7 @@ class MedianocheTest extends TestCase
      *   FilesGen.php: way too much in one file, mostly CSfixer stuff
      *   openapi/Generator.php: injects nette printer into filesgen
      *   schema/generator.php: same, but with schema.org parsing
-     *   class_php::toNetteFile() the big nette implementation, evertying else dances around it./.......................;ooooooooi9'''9m,9(JNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNMK)
+     *   class_php::toNetteFile() the big nette implementation, evertying else dances around it
      *
      * 3/18 intermediate assertion/goal/steps
      * usable graph (cebe should be fine)
@@ -264,36 +266,25 @@ class MedianocheTest extends TestCase
 
     #[Test]
     #[Depends('schemaTypeAllOf')]
-    #[TestDox('Simple use case for schema of type anyOf')]
+    #[TestDox('Unsupported use case for anyOf')]
     public function schemaTypeAnyOf(): void
     {
         $logger = new ConsoleLogger(new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG));
         self::setLogger($logger);
         $spec = Reader::readFromYamlFile(
-            realpath('tests/fixtures/starOf-simple.yml'),
+            realpath('tests/fixtures/anyOf-simple.yml'),
             OpenAPI::class,
             ReferenceContext::RESOLVE_MODE_ALL,
         );
         $printer = new Printer();
 
+        $this->expectException(UnsupportedSchema::class);
         $classes = [];
         foreach ($spec->components->schemas as $name => $schema) {
             $class = $this->newNetteClass($schema, $name);
             $classes[$name] = $class;
             $this->logger->debug($printer->printClass($class));
         }
-
-        self::assertCount(
-            2,
-            $classes['TooManyRequests']->getProperties(),
-            'Schemas of type allOf should not inline properties of Referenced objects'
-        );
-
-        self::assertEquals(
-            'Error',
-            $classes['TooManyRequests']->getProperty('error')->getType(),
-            'The type on properties that reference other types should match the referenced type'
-        );
     }
 
     /**
@@ -498,7 +489,7 @@ class MedianocheTest extends TestCase
     {
         $__props = [];
 
-        $last = static fn (Schema $p, ?bool $list = false): string =>
+        $last = static fn (Schema|Reference $p, ?bool $list = false): string =>
             Collection::fromIterable(
                 $list === false ?
                 $p->getDocumentPosition()->getPath() :
@@ -531,14 +522,20 @@ class MedianocheTest extends TestCase
             $__props[] = $prop;
         }
 
+        /**
+         * Generator maps cebe Schemas to nette Properties.
+         *
+         * @param list<Schema|Reference> $array
+         *
+         * @return Generator<mixed, Property, null, void>
+         */
         $compositeGenerator = function ($array) use ($class_name, $last): Generator {
             foreach ($array as $key => $property) {
                 $lastRef = $last($property);
 
                 // Pointer path with string ending is a reference to another schema.
                 if (! is_numeric($lastRef)) {
-                     $q = $this->nativeProp($property, strtolower($lastRef), null, $lastRef, $class_name);
-                     yield $lastRef => $q;
+                    yield $lastRef => $this->nativeProp($property, strtolower($lastRef), null, $lastRef, $class_name);
                 }
 
                 // Pointer path with numerical ending is an internal property.
@@ -562,6 +559,40 @@ class MedianocheTest extends TestCase
                 $this->logger->debug(sprintf('[%s/%s] Add class property', $class_name, $name));
                 $__props[] = $prop;
             }
+        }
+
+        /**
+         * anyOf schemas:
+         * - Generate every type, regardless if it's reference or inline native/object type.
+         * - For each schema reference, generate only the type reference, not the type itself.
+         * - For schema reference, add type ref to a union of types.
+         * - Inline objects and natives are generated inline.
+         * - Inline objects are also part of a union, which capture every single type
+         *   mentioned in the anyOf.
+         *
+         * So basically a anyOf generator should return a big ol list of types to be added to a Union.
+         * Some of them just references, some of them fully populated objects or native types.
+         *
+         * @TODO The above comment needs to be worded better, but the ball needs to get rollin'
+         *
+         * @see https://dev.to/drupalista/dev-log-330-anyof-2jgm
+         */
+        if ($schema->anyOf) {
+            // Detect unsuported use case.
+            // @TODO: Move to location where it applies to all starOfs.
+            // Error condition: if a starOf is detected in a schema item whose parent is components/schemas
+            // it means it's a top-level starOf schema, which I'm not supporting.
+            if ('/components/schemas' == $schema->getDocumentPosition()->parent()->getPointer()) {
+                $error = 'Using anyOf on a top-level schema component';
+                throw new UnsupportedSchema($schema, $class_name, $error);
+            }
+
+            /** @var Property $prop */
+            foreach ($compositeGenerator($schema->anyOf) as $name => $prop) {
+                $this->logger->debug(sprintf('[%s/%s] Add class property', $class_name, $name));
+                $__props[] = $prop;
+            }
+            // $prop->setType()
         }
 
         return $__props;
