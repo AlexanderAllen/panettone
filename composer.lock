@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "8443f29ee3c92a04068df85e4aef7db6",
+    "content-hash": "16e1b930e912b8574b4de50f038caa32",
     "packages": [
         {
             "name": "api-platform/schema-generator",
