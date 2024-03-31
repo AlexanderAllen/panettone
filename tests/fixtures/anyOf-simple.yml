@@ -27,27 +27,6 @@ components:
             $ref: '#/components/schemas/PanettoneAnyOf'
 
   schemas:
-    # This is saying the contents of the reponse could have any of these types
-    # this is a OR operation
-    #
-    # PHP Type would look like
-    # public Me|Activities|string $inline_obj_string_prop_anyOf
-    #
-    # If I were to type this I would end up with an unpredictable result for the uer.
-    # So you know, just don't support this particular use of anyOf, it doesn't make sense.
-    #
-    # There should be a test that rejects this use case with an exception.
-    UnsupportedAnyOf:
-      anyOf:
-        # Types have a name, but there isn't a named property they're tied to.
-        - $ref: '#/components/schemas/Me'
-        - $ref: '#/components/schemas/Activities'
-        # Anonymous inline object with no name, only props.
-        # this turns inline_obj_string into a property of UnsupportedAnyOf.
-        - type: object
-          properties:
-            inline_obj_string_prop_anyOf:
-              type: string
 
     PanettoneAnyOf:
       type: object
