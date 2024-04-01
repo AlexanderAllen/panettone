@@ -48,7 +48,7 @@ jobs:
             --log-junit $PWD/build/junit.xml \
             --coverage-text \
             --coverage-cobertura $PWD/build/coverage.cobertura.xml \
-            --coverage-clover $PWD/build/clover.xml
+            --coverage-clover $PWD/build/clover.xml \
             --exclude-group ignore \
             --coverage-filter src
 
