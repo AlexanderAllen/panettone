@@ -45,8 +45,20 @@ jobs:
         php vendor/bin/phpunit --no-progress \
             tests \
             --testdox \
-            --log-junit $PWD/junit.xml \
+            --log-junit $PWD/build/junit.xml \
             --coverage-text \
-            --coverage-cobertura $PWD/coverage.cobertura.xml \
+            --coverage-cobertura $PWD/build/coverage.cobertura.xml \
+            --coverage-clover $PWD/build/clover.xml \
             --exclude-group ignore \
             --coverage-filter src
+
+    # See https://github.com/php-coveralls/php-coveralls
+    - name: Upload coverage results to Coveralls
+      env:
+        COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN_SECRET }}
+      run: |
+        mkdir tools
+        composer require -d tools php-coveralls/php-coveralls
+        tools/vendor/bin/php-coveralls -v \
+        --coverage_clover=$PWD/build/clover.xml \
+        --json_path=tools/coveralls-upload.json
