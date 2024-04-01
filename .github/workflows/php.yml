@@ -60,7 +60,7 @@ jobs:
         echo $PWD
         ls -la $PWD
         ls -la $PWD/build/clover.xml
-        composer global require php-coveralls/php-coveralls
+        composer require-dev php-coveralls/php-coveralls
         php-coveralls -v \
         --coverage_clover=$PWD/build/clover.xml \
-        --json_path=$PWD
+        --json_path=$PWD/build
