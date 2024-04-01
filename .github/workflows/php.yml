@@ -63,4 +63,4 @@ jobs:
         composer require -d tools php-coveralls/php-coveralls
         tools/vendor/bin/php-coveralls -v \
         --coverage_clover=$PWD/build/clover.xml \
-        --json_path=/tmp
+        --json_path=tools/coveralls-upload.json
