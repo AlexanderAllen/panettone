@@ -11,7 +11,7 @@ use PHPUnit\Framework\Attributes\{CoversClass, CoversFunction, Group, Test, Test
 use Psr\Log\{LoggerAwareTrait, NullLogger};
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Logger\ConsoleLogger;
-use cebe\openapi\{Reader, ReferenceContext};
+use cebe\openapi\{Reader, ReferenceContext, SpecObjectInterface};
 use cebe\openapi\spec\{OpenApi, Schema, Reference};
 use cebe\openapi\exceptions\{TypeErrorException, UnresolvableReferenceException, IOException};
 use cebe\openapi\json\JsonPointer;
@@ -30,6 +30,7 @@ use loophp\collection\Collection;
 use loophp\collection\Operation\Nullsy;
 use UnhandledMatchError;
 use Nette\InvalidArgumentException;
+use PhpParser\Node\Expr\FuncCall;
 
 use function Symfony\Component\String\u;
 
@@ -40,7 +41,7 @@ use function Symfony\Component\String\u;
  */
 #[CoversClass(MediaNoche::class)]
 #[CoversClass(UnsupportedSchema::class)]
-#[TestDox('Nette tests')]
+#[TestDox('Medianoche')]
 #[Group('nette')]
 class MedianocheTest extends TestCase
 {
@@ -51,6 +52,33 @@ class MedianocheTest extends TestCase
     protected function setUp(): void
     {
         self::setLogger(new NullLogger());
+    }
+
+    /**
+     * The real fixture method - setup the spec and logging for every test.
+     *
+     * @param string $spec
+     * @param bool $log
+     *
+     * @return array{OpenApi, Printer}
+     * @throws TypeErrorException
+     * @throws UnresolvableReferenceException
+     * @throws IOException
+     */
+    public function realSetup(string $spec, bool $log = false): array
+    {
+        $this->setLogger($log ?
+            new ConsoleLogger(new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG)) :
+            new NullLogger());
+
+        return [
+            Reader::readFromYamlFile(
+                realpath($spec),
+                OpenAPI::class,
+                ReferenceContext::RESOLVE_MODE_ALL,
+            ),
+            new Printer()
+        ];
     }
 
     /**
@@ -267,18 +295,26 @@ class MedianocheTest extends TestCase
     #[Test]
     #[Depends('schemaTypeAllOf')]
     #[TestDox('Assert unsupported use case for anyOf')]
-    public function schemaTypeAnyOf(): void
+    public function invalidSchemaTypeAnyOf(): void
     {
-        $logger = new ConsoleLogger(new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG));
-        self::setLogger($logger);
-        $spec = Reader::readFromYamlFile(
-            realpath('tests/fixtures/anyOf-invalid.yml'),
-            OpenAPI::class,
-            ReferenceContext::RESOLVE_MODE_ALL,
-        );
-        $printer = new Printer();
+        [$spec, $printer] = $this->realSetup('tests/fixtures/anyOf-invalid.yml');
 
         $this->expectException(UnsupportedSchema::class);
+        $classes = [];
+        foreach ($spec->components->schemas as $name => $schema) {
+            $class = $this->newNetteClass($schema, $name);
+            $classes[$name] = $class;
+            $this->logger->debug($printer->printClass($class));
+        }
+    }
+
+    #[Test]
+    #[Depends('invalidSchemaTypeAnyOf')]
+    #[TestDox('Assert simple use case for anyOf')]
+    public function schemaTypeAnyOf(): void
+    {
+        [$spec, $printer] = $this->realSetup('tests/fixtures/anyOf-simple.yml', true);
+
         $classes = [];
         foreach ($spec->components->schemas as $name => $schema) {
             $class = $this->newNetteClass($schema, $name);
