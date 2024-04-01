@@ -58,8 +58,9 @@ jobs:
         COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN_SECRET }}
       run: |
         mkdir tools
-        ls -la $PWD/build/clover.xml
+        ls -lad $PWD
+        ls -lad $PWD/build
         composer require -d tools php-coveralls/php-coveralls
         tools/vendor/bin/php-coveralls -v \
         --coverage_clover=$PWD/build/clover.xml \
-        --json_path=$PWD/build
+        --json_path=/tmp
