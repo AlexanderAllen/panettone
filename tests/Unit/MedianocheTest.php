@@ -113,11 +113,7 @@ class MedianocheTest extends TestCase
     #[TestDox('Dump cebe graph into nette class string')]
     public function cebeToNetteString(): void
     {
-        $spec = Reader::readFromYamlFile(
-            realpath('tests/fixtures/medianoche.yml'),
-            OpenAPI::class,
-            ReferenceContext::RESOLVE_MODE_ALL,
-        );
+        [$spec, $printer] = $this->realSetup('tests/fixtures/medianoche.yml');
 
         $result_user = $spec->components->schemas['User'];
         self::assertContainsOnlyInstancesOf(
@@ -150,11 +146,7 @@ class MedianocheTest extends TestCase
     #[TestDox('Create nette class object(s)')]
     public function cebeToNetteObject(): void
     {
-        $spec = Reader::readFromYamlFile(
-            realpath('tests/fixtures/medianoche.yml'),
-            OpenAPI::class,
-            ReferenceContext::RESOLVE_MODE_ALL,
-        );
+        [$spec, $printer] = $this->realSetup('tests/fixtures/medianoche.yml');
 
         $classes = [];
         $expected_count = count($spec->components->schemas);
@@ -178,14 +170,7 @@ class MedianocheTest extends TestCase
     #[TestDox('Proceduralish class resolver')]
     public function proceduralish(): void
     {
-        // $logger = new ConsoleLogger(new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG));
-        // self::setLogger($logger);
-        $spec = Reader::readFromYamlFile(
-            realpath('tests/fixtures/medianoche-1.yml'),
-            OpenAPI::class,
-            ReferenceContext::RESOLVE_MODE_ALL,
-        );
-        $printer = new Printer();
+        [$spec, $printer] = $this->realSetup('tests/fixtures/medianoche-1.yml');
 
         $classes = [];
         $expected_count = count($spec->components->schemas);
@@ -201,20 +186,6 @@ class MedianocheTest extends TestCase
             $classes,
             'The given and yielded object amount is an exact match'
         );
-    }
-
-    /**
-     * Functionalish class resolver without recursion.
-     *
-     * I've been aiming to avoid procedural recursion at all costs.
-     * What if the upper scope / stack member becomes a collection and receive
-     * a bucket of nested classes / types to be generated?s
-     */
-    // #[Test]
-    #[TestDox('Functionalish class resolver')]
-    public function functionalish(): void
-    {
-        // ...
     }
 
     // ADV_ALLOF_EDGECASE
@@ -263,14 +234,7 @@ class MedianocheTest extends TestCase
     #[TestDox('Simple use case for schema of type allOf')]
     public function schemaTypeAllOf(): void
     {
-        // $logger = new ConsoleLogger(new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG));
-        // self::setLogger($logger);
-        $spec = Reader::readFromYamlFile(
-            realpath('tests/fixtures/allOf-simple.yml'),
-            OpenAPI::class,
-            ReferenceContext::RESOLVE_MODE_ALL,
-        );
-        $printer = new Printer();
+        [$spec, $printer] = $this->realSetup('tests/fixtures/allOf-simple.yml');
 
         $classes = [];
         foreach ($spec->components->schemas as $name => $schema) {
