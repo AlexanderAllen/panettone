@@ -1,0 +1,7 @@
+schema
+vendor
+
+# PHPUnit
+*.cobertura.xml
+junit.xml
+.phpunit.*

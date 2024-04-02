@@ -83,67 +83,6 @@ class MedianocheTest extends TestCase
         ];
     }
 
-    /**
-     * Transform a cebe openapi graph into physical form using nette.
-     *
-     * goals:
-     * all logic must be atomic, encapsulated in units, testable, and composable (functional)
-     * cyclomatic comp always lower than 5, always
-     * no nested iterations
-     * no internal states (OOP this, etc), you get what you give only
-     *
-     * inspirtion from schemagen, filesgenerator, etc.
-     *   propgen.php: per-prop type generator, buggy
-     *   FilesGen.php: way too much in one file, mostly CSfixer stuff
-     *   openapi/Generator.php: injects nette printer into filesgen
-     *   schema/generator.php: same, but with schema.org parsing
-     *   class_php::toNetteFile() the big nette implementation, evertying else dances around it
-     *
-     * 3/18 intermediate assertion/goal/steps
-     * usable graph (cebe should be fine)
-     * graph processor (generator?) nette implementation for graph
-     * dumper
-     *
-     * @return void
-     * @throws TypeErrorException
-     * @throws UnresolvableReferenceException
-     * @throws IOException
-     * @throws Exception
-     * @throws ExpectationFailedException
-     */
-    // #[Test]
-    #[TestDox('Dump cebe graph into nette class string')]
-    public function cebeToNetteString(): void
-    {
-        [$spec, $printer] = $this->realSetup('tests/fixtures/medianoche.yml');
-
-        $result_user = $spec->components->schemas['User'];
-        self::assertContainsOnlyInstancesOf(
-            Schema::class,
-            $result_user->properties,
-            'All references in a schema should be resolved'
-        );
-        $this->logger->info('All User schema prop references are resolved');
-        $this->logger->debug(get_class($result_user->properties['contact_info']));
-
-        // Test first schema only.
-        // Transform cebe props to nette props.
-        $class = new ClassType('User');
-        $schema = $spec->components->schemas['User'];
-
-        foreach ((new MediaNoche())->propertyGenerator($schema) as $name => $nette_prop) {
-            self::assertInstanceOf(Property::class, $nette_prop, 'Generator yields Property objects');
-            $class->addMember($nette_prop);
-        }
-
-        $class
-            ->setFinal()
-            ->addComment("Class description.\nSecond line\n");
-
-        $printer = new Printer();
-        $this->logger->debug($printer->printClass($class));
-    }
-
     #[Test]
     #[TestDox('Create nette class object(s)')]
     public function cebeToNetteObject(): void
@@ -279,7 +218,7 @@ class MedianocheTest extends TestCase
     #[TestDox('Assert union use case for anyOf')]
     public function schemaTypeAnyOf(): void
     {
-        [$spec, $printer] = $this->realSetup('tests/fixtures/anyOf-simple.yml', true);
+        [$spec, $printer] = $this->realSetup('tests/fixtures/anyOf-simple.yml');
 
         $classes = [];
         foreach ($spec->components->schemas as $name => $schema) {
@@ -300,6 +239,21 @@ class MedianocheTest extends TestCase
         $this->assertContains('Me', $names, 'Assert member property references anyOf type.');
         $this->assertContains('User', $names, 'Assert member property references anyOf type.');
         $this->assertTrue($type->isUnion(), 'Assert member property type is a union');
+    }
+
+    #[Test]
+    #[Depends('schemaTypeAnyOf')]
+    #[TestDox('Assert use case for oneOf')]
+    public function schemaTypeOneOf(): void
+    {
+        [$spec, $printer] = $this->realSetup('tests/fixtures/oneOf-simple.yml', true);
+
+        $classes = [];
+        foreach ($spec->components->schemas as $name => $schema) {
+            $class = $this->newNetteClass($schema, $name);
+            $classes[$name] = $class;
+            $this->logger->debug($printer->printClass($class));
+        }
     }
 
     /**

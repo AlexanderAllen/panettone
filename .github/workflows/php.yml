@@ -35,15 +35,18 @@ jobs:
           ${{ runner.os }}-php-
 
     - name: Install dependencies
-      run: composer install --prefer-dist --no-progress
+      run: |
+        composer install --prefer-dist --no-progress
+        composer install --prefer-dist --no-progress -d tools/phpunit
 
     # Add a test script to composer.json, for instance: "test": "vendor/bin/phpunit"
     # Docs: https://getcomposer.org/doc/articles/scripts.md
 
     - name: Run PHPUnit tests
       run: |
-        php vendor/bin/phpunit --no-progress \
+        php tools/phpunit/vendor/bin/phpunit --no-progress \
             tests \
+            --configuration tools/phpunit/phpunit.xml \
             --testdox \
             --log-junit $PWD/build/junit.xml \
             --coverage-text \
@@ -57,8 +60,6 @@ jobs:
       env:
         COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN_SECRET }}
       run: |
-        mkdir tools
-        composer require -d tools php-coveralls/php-coveralls
-        tools/vendor/bin/php-coveralls -v \
+        tools/phpunit/vendor/bin/php-coveralls -v \
         --coverage_clover=$PWD/build/clover.xml \
         --json_path=tools/coveralls-upload.json

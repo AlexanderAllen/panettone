@@ -1,0 +1,20 @@
+{
+    "name": "alexanderallen/panettone-test",
+    "description": "Dependencies for Panettone testing",
+    "type": "project",
+    "autoload": {
+        "psr-4": {
+            "Alexanderallen\\PanettoneTest\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "AlexanderAllen",
+            "email": "14018885+AlexanderAllen@users.noreply.github.com"
+        }
+    ],
+    "require-dev": {
+        "phpunit/phpunit": "^11.0",
+        "php-coveralls/php-coveralls": "^2.7"
+    }
+}

@@ -4,3 +4,12 @@ Coverage: https://coveralls.io/github/AlexanderAllen/panettone
 
 # Panettone
 A lightweight PHP type generator for Open API (formerly Swagger)
+
+## Testing
+
+Tests are located in the `tests` directory. PHPUnit is installed separately in the `tools/phpunit` directory.
+
+To test install and run PHPUnit.
+
+    composer -d tools/phpunit install
+    . tools/phpunit/test

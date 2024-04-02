@@ -173,8 +173,56 @@ class PanSobaoTest extends TestCase
             $result_user->properties,
             'All references in a schema should be resolved'
         );
+    }
 
+    /**
+     * Transform a cebe openapi graph into physical form using nette.
+     *
+     * inspirtion from schemagen, filesgenerator, etc.
+     *   propgen.php: per-prop type generator, buggy
+     *   FilesGen.php: way too much in one file, mostly CSfixer stuff
+     *   openapi/Generator.php: injects nette printer into filesgen
+     *   schema/generator.php: same, but with schema.org parsing
+     *   class_php::toNetteFile() the big nette implementation, evertying else dances around it
+     *
+     * @return void
+     * @throws TypeErrorException
+     * @throws UnresolvableReferenceException
+     * @throws IOException
+     * @throws Exception
+     * @throws ExpectationFailedException
+     */
+    // #[Test]
+    #[TestDox('Dump cebe graph into nette class string')]
+    public function cebeToNetteString(): void
+    {
+        [$spec, $printer] = $this->realSetup('tests/fixtures/medianoche.yml');
 
+        $result_user = $spec->components->schemas['User'];
+        self::assertContainsOnlyInstancesOf(
+            Schema::class,
+            $result_user->properties,
+            'All references in a schema should be resolved'
+        );
+        $this->logger->info('All User schema prop references are resolved');
+        $this->logger->debug(get_class($result_user->properties['contact_info']));
+
+        // Test first schema only.
+        // Transform cebe props to nette props.
+        $class = new ClassType('User');
+        $schema = $spec->components->schemas['User'];
+
+        foreach ($this->propertyGenerator($schema) as $name => $nette_prop) {
+            self::assertInstanceOf(Property::class, $nette_prop, 'Generator yields Property objects');
+            $class->addMember($nette_prop);
+        }
+
+        $class
+            ->setFinal()
+            ->addComment("Class description.\nSecond line\n");
+
+        $printer = new Printer();
+        $this->logger->debug($printer->printClass($class));
     }
 
     /**
