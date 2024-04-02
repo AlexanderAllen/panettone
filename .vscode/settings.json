@@ -14,4 +14,8 @@
   "editor.tabSize": 4,
 "editor.detectIndentation": false,
 "phpstan.enableLanguageServer": false,
+"intelephense.environment.includePaths": [
+    "vendor",
+    "tools/phpunit/vendor"
+],
 }

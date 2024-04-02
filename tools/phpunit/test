@@ -2,6 +2,7 @@
 
 php tools/phpunit/vendor/bin/phpunit --no-progress \
 tests \
+--configuration tools/phpunit/phpunit.xml \
 --testdox \
 --log-junit $PWD/junit.xml \
 --coverage-text \

@@ -5,3 +5,5 @@ parameters:
 	paths:
 		- src
 		- tests
+	scanDirectories:
+		- tools/phpunit/vendor
