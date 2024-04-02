@@ -8,6 +8,7 @@ use AlexanderAllen\Panettone\Bread\PanSobao;
 use cebe\openapi\{Reader, ReferenceContext};
 use cebe\openapi\spec\{OpenApi, Schema, Reference};
 use cebe\openapi\exceptions\{TypeErrorException, UnresolvableReferenceException, IOException};
+use Nette\PhpGenerator\Property as Prop;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\{CoversClass, Group, Test, TestDox, Large};
 use Symfony\Component\Console\Output\ConsoleOutput;
@@ -311,5 +312,49 @@ class PanSobaoTest extends TestCase
         }
 
         return $class;
+    }
+
+    /**
+     * Recursive property generator for Nette.
+     *
+     * Creates nette class `Property` objects from cebe `Schema` objects.
+     * Uses a flatten/merge recursive pattern to retrieve nested object properties.
+     *
+     * @return \Generator<string, Prop, null, void>
+     */
+    public function propertyGenerator(Schema $schema): \Generator
+    {
+        foreach ($schema->properties as $name => $property) {
+            $this->logger->debug(sprintf('Parsing property: %s', $name));
+
+            if ($property->type == 'object') {
+                // Start a new internal, recursive generator.
+                $this->logger->debug(sprintf('Recursing object property: %s', $name));
+                foreach ($this->propertyGenerator($property) as $key => $nette_prop) {
+                    yield $key => $nette_prop;
+                }
+                // Do not yield Schema items, only Property items.
+                return;
+            }
+
+            /* @see https://swagger.io/specification/#data-types */
+            $type = match ($property->type) {
+                'string' => 'string',
+                'integer' => 'int',
+                'boolean' => 'bool',
+                'float', 'double' => 'float',
+                // 'object' => Schema::class,
+                'date', 'dateTime' => \DateTimeInterface::class,
+                default => throw new \UnhandledMatchError(),
+            };
+
+            yield $name =>
+            (new Prop($name))
+                ->setType($type)
+                ->setReadOnly(true)
+                ->setComment($property->description)
+                ->setNullable(true)
+                ->setValue($property->default);
+        }
     }
 }

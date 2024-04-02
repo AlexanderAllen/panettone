@@ -11,7 +11,7 @@ use PHPUnit\Framework\Attributes\{CoversClass, CoversFunction, Group, Test, Test
 use Psr\Log\{LoggerAwareTrait, NullLogger};
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Logger\ConsoleLogger;
-use cebe\openapi\{Reader, ReferenceContext};
+use cebe\openapi\{Reader, ReferenceContext, SpecObjectInterface};
 use cebe\openapi\spec\{OpenApi, Schema, Reference};
 use cebe\openapi\exceptions\{TypeErrorException, UnresolvableReferenceException, IOException};
 use cebe\openapi\json\JsonPointer;
@@ -27,11 +27,10 @@ use Nette\PhpGenerator\Property;
 use PHPUnit\Framework\Exception;
 use PHPUnit\Framework\ExpectationFailedException;
 use loophp\collection\Collection;
-use loophp\collection\Operation\Nullsy;
 use UnhandledMatchError;
 use Nette\InvalidArgumentException;
-
-use function Symfony\Component\String\u;
+use Nette\PhpGenerator\Type;
+use Nette\Utils\Type as UtilsType;
 
 /**
  * Test suite for nette generators.
@@ -40,7 +39,7 @@ use function Symfony\Component\String\u;
  */
 #[CoversClass(MediaNoche::class)]
 #[CoversClass(UnsupportedSchema::class)]
-#[TestDox('Nette tests')]
+#[TestDox('Medianoche')]
 #[Group('nette')]
 class MedianocheTest extends TestCase
 {
@@ -51,6 +50,37 @@ class MedianocheTest extends TestCase
     protected function setUp(): void
     {
         self::setLogger(new NullLogger());
+    }
+
+    /**
+     * The real fixture method - setup the spec and logging for every test.
+     *
+     * @param string $spec
+     * @param bool $log
+     *
+     * @return array{OpenApi, Printer}
+     * @throws TypeErrorException
+     * @throws UnresolvableReferenceException
+     * @throws IOException
+     */
+    public function realSetup(string $spec, bool $log = false): array
+    {
+        $this->setLogger($log ?
+            new ConsoleLogger(new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG)) :
+            new NullLogger());
+
+        // if (function_exists('xdebug_break') && $log === true) {
+        //     xdebug_break();
+        // }
+
+        return [
+            Reader::readFromYamlFile(
+                realpath($spec),
+                OpenAPI::class,
+                ReferenceContext::RESOLVE_MODE_ALL,
+            ),
+            new Printer()
+        ];
     }
 
     /**
@@ -85,11 +115,7 @@ class MedianocheTest extends TestCase
     #[TestDox('Dump cebe graph into nette class string')]
     public function cebeToNetteString(): void
     {
-        $spec = Reader::readFromYamlFile(
-            realpath('tests/fixtures/medianoche.yml'),
-            OpenAPI::class,
-            ReferenceContext::RESOLVE_MODE_ALL,
-        );
+        [$spec, $printer] = $this->realSetup('tests/fixtures/medianoche.yml');
 
         $result_user = $spec->components->schemas['User'];
         self::assertContainsOnlyInstancesOf(
@@ -122,11 +148,7 @@ class MedianocheTest extends TestCase
     #[TestDox('Create nette class object(s)')]
     public function cebeToNetteObject(): void
     {
-        $spec = Reader::readFromYamlFile(
-            realpath('tests/fixtures/medianoche.yml'),
-            OpenAPI::class,
-            ReferenceContext::RESOLVE_MODE_ALL,
-        );
+        [$spec, $printer] = $this->realSetup('tests/fixtures/medianoche.yml');
 
         $classes = [];
         $expected_count = count($spec->components->schemas);
@@ -150,14 +172,7 @@ class MedianocheTest extends TestCase
     #[TestDox('Proceduralish class resolver')]
     public function proceduralish(): void
     {
-        // $logger = new ConsoleLogger(new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG));
-        // self::setLogger($logger);
-        $spec = Reader::readFromYamlFile(
-            realpath('tests/fixtures/medianoche-1.yml'),
-            OpenAPI::class,
-            ReferenceContext::RESOLVE_MODE_ALL,
-        );
-        $printer = new Printer();
+        [$spec, $printer] = $this->realSetup('tests/fixtures/medianoche-1.yml');
 
         $classes = [];
         $expected_count = count($spec->components->schemas);
@@ -173,20 +188,6 @@ class MedianocheTest extends TestCase
             $classes,
             'The given and yielded object amount is an exact match'
         );
-    }
-
-    /**
-     * Functionalish class resolver without recursion.
-     *
-     * I've been aiming to avoid procedural recursion at all costs.
-     * What if the upper scope / stack member becomes a collection and receive
-     * a bucket of nested classes / types to be generated?s
-     */
-    // #[Test]
-    #[TestDox('Functionalish class resolver')]
-    public function functionalish(): void
-    {
-        // ...
     }
 
     // ADV_ALLOF_EDGECASE
@@ -235,14 +236,7 @@ class MedianocheTest extends TestCase
     #[TestDox('Simple use case for schema of type allOf')]
     public function schemaTypeAllOf(): void
     {
-        // $logger = new ConsoleLogger(new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG));
-        // self::setLogger($logger);
-        $spec = Reader::readFromYamlFile(
-            realpath('tests/fixtures/allOf-simple.yml'),
-            OpenAPI::class,
-            ReferenceContext::RESOLVE_MODE_ALL,
-        );
-        $printer = new Printer();
+        [$spec, $printer] = $this->realSetup('tests/fixtures/allOf-simple.yml');
 
         $classes = [];
         foreach ($spec->components->schemas as $name => $schema) {
@@ -267,16 +261,9 @@ class MedianocheTest extends TestCase
     #[Test]
     #[Depends('schemaTypeAllOf')]
     #[TestDox('Assert unsupported use case for anyOf')]
-    public function schemaTypeAnyOf(): void
+    public function invalidSchemaTypeAnyOf(): void
     {
-        $logger = new ConsoleLogger(new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG));
-        self::setLogger($logger);
-        $spec = Reader::readFromYamlFile(
-            realpath('tests/fixtures/anyOf-invalid.yml'),
-            OpenAPI::class,
-            ReferenceContext::RESOLVE_MODE_ALL,
-        );
-        $printer = new Printer();
+        [$spec, $printer] = $this->realSetup('tests/fixtures/anyOf-invalid.yml');
 
         $this->expectException(UnsupportedSchema::class);
         $classes = [];
@@ -285,6 +272,34 @@ class MedianocheTest extends TestCase
             $classes[$name] = $class;
             $this->logger->debug($printer->printClass($class));
         }
+    }
+
+    #[Test]
+    #[Depends('invalidSchemaTypeAnyOf')]
+    #[TestDox('Assert union use case for anyOf')]
+    public function schemaTypeAnyOf(): void
+    {
+        [$spec, $printer] = $this->realSetup('tests/fixtures/anyOf-simple.yml', true);
+
+        $classes = [];
+        foreach ($spec->components->schemas as $name => $schema) {
+            $class = $this->newNetteClass($schema, $name);
+            $classes[$name] = $class;
+            $this->logger->debug($printer->printClass($class));
+        }
+
+        $this->assertArrayHasKey('PanettoneAnyOf', $classes, 'Test subject is present');
+        $subject = $classes['PanettoneAnyOf'];
+        $this->assertTrue($subject->hasProperty('origin'), 'Test member is present');
+        $member = $classes['PanettoneAnyOf']->getProperty('origin');
+
+        // See https://doc.nette.org/en/utils/type.
+        $type = UtilsType::fromString($member->getType());
+        $names = $type->getNames();
+
+        $this->assertContains('Me', $names, 'Assert member property references anyOf type.');
+        $this->assertContains('User', $names, 'Assert member property references anyOf type.');
+        $this->assertTrue($type->isUnion(), 'Assert member property type is a union');
     }
 
     /**
@@ -341,25 +356,6 @@ class MedianocheTest extends TestCase
                 default => $advanced($schema),
             })($schema);
 
-        /**
-         * Advanced type parsing.
-         * I'd be cool to have an engine that can dictate on the fly how to interpret *Ofs.
-         * Maybe by breaking the *Of logic into a swappable callable.
-         * This might be a good point for recursion since the reference could be referencing anything adf asdasd
-         *
-         * For example
-         * allOf could be interpreted as a merge op
-         */
-        $starOfs = static fn ($schema) =>
-            (
-                in_array($schemaType, $adv_types, true) &&
-                property_exists($schema, $schemaType) &&
-                is_array($schema->{$schemaType})
-            )
-            ? $schema->{$schemaType}
-            : [];
-            $test = null;
-
         return $schemaType;
     }
 
@@ -390,66 +386,6 @@ class MedianocheTest extends TestCase
             return $that->nativeProp($property, $propName, null, null, $class_name);
         };
         return $new_obj;
-    }
-
-    /**
-     * Converts a property from a cebe to a nette object.
-     *
-     * @param Schema $property
-     * @param string $propName
-     * @param null|Collection<Property, string> $collection Present when calling from a `Collection::method()`.
-     * @param null|string $typeName
-     * @param null|string $class_name
-     * @return Property
-     * @throws UnhandledMatchError
-     * @throws InvalidArgumentException
-     */
-    public function nativeProp(
-        Schema $property,
-        string $propName,
-        ?Collection $collection = null,
-        ?string $typeName = null,
-        ?string $class_name = null,
-    ): Property {
-
-        $unhandled_type = static fn ($type, $name, $class_name): \UnhandledMatchError =>
-        new \UnhandledMatchError(
-            sprintf(
-                'Unhandled type "%s" for property "%s" of schema "%s"',
-                $type,
-                $name,
-                $class_name
-            )
-        );
-
-        /**
-         * Custom type identifier.
-         *
-         * The physical type filename and class name must match.
-         * Usually the type (schema/class) is capitalized CamelCase,
-         * whereas class properties that reference the types are camel_case.
-         *
-         * @see api-platform/schema-generator/src/AttributeGenerator/GenerateIdentifierNameTrait.php
-         */
-        $normalizer = static fn ($name) => ucfirst(u($name)->camel()->toString());
-
-        return (new Property($propName))
-            ->setReadOnly(true)
-            ->setComment($property->description)
-            ->setNullable(true)
-            ->setValue($property->default)
-            ->setType(
-                match ($property->type) {
-                    /* @see https://swagger.io/specification/#data-types */
-                    'string' => 'string',
-                    'integer' => 'int',
-                    'boolean' => 'bool',
-                    'float', 'double' => 'float',
-                    'object', 'array' => $normalizer($typeName ?? $propName),
-                    'date', 'dateTime' => \DateTimeInterface::class,
-                    default => throw $unhandled_type($property->type, $propName, $class_name),
-                }
-            );
     }
 
     /**
@@ -505,8 +441,8 @@ class MedianocheTest extends TestCase
          */
         $nette_props = Collection::fromIterable($schema->properties)->ifThenElse(
             $natives,
-            [$this, 'nativeProp'],
-            [$this, 'nativeProp'],
+            [MediaNoche::class, 'nativeProp'],
+            [MediaNoche::class, 'nativeProp'],
         );
         foreach ($nette_props as $name => $prop) {
             $this->logger->debug(sprintf('[%s/%s] Add class property', $class_name, $name));
@@ -518,7 +454,7 @@ class MedianocheTest extends TestCase
         if ($schema->type === 'array') {
             // Don't flatten or inline the reference, instead reference the schema as a type.
             $this->logger->debug(sprintf('[%s/%s] Add array class property', $class_name, 'items'));
-            $prop = $this->nativeProp($schema, 'items', null, $last($schema), $class_name);
+            $prop = MediaNoche::nativeProp($schema, 'items', null, $last($schema), $class_name);
             $__props[] = $prop;
         }
 
@@ -535,7 +471,7 @@ class MedianocheTest extends TestCase
 
                 // Pointer path with string ending is a reference to another schema.
                 if (! is_numeric($lastRef)) {
-                    yield $lastRef => $this->nativeProp($property, strtolower($lastRef), null, $lastRef, $class_name);
+                    yield $lastRef => MediaNoche::nativeProp($property, strtolower($lastRef), null, $lastRef, $class_name);
                 }
 
                 // Pointer path with numerical ending is an internal property.
@@ -548,7 +484,7 @@ class MedianocheTest extends TestCase
                     // The generator steps through all the object properties, causing them to become "inline", or part
                     // of the generated type.
                     foreach ($property->properties as $key => $value) {
-                        yield $key => $this->nativeProp($value, $key);
+                        yield $key => MediaNoche::nativeProp($value, $key);
                     }
                 }
             }
