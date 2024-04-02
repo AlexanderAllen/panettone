@@ -218,7 +218,7 @@ class MedianocheTest extends TestCase
     #[TestDox('Assert union use case for anyOf')]
     public function schemaTypeAnyOf(): void
     {
-        [$spec, $printer] = $this->realSetup('tests/fixtures/anyOf-simple.yml', true);
+        [$spec, $printer] = $this->realSetup('tests/fixtures/anyOf-simple.yml');
 
         $classes = [];
         foreach ($spec->components->schemas as $name => $schema) {
@@ -239,6 +239,21 @@ class MedianocheTest extends TestCase
         $this->assertContains('Me', $names, 'Assert member property references anyOf type.');
         $this->assertContains('User', $names, 'Assert member property references anyOf type.');
         $this->assertTrue($type->isUnion(), 'Assert member property type is a union');
+    }
+
+    #[Test]
+    #[Depends('schemaTypeAnyOf')]
+    #[TestDox('Assert use case for oneOf')]
+    public function schemaTypeOneOf(): void
+    {
+        [$spec, $printer] = $this->realSetup('tests/fixtures/oneOf-simple.yml', true);
+
+        $classes = [];
+        foreach ($spec->components->schemas as $name => $schema) {
+            $class = $this->newNetteClass($schema, $name);
+            $classes[$name] = $class;
+            $this->logger->debug($printer->printClass($class));
+        }
     }
 
     /**
