@@ -719,16 +719,16 @@
         },
         {
             "name": "loophp/collection",
-            "version": "7.5.2",
+            "version": "7.6.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/loophp/collection.git",
-                "reference": "b0b44687c96374a63f30e36c2c52069f9e9c55e5"
+                "reference": "a068deed401f774be817c520db293769f9494847"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/loophp/collection/zipball/b0b44687c96374a63f30e36c2c52069f9e9c55e5",
-                "reference": "b0b44687c96374a63f30e36c2c52069f9e9c55e5",
+                "url": "https://api.github.com/repos/loophp/collection/zipball/a068deed401f774be817c520db293769f9494847",
+                "reference": "a068deed401f774be817c520db293769f9494847",
                 "shasum": ""
             },
             "require": {
@@ -791,7 +791,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2024-02-20T19:42:06+00:00"
+            "time": "2024-04-02T08:40:20+00:00"
         },
         {
             "name": "loophp/iterators",
@@ -5499,16 +5499,16 @@
         },
         {
             "name": "squizlabs/php_codesniffer",
-            "version": "3.9.0",
+            "version": "3.9.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PHPCSStandards/PHP_CodeSniffer.git",
-                "reference": "d63cee4890a8afaf86a22e51ad4d97c91dd4579b"
+                "reference": "267a4405fff1d9c847134db3a3c92f1ab7f77909"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PHPCSStandards/PHP_CodeSniffer/zipball/d63cee4890a8afaf86a22e51ad4d97c91dd4579b",
-                "reference": "d63cee4890a8afaf86a22e51ad4d97c91dd4579b",
+                "url": "https://api.github.com/repos/PHPCSStandards/PHP_CodeSniffer/zipball/267a4405fff1d9c847134db3a3c92f1ab7f77909",
+                "reference": "267a4405fff1d9c847134db3a3c92f1ab7f77909",
                 "shasum": ""
             },
             "require": {
@@ -5575,7 +5575,7 @@
                     "type": "open_collective"
                 }
             ],
-            "time": "2024-02-16T15:06:51+00:00"
+            "time": "2024-03-31T21:03:09+00:00"
         },
         {
             "name": "symfony/cache",
