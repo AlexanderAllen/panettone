@@ -18,4 +18,5 @@
 ],
 "phpcs.autoConfigSearch": false,
 "phpcs.standard": "tools/phpcs/phpcs.xml",
+"phpstan.configFile": "tools/phpstan/phpstan.neon",
 }

@@ -1,0 +1,21 @@
+{
+    "name": "alexanderallen/panettone-test",
+    "description": "Dependencies for Panettone testing",
+    "type": "project",
+    "autoload": {
+        "psr-4": {
+            "Alexanderallen\\PanettoneTest\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "AlexanderAllen",
+            "email": "14018885+AlexanderAllen@users.noreply.github.com"
+        }
+    ],
+    "require": {
+        "phpstan/phpstan": "^1.10",
+        "phpstan/phpstan-strict-rules": "^1.5",
+        "phpstan/phpstan-phpunit": "^1.3"
+    }
+}
