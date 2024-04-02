@@ -112,7 +112,7 @@
         "detail": "Run PHP Insights tool",
         "type": "shell",
         "problemMatcher": "$eslint-compact",
-        "command": "php tools/insights/vendor/bin/phpinsights analyse tests src",
+        "command": "php tools/insights/vendor/bin/phpinsights --config-path=tools/insights/phpinsights.php analyse tests src",
         "group": "none",
         "isBackground": false,
         "icon": {"id": "wand", "color": "terminal.ansiYellow"},
