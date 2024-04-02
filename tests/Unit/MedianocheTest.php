@@ -27,10 +27,10 @@ use Nette\PhpGenerator\Property;
 use PHPUnit\Framework\Exception;
 use PHPUnit\Framework\ExpectationFailedException;
 use loophp\collection\Collection;
-use loophp\collection\Operation\Nullsy;
 use UnhandledMatchError;
 use Nette\InvalidArgumentException;
-use PhpParser\Node\Expr\FuncCall;
+use Nette\PhpGenerator\Type;
+use Nette\Utils\Type as UtilsType;
 
 use function Symfony\Component\String\u;
 
@@ -70,6 +70,10 @@ class MedianocheTest extends TestCase
         $this->setLogger($log ?
             new ConsoleLogger(new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG)) :
             new NullLogger());
+
+        // if (function_exists('xdebug_break') && $log === true) {
+        //     xdebug_break();
+        // }
 
         return [
             Reader::readFromYamlFile(
@@ -341,25 +345,6 @@ class MedianocheTest extends TestCase
                 default => $advanced($schema),
             })($schema);
 
-        /**
-         * Advanced type parsing.
-         * I'd be cool to have an engine that can dictate on the fly how to interpret *Ofs.
-         * Maybe by breaking the *Of logic into a swappable callable.
-         * This might be a good point for recursion since the reference could be referencing anything adf asdasd
-         *
-         * For example
-         * allOf could be interpreted as a merge op
-         */
-        $starOfs = static fn ($schema) =>
-            (
-                in_array($schemaType, $adv_types, true) &&
-                property_exists($schema, $schemaType) &&
-                is_array($schema->{$schemaType})
-            )
-            ? $schema->{$schemaType}
-            : [];
-            $test = null;
-
         return $schemaType;
     }
 
@@ -433,23 +418,58 @@ class MedianocheTest extends TestCase
          */
         $normalizer = static fn ($name) => ucfirst(u($name)->camel()->toString());
 
-        return (new Property($propName))
+        $last = static fn (Schema|Reference $p, ?bool $list = false): string =>
+            Collection::fromIterable(
+                $list === false ?
+                $p->getDocumentPosition()->getPath() :
+                $p->items->getDocumentPosition()->getPath()
+            )->last('');
+
+        $newProp = (new Property($propName))
             ->setReadOnly(true)
             ->setComment($property->description)
             ->setNullable(true)
-            ->setValue($property->default)
-            ->setType(
-                match ($property->type) {
-                    /* @see https://swagger.io/specification/#data-types */
-                    'string' => 'string',
-                    'integer' => 'int',
-                    'boolean' => 'bool',
-                    'float', 'double' => 'float',
-                    'object', 'array' => $normalizer($typeName ?? $propName),
-                    'date', 'dateTime' => \DateTimeInterface::class,
-                    default => throw $unhandled_type($property->type, $propName, $class_name),
+            ->setValue($property->default);
+
+        // $property->anyOf[0]->getDocumentPosition()->parent()->getPointer()
+        // "/components/schemas"
+        $starred = false;
+        $starRefs = [];
+        foreach (['allOf', 'anyOf', 'oneOf'] as $star) {
+            if (
+                isset($property->{$star}) &&
+                is_array($property->{$star}) &&
+                ! empty($property->{$star})
+            ) {
+                // $property->type "object"
+                // @TODO What happens when you have a native + non-native type union? (test case)
+                // and what about *Ofs nested deeper inside properties
+                // $starRefs[] = $this->propertyGenerator($property, $propName);
+                foreach ($property->{$star} as $starRef) {
+                    $starRefs[] = $last($starRef);
                 }
-            );
+                $starred = true;
+            }
+        }
+
+        if ($starred) {
+            $newProp->setType(Type::union(...$starRefs));
+            return $newProp;
+        }
+
+        $newProp->setType(
+            /* @see https://swagger.io/specification/#data-types */
+            match ($property->type) {
+                'string' => 'string',
+                'integer' => 'int',
+                'boolean' => 'bool',
+                'float', 'double' => 'float',
+                'object', 'array' => $normalizer($typeName ?? $propName),
+                'date', 'dateTime' => \DateTimeInterface::class,
+                default => throw $unhandled_type($property->type, $propName, $class_name),
+            }
+        );
+        return $newProp;
     }
 
     /**
