@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace AlexanderAllen\Panettone\Bread;
 
+use AlexanderAllen\Panettone\UnsupportedSchema;
 use cebe\openapi\spec\{Schema, Reference};
 use loophp\collection\Collection;
 use Nette\PhpGenerator\Property;
@@ -34,16 +35,6 @@ final class MediaNoche
         ?string $typeName = null,
         ?string $class_name = null,
     ): Property {
-
-        $unhandled_type = static fn ($type, $name, $class_name): \UnhandledMatchError =>
-            new \UnhandledMatchError(
-                sprintf(
-                    'Unhandled type "%s" for property "%s" of schema "%s"',
-                    $type,
-                    $name,
-                    $class_name
-                )
-            );
 
         /**
          * Custom type identifier.
@@ -104,7 +95,7 @@ final class MediaNoche
                 'float', 'double' => 'float',
                 'object', 'array' => $normalizer($typeName ?? $propName),
                 'date', 'dateTime' => \DateTimeInterface::class,
-                default => throw $unhandled_type($property->type, $propName, $class_name),
+                default => throw new UnsupportedSchema($property, $propName)
             }
         );
         return $newProp;
