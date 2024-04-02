@@ -68,7 +68,7 @@
     {
       "label": "Local: phpunit",
       "type": "shell",
-      "command": "./test",
+      "command": ". tools/phpunit/test",
       "detail": "Executes PHPUnit on the local system",
       "options": {
         "env": {
