@@ -1,6 +1,6 @@
 #!/bin/sh
 
-php vendor/bin/phpunit --no-progress \
+php tools/phpunit/vendor/bin/phpunit --no-progress \
 tests \
 --testdox \
 --log-junit $PWD/junit.xml \
