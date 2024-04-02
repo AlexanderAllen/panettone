@@ -276,7 +276,7 @@ class MedianocheTest extends TestCase
 
     #[Test]
     #[Depends('invalidSchemaTypeAnyOf')]
-    #[TestDox('Assert simple use case for anyOf')]
+    #[TestDox('Assert union use case for anyOf')]
     public function schemaTypeAnyOf(): void
     {
         [$spec, $printer] = $this->realSetup('tests/fixtures/anyOf-simple.yml', true);
@@ -287,6 +287,19 @@ class MedianocheTest extends TestCase
             $classes[$name] = $class;
             $this->logger->debug($printer->printClass($class));
         }
+
+        $this->assertArrayHasKey('PanettoneAnyOf', $classes, 'Test subject is present');
+        $subject = $classes['PanettoneAnyOf'];
+        $this->assertTrue($subject->hasProperty('origin'), 'Test member is present');
+        $member = $classes['PanettoneAnyOf']->getProperty('origin');
+
+        // See https://doc.nette.org/en/utils/type.
+        $type = UtilsType::fromString($member->getType());
+        $names = $type->getNames();
+
+        $this->assertContains('Me', $names, 'Assert member property references anyOf type.');
+        $this->assertContains('User', $names, 'Assert member property references anyOf type.');
+        $this->assertTrue($type->isUnion(), 'Assert member property type is a union');
     }
 
     /**
