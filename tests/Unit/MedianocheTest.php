@@ -32,6 +32,8 @@ use Nette\InvalidArgumentException;
 use Nette\PhpGenerator\Type;
 use Nette\Utils\Type as UtilsType;
 
+require 'tools/phpunit/vendor/autoload.php';
+
 /**
  * Test suite for nette generators.
  *
