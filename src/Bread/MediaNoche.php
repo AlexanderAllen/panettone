@@ -6,7 +6,6 @@ namespace AlexanderAllen\Panettone\Bread;
 
 use cebe\openapi\spec\{Schema, Reference};
 use loophp\collection\Collection;
-use Psr\Log\{NullLogger, LoggerAwareTrait, LoggerInterface};
 use Nette\PhpGenerator\Property;
 use Nette\PhpGenerator\Type;
 
@@ -18,13 +17,6 @@ use function Symfony\Component\String\u;
  */
 final class MediaNoche
 {
-    use LoggerAwareTrait;
-
-    public function __construct(LoggerInterface $logger = null)
-    {
-        $this->logger = ($logger !== null) ? $logger : new NullLogger();
-    }
-
     /**
      * Converts a property from a cebe to a nette object.
      *
