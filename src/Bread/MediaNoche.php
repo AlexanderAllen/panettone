@@ -47,11 +47,9 @@ final class MediaNoche
          */
         $normalizer = static fn ($name) => ucfirst(u($name)->camel()->toString());
 
-        $last = static fn (Schema|Reference $p, ?bool $list = false): string =>
+        $last = static fn (Schema|Reference $p): string =>
             Collection::fromIterable(
-                $list === false ?
-                $p->getDocumentPosition()->getPath() :
-                $p->items->getDocumentPosition()->getPath()
+                $p->getDocumentPosition()->getPath()
             )->last('');
 
         $newProp = (new Property($propName))
