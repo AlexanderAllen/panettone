@@ -1,5 +1,7 @@
 #!/bin/sh
 
+echo "Running tests for group '${1}'"
+
 php tools/phpunit/vendor/bin/phpunit --no-progress \
 tests \
 --configuration tools/phpunit/phpunit.xml \
@@ -7,5 +9,6 @@ tests \
 --log-junit $PWD/junit.xml \
 --coverage-text \
 --coverage-cobertura $PWD/coverage.cobertura.xml \
+--group $1 \
 --exclude-group ignore \
 --coverage-filter src
