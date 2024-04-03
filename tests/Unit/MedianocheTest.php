@@ -254,6 +254,19 @@ class MedianocheTest extends TestCase
             $classes[$name] = $class;
             $this->logger->debug($printer->printClass($class));
         }
+
+        $this->assertArrayHasKey('TestSubject', $classes, 'Test subject is present');
+        $subject = $classes['TestSubject'];
+        $this->assertTrue($subject->hasProperty('origin'), 'Test member is present');
+        $member = $subject->getProperty('origin');
+
+        // See https://doc.nette.org/en/utils/type.
+        $type = UtilsType::fromString($member->getType());
+        $names = $type->getNames();
+
+        $this->assertContains('Me', $names, 'Assert member property references *Of type.');
+        $this->assertContains('User', $names, 'Assert member property references *Of type.');
+        $this->assertTrue($type->isUnion(), 'Assert member property type is a union');
     }
 
     /**

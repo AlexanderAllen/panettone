@@ -13,21 +13,21 @@ paths:
       summary: Boilerplate example response.
       responses:
         '200':
-          $ref: '#/components/responses/Panettone'
+          $ref: '#/components/responses/TestResponse'
 
 components:
 
   responses:
-    Panettone:
+    TestResponse:
       description: Success
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/PanettoneAnyOf'
+            $ref: '#/components/schemas/TestSubject'
 
   schemas:
 
-    PanettoneAnyOf:
+    TestSubject:
       type: object
       properties:
         type:
@@ -39,7 +39,7 @@ components:
         origin:
           description: Origin.
           type: object
-          anyOf:
+          oneOf:
             - $ref: '#/components/schemas/Me'
             - $ref: '#/components/schemas/User'
 
