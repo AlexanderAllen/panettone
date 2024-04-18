@@ -55,7 +55,6 @@ final class MediaNoche
         $newProp = (new Property($propName))
             ->setReadOnly(true)
             ->setComment($property->description)
-            ->setNullable(true)
             ->setValue($property->default);
 
         if ($property->nullable) {
