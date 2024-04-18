@@ -58,6 +58,10 @@ final class MediaNoche
             ->setNullable(true)
             ->setValue($property->default);
 
+        if ($property->nullable) {
+            $newProp->setNullable(true);
+        }
+
         // $property->anyOf[0]->getDocumentPosition()->parent()->getPointer()
         // "/components/schemas"
         $starred = false;
