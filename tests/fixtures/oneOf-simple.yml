@@ -30,18 +30,19 @@ components:
     TestSubject:
       type: object
       properties:
-        type:
-          description: Type of activity (track).
-          type: string
-        created_at:
-          description: Created timestamp.
-          type: string
         origin:
           description: Origin.
           type: object
           oneOf:
             - $ref: '#/components/schemas/Me'
             - $ref: '#/components/schemas/User'
+          nullable: true
+        type:
+          description: Type of activity (track).
+          type: string
+        created_at:
+          description: Created timestamp.
+          type: string
 
     Me:
       type: object
