@@ -68,7 +68,7 @@
     {
       "label": "Local: phpunit",
       "type": "shell",
-      "command": ". tools/phpunit/test",
+      "command": ". tools/phpunit/test ${input:group}",
       "detail": "Executes PHPUnit on the local system",
       "options": {
         "env": {
@@ -112,7 +112,7 @@
         "detail": "Run PHP Insights tool",
         "type": "shell",
         "problemMatcher": "$eslint-compact",
-        "command": "php tools/insights/vendor/bin/phpinsights analyse tests src",
+        "command": "php tools/insights/vendor/bin/phpinsights --config-path=tools/insights/phpinsights.php analyse tests src",
         "group": "none",
         "isBackground": false,
         "icon": {"id": "wand", "color": "terminal.ansiYellow"},
@@ -124,6 +124,12 @@
         "type": "promptString",
         "description": "Open API source",
         "default": "schema/soundcloud/oas-1.0.1.yml"
+    },
+    {
+        "id": "group",
+        "type": "promptString",
+        "description": "PHPUnit test group",
+        "default": "target"
     }
   ]
 }

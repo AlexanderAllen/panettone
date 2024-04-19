@@ -8,9 +8,7 @@
 "phpstan.rootDir": "",
 
   "phpcs.showSources": true,
-  "phpcs.standard": "./phpcs.xml",
-  "phpcs.executablePath": "./vendor/bin/phpcs",
-  "phpcs.enable": true,
+"phpcs.executablePath": "tools/phpcs/vendor/bin/phpcs",
   "editor.tabSize": 4,
 "editor.detectIndentation": false,
 "phpstan.enableLanguageServer": false,
@@ -18,4 +16,7 @@
     "vendor",
     "tools/phpunit/vendor"
 ],
+"phpcs.autoConfigSearch": false,
+"phpcs.standard": "tools/phpcs/phpcs.xml",
+"phpstan.configFile": "tools/phpstan/phpstan.neon",
 }

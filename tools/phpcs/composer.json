@@ -1,0 +1,25 @@
+{
+    "name": "alexanderallen/panettone-test",
+    "description": "Dependencies for Panettone testing",
+    "type": "project",
+    "autoload": {
+        "psr-4": {
+            "Alexanderallen\\PanettoneTest\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "AlexanderAllen",
+            "email": "14018885+AlexanderAllen@users.noreply.github.com"
+        }
+    ],
+    "require-dev": {
+        "squizlabs/php_codesniffer": "^3.9",
+        "slevomat/coding-standard": "^8.15"
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    }
+}

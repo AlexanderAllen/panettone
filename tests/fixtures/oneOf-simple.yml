@@ -13,35 +13,36 @@ paths:
       summary: Boilerplate example response.
       responses:
         '200':
-          $ref: '#/components/responses/Panettone'
+          $ref: '#/components/responses/TestResponse'
 
 components:
 
   responses:
-    Panettone:
+    TestResponse:
       description: Success
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/PanettoneAnyOf'
+            $ref: '#/components/schemas/TestSubject'
 
   schemas:
 
-    PanettoneAnyOf:
+    TestSubject:
       type: object
       properties:
+        origin:
+          description: Origin.
+          type: object
+          oneOf:
+            - $ref: '#/components/schemas/Me'
+            - $ref: '#/components/schemas/User'
+          nullable: true
         type:
           description: Type of activity (track).
           type: string
         created_at:
           description: Created timestamp.
           type: string
-        origin:
-          description: Origin.
-          type: object
-          anyOf:
-            - $ref: '#/components/schemas/Me'
-            - $ref: '#/components/schemas/User'
 
     Me:
       type: object

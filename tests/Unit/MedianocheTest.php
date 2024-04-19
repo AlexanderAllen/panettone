@@ -175,7 +175,7 @@ class MedianocheTest extends TestCase
     #[TestDox('Simple use case for schema of type allOf')]
     public function schemaTypeAllOf(): void
     {
-        [$spec, $printer] = $this->realSetup('tests/fixtures/allOf-simple.yml');
+        [$spec, $printer] = $this->realSetup('tests/fixtures/allOf-simple.yml', true);
 
         $classes = [];
         foreach ($spec->components->schemas as $name => $schema) {
@@ -242,7 +242,7 @@ class MedianocheTest extends TestCase
     }
 
     #[Test]
-    #[Depends('schemaTypeAnyOf')]
+    #[Group('target')]
     #[TestDox('Assert use case for oneOf')]
     public function schemaTypeOneOf(): void
     {
@@ -254,6 +254,19 @@ class MedianocheTest extends TestCase
             $classes[$name] = $class;
             $this->logger->debug($printer->printClass($class));
         }
+
+        $this->assertArrayHasKey('TestSubject', $classes, 'Test subject is present');
+        $subject = $classes['TestSubject'];
+        $this->assertTrue($subject->hasProperty('origin'), 'Test member is present');
+        $member = $subject->getProperty('origin');
+
+        // See https://doc.nette.org/en/utils/type.
+        $type = UtilsType::fromString($member->getType());
+        $names = $type->getNames();
+
+        $this->assertContains('Me', $names, 'Assert member property references *Of type.');
+        $this->assertContains('User', $names, 'Assert member property references *Of type.');
+        $this->assertTrue($type->isUnion(), 'Assert member property type is a union');
     }
 
     /**
@@ -311,35 +324,6 @@ class MedianocheTest extends TestCase
             })($schema);
 
         return $schemaType;
-    }
-
-    private function newObj(Schema $schema, string $class_name = ''): callable
-    {
-        $refdSchema = static fn (Schema $schema): string =>
-            Collection::fromIterable($schema->items->getDocumentPosition()->getPath())
-            ->last('');
-
-        // Set aside nested cebe objects for additional processing.
-        // I'd be nice to have an injectable rules matcher/executor for unit testing.
-        static $nested_objects = [];
-        $that = $this;
-        $new_obj = static function (Schema $property, string $propName) use ($refdSchema, $nested_objects, $class_name, $that): Property {
-
-            $nested_objects[$propName] = $property;
-            if ($property->type == 'array') {
-                // Shape: "object schema, has array property, items have single reference
-                // PHP shape: Type -> CustomType $propertyName
-                // The type of the property must match the referenced type (class).
-                if ($property->items instanceof \cebe\openapi\spec\Schema) {
-                    // Use the referenced schema as the type for the property.
-                    return $that->nativeProp($property->items, $propName, null, $refdSchema($property), $class_name);
-                }
-            }
-
-            // This will create a new class property with a custom type.
-            return $that->nativeProp($property, $propName, null, null, $class_name);
-        };
-        return $new_obj;
     }
 
     /**

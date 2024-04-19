@@ -36,6 +36,45 @@ final class MediaNoche
         ?string $class_name = null,
     ): Property {
 
+        $newProp = (new Property($propName))
+            ->setReadOnly(true)
+            ->setComment($property->description)
+            ->setValue($property->default);
+
+        if ($property->nullable) {
+            $newProp->setNullable(true);
+        }
+
+        // The star logic does not trigger for root schemas of star type,
+        // only for child schema properties of type star.
+
+        $starProps = self::getStarProps($property);
+        // $starProps['oneOf'][0]->getDocumentPosition()->getPath()
+        // $starProps['oneOf'][0]->getDocumentPosition()->getPointer()
+
+        // Dereference schemas.
+        $lastRefs = self::derefSchemaNames($starProps);
+
+        // If star allOf: intersection, anyOf|oneOf: union.
+        if (!empty($starProps)) {
+            foreach ($lastRefs as $starType => $starRefs) {
+                if ($starType == 'allOf') {
+                    $newProp->setType(Type::intersection(...$starRefs));
+                } else {
+                    $newProp->setType(Type::union(...$starRefs));
+                }
+            }
+        } else {
+            $newProp->setType(
+                self::nativeTypeMatch($property->type, $propName, $typeName)
+            );
+        }
+
+        return $newProp;
+    }
+
+    private static function nativeTypeMatch(string $type, string $propName, string $typeName = null): string
+    {
         /**
          * Custom type identifier.
          *
@@ -47,55 +86,61 @@ final class MediaNoche
          */
         $normalizer = static fn ($name) => ucfirst(u($name)->camel()->toString());
 
-        $last = static fn (Schema|Reference $p): string =>
-            Collection::fromIterable(
-                $p->getDocumentPosition()->getPath()
-            )->last('');
+        /* @see https://swagger.io/specification/#data-types */
+        return match ($type) {
+            'string' => 'string',
+            'integer' => 'int',
+            'boolean' => 'bool',
+            'float', 'double' => 'float',
+            'object', 'array' => $normalizer($typeName ?? $propName),
+            'date', 'dateTime' => \DateTimeInterface::class,
+            default => 'string',
+            // default => throw new UnsupportedSchema($property, $propName)
+        };
+    }
 
-        $newProp = (new Property($propName))
-            ->setReadOnly(true)
-            ->setComment($property->description)
-            ->setNullable(true)
-            ->setValue($property->default);
-
-        // $property->anyOf[0]->getDocumentPosition()->parent()->getPointer()
-        // "/components/schemas"
-        $starred = false;
-        $starRefs = [];
+    /**
+     * Detect starred schemas.
+     *
+     * @param Schema|Reference $property
+     * @return array<string, array<Schema|Reference>>
+     */
+    private static function getStarProps(Schema|Reference $property): array
+    {
+        $starProps = [];
         foreach (['allOf', 'anyOf', 'oneOf'] as $star) {
             if (
                 isset($property->{$star}) &&
                 is_array($property->{$star}) &&
                 ! empty($property->{$star})
             ) {
-                // $property->type "object"
-                // @TODO What happens when you have a native + non-native type union? (test case)
-                // and what about *Ofs nested deeper inside properties
-                // $starRefs[] = $this->propertyGenerator($property, $propName);
-                foreach ($property->{$star} as $starRef) {
-                    $starRefs[] = $last($starRef);
-                }
-                $starred = true;
+                $starProps[$star] = $property->{$star};
+            }
+        }
+        return $starProps;
+    }
+
+    /**
+     * Dereference schemas.
+     *
+     * @param array<string, array<Schema|Reference>> $starProps
+     * @return array<string, array<string>>
+     */
+    private static function derefSchemaNames(array $starProps): array
+    {
+        $last = static fn (Schema|Reference $p): string =>
+            Collection::fromIterable(
+                $p->getDocumentPosition()->getPath()
+            )->last('');
+
+        $lastRefs = [];
+
+        foreach ($starProps as $star => $property) {
+            foreach ($property as $starRef) {
+                $lastRefs[$star][] = $last($starRef);
             }
         }
 
-        if ($starred) {
-            $newProp->setType(Type::union(...$starRefs));
-            return $newProp;
-        }
-
-        $newProp->setType(
-            /* @see https://swagger.io/specification/#data-types */
-            match ($property->type) {
-                'string' => 'string',
-                'integer' => 'int',
-                'boolean' => 'bool',
-                'float', 'double' => 'float',
-                'object', 'array' => $normalizer($typeName ?? $propName),
-                'date', 'dateTime' => \DateTimeInterface::class,
-                default => throw new UnsupportedSchema($property, $propName)
-            }
-        );
-        return $newProp;
+        return $lastRefs;
     }
 }

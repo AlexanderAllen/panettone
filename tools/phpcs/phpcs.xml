@@ -11,7 +11,7 @@
   <autoload>./vendor/autoload.php</autoload>
 
   <!-- See https://github.com/slevomat/coding-standard -->
-  <config name="installed_paths" value="vendor/slevomat/coding-standard"/>
+  <config name="installed_paths" value="tools/phpcs/vendor/slevomat/coding-standard"/>
 
   <rule ref="PSR12" />
 
