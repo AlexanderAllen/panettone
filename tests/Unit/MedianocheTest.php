@@ -135,6 +135,11 @@ class MedianocheTest extends TestCase
         );
     }
 
+    /**
+     * Test case for allOf.
+     *
+     * @TODO Update assertions, see issue #19.
+     */
     #[Test]
     #[Depends('proceduralish')]
     #[TestDox('Simple use case for keyword allOf')]
@@ -160,8 +165,6 @@ class MedianocheTest extends TestCase
             $classes['TooManyRequests']->getProperty('error')->getType(),
             'The type on properties that reference other types should match the referenced type'
         );
-
-        // @TODO Should assert that result type is an intersection and not an union.
     }
 
     #[Test]
