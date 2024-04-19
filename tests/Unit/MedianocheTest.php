@@ -35,6 +35,8 @@ use Nette\Utils\Type as UtilsType;
 /**
  * Test suite for nette generators.
  *
+ * @phpstan-type TestTuple array{OpenApi, Printer}
+ *
  * @package AlexanderAllen\Panettone\Test
  */
 #[CoversClass(MediaNoche::class)]
@@ -55,10 +57,16 @@ class MedianocheTest extends TestCase
     /**
      * The real fixture method - setup the spec and logging for every test.
      *
-     * @param string $spec
-     * @param bool $log
+     * Most tests in this suite read from a OAS source. This method just cuts
+     * down some of that boilerplate, along with some of the logging ceremonies.
      *
-     * @return array{OpenApi, Printer}
+     * @param string $spec
+     *   The path to the Open API specification.
+     * @param bool $log
+     *   A Nette Printer instance used for logging and debugging.
+     *
+     * @return TestTuple
+     *   A tuple with the cebe OAS graph a Nette Printer instance.
      * @throws TypeErrorException
      * @throws UnresolvableReferenceException
      * @throws IOException
