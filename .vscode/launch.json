@@ -5,6 +5,17 @@
   "version": "0.2.0",
   "configurations": [
     {
+        "name": "Local: debug",
+        "type": "php",
+        "request": "launch",
+        "port": 9003,
+        "hostname": "localhost",
+        "xdebugSettings": {
+          "show_hidden": 1,
+        },
+        "stopOnEntry": false
+    },
+    {
       "name": "Lando: debug",
 
       "type": "php",
@@ -18,32 +29,6 @@
         "show_hidden": 1,
       },
       "stopOnEntry": false,
-    },
-    {
-        "name": "Local: debug",
-        "type": "php",
-        "request": "launch",
-        "port": 9003,
-        "hostname": "localhost",
-        "xdebugSettings": {
-          "show_hidden": 1,
-        },
-        "stopOnEntry": false
-      },
-    {
-      "name": "Launch currently open script",
-      "type": "php",
-      "request": "launch",
-      "program": "${file}",
-      "cwd": "${fileDirname}",
-      "port": 0,
-      "runtimeArgs": [
-        "-dxdebug.start_with_request=yes"
-      ],
-      "env": {
-        "XDEBUG_MODE": "debug,develop",
-        "XDEBUG_CONFIG": "client_port=${port}"
-      }
-    },
+    }
   ]
 }

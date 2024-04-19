@@ -1,0 +1,77 @@
+openapi: 3.0.1
+info:
+  title: Panettone schema for `not` keyword
+  version: 1.0.0
+  description: |
+    Simple use cases for `not` schema type.
+
+servers:
+  - url: https://localhost
+paths:
+  /me:
+    get:
+      summary: Boilerplate example response.
+      responses:
+        '200':
+          $ref: '#/components/responses/TestResponse'
+
+components:
+
+  responses:
+    TestResponse:
+      description: Success
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TestSubject'
+
+  schemas:
+
+    TestSubject:
+      type: object
+      properties:
+        property_scalar:
+          not:
+            type: integer
+        property_object_reference:
+          not:
+            $ref: '#/components/schemas/Me'
+        property_object_literal_nested_ref:
+          not:
+            type: object
+            allOf:
+              - $ref: '#/components/schemas/Me'
+      required:
+        - property_scalar
+
+    Me:
+      type: object
+      description: SoundCloud Me object
+      properties:
+        avatar_url:
+          description: URL to a JPEG image.
+          type: string
+        city:
+          description: city.
+          type: string
+        comments_count:
+          description: comments count. From now on, the field always has a `0` value.
+          type: integer
+          deprecated: true
+
+    User:
+      type: object
+      description: SoundCloud User object
+      properties:
+        avatar_url:
+          description: URL to a JPEG image
+          type: string
+        username:
+          description: username
+          type: string
+        website:
+          description: a URL to the website
+          type: string
+        website_title:
+          description: a custom title for the website
+          type: string

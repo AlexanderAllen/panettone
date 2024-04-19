@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace AlexanderAllen\Panettone\Bread;
 
-use AlexanderAllen\Panettone\UnsupportedSchema;
 use cebe\openapi\spec\{Schema, Reference};
 use loophp\collection\Collection;
 use Nette\PhpGenerator\Property;
 use Nette\PhpGenerator\Type;
+use RuntimeException;
 
 use function Symfony\Component\String\u;
 
@@ -64,11 +64,18 @@ final class MediaNoche
                     $newProp->setType(Type::union(...$starRefs));
                 }
             }
-        } else {
-            $newProp->setType(
-                self::nativeTypeMatch($property->type, $propName, $typeName)
-            );
+            return $newProp;
         }
+
+        // The not keyword is not an array.
+        if (isset($property->not)) {
+            $newProp->setType('mixed');
+            return $newProp;
+        }
+
+        $newProp->setType(
+            self::nativeTypeMatch($property->type, $propName, $typeName)
+        );
 
         return $newProp;
     }
@@ -94,8 +101,7 @@ final class MediaNoche
             'float', 'double' => 'float',
             'object', 'array' => $normalizer($typeName ?? $propName),
             'date', 'dateTime' => \DateTimeInterface::class,
-            default => 'string',
-            // default => throw new UnsupportedSchema($property, $propName)
+            default => throw new RuntimeException("Unsupported schema property type {$type}")
         };
     }
 
@@ -103,17 +109,18 @@ final class MediaNoche
      * Detect starred schemas.
      *
      * @param Schema|Reference $property
-     * @return array<string, array<Schema|Reference>>
+     * @return array<string, mixed>
      */
     private static function getStarProps(Schema|Reference $property): array
     {
+        // Star keywords are represented in both Open API and cebe as arrays.
         $starProps = [];
         foreach (['allOf', 'anyOf', 'oneOf'] as $star) {
             if (
                 isset($property->{$star}) &&
-                is_array($property->{$star}) &&
                 ! empty($property->{$star})
             ) {
+                assert(is_array($property->{$star}), "Schema property {$star} must be of type array");
                 $starProps[$star] = $property->{$star};
             }
         }
@@ -122,6 +129,8 @@ final class MediaNoche
 
     /**
      * Dereference schemas.
+     *
+     * Only works when the property is an array, such as `allOf`, etc.
      *
      * @param array<string, array<Schema|Reference>> $starProps
      * @return array<string, array<string>>

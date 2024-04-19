@@ -55,10 +55,16 @@ class MedianocheTest extends TestCase
     /**
      * The real fixture method - setup the spec and logging for every test.
      *
+     * Most tests in this suite read from a OAS source. This method just cuts
+     * down some of that boilerplate, along with some of the logging ceremonies.
+     *
      * @param string $spec
+     *   The path to the Open API specification.
      * @param bool $log
+     *   A Nette Printer instance used for logging and debugging.
      *
      * @return array{OpenApi, Printer}
+     *   A tuple with the cebe OAS graph a Nette Printer instance.
      * @throws TypeErrorException
      * @throws UnresolvableReferenceException
      * @throws IOException
@@ -172,10 +178,10 @@ class MedianocheTest extends TestCase
      */
     #[Test]
     #[Depends('proceduralish')]
-    #[TestDox('Simple use case for schema of type allOf')]
+    #[TestDox('Simple use case for keyword allOf')]
     public function schemaTypeAllOf(): void
     {
-        [$spec, $printer] = $this->realSetup('tests/fixtures/allOf-simple.yml', true);
+        [$spec, $printer] = $this->realSetup('tests/fixtures/keyword-allOf-simple.yml', true);
 
         $classes = [];
         foreach ($spec->components->schemas as $name => $schema) {
@@ -195,14 +201,16 @@ class MedianocheTest extends TestCase
             $classes['TooManyRequests']->getProperty('error')->getType(),
             'The type on properties that reference other types should match the referenced type'
         );
+
+        // @TODO Should assert that result type is an intersection and not an union.
     }
 
     #[Test]
     #[Depends('schemaTypeAllOf')]
-    #[TestDox('Assert unsupported use case for anyOf')]
+    #[TestDox('Assert unsupported use case for keyword anyOf')]
     public function invalidSchemaTypeAnyOf(): void
     {
-        [$spec, $printer] = $this->realSetup('tests/fixtures/anyOf-invalid.yml');
+        [$spec, $printer] = $this->realSetup('tests/fixtures/keyword-anyOf-invalid.yml');
 
         $this->expectException(UnsupportedSchema::class);
         $classes = [];
@@ -215,10 +223,10 @@ class MedianocheTest extends TestCase
 
     #[Test]
     #[Depends('invalidSchemaTypeAnyOf')]
-    #[TestDox('Assert union use case for anyOf')]
+    #[TestDox('Assert union use case for keyword anyOf')]
     public function schemaTypeAnyOf(): void
     {
-        [$spec, $printer] = $this->realSetup('tests/fixtures/anyOf-simple.yml');
+        [$spec, $printer] = $this->realSetup('tests/fixtures/keyword-anyOf-simple.yml');
 
         $classes = [];
         foreach ($spec->components->schemas as $name => $schema) {
@@ -242,11 +250,10 @@ class MedianocheTest extends TestCase
     }
 
     #[Test]
-    #[Group('target')]
-    #[TestDox('Assert use case for oneOf')]
+    #[TestDox('Assert use case for keyword oneOf')]
     public function schemaTypeOneOf(): void
     {
-        [$spec, $printer] = $this->realSetup('tests/fixtures/oneOf-simple.yml', true);
+        [$spec, $printer] = $this->realSetup('tests/fixtures/keyword-oneOf-simple.yml', true);
 
         $classes = [];
         foreach ($spec->components->schemas as $name => $schema) {
@@ -267,6 +274,54 @@ class MedianocheTest extends TestCase
         $this->assertContains('Me', $names, 'Assert member property references *Of type.');
         $this->assertContains('User', $names, 'Assert member property references *Of type.');
         $this->assertTrue($type->isUnion(), 'Assert member property type is a union');
+    }
+
+    /**
+     * Use case for `not` keyword.
+     *
+     * There is no such thing as a negation type, from a static code perspective.
+     * From the [PetStore](https://swagger.io/docs/specification/data-models/oneof-anyof-allof-not/) documentation:
+     *
+     * ```text
+     * In this example, user should specify the pet_type value of any type except integer...
+     * ```
+     * The closest thing I think can match this requirement is the `mixed` type,
+     * which ironically is the default in a loose-type language like PHP. However, since PHP 8.0
+     * `mixed` can be specified literally, which would make the printed type's intent more clear.
+     *
+     * Mixed references:
+     *  - [PHP Manual, types](https://www.php.net/manual/en/language.types.mixed.php)
+     *  - [PHP 8.0: New mixed pseudo type](https://php.watch/versions/8.0/mixed-type)
+     *
+     * Mixed is kinda evil and you shouldn't use it, but I do need to have at least some sort of
+     * basic detection/support for the use case so the program doesn't explode. This use case is
+     * for testing that basic support using `mixed`.
+     */
+    #[Test]
+    #[Group('target')]
+    #[TestDox('Assert use case for keyword not')]
+    public function schemaTypeNot(): void
+    {
+        [$spec, $printer] = $this->realSetup('tests/fixtures/keyword-not-simple.yml', true);
+
+        $classes = [];
+        foreach ($spec->components->schemas as $name => $schema) {
+            $class = $this->newNetteClass($schema, $name);
+            $classes[$name] = $class;
+            $this->logger->debug($printer->printClass($class));
+        }
+
+        $this->assertArrayHasKey('TestSubject', $classes, 'Test subject is present');
+        $subject = $classes['TestSubject'];
+        $this->assertTrue($subject->hasProperty('property_scalar'), 'Test property is present');
+        $member = $subject->getProperty('property_scalar');
+
+        // See https://doc.nette.org/en/utils/type.
+        $type = UtilsType::fromString($member->getType());
+        $names = $type->getNames();
+
+        $this->assertContains('mixed', $names, 'Assert member property is of type mixed.');
+        $this->assertTrue($type->isSimple() && $type->isBuiltin(), 'Assert member property type.');
     }
 
     /**
