@@ -276,6 +276,27 @@ class MedianocheTest extends TestCase
         $this->assertTrue($type->isUnion(), 'Assert member property type is a union');
     }
 
+    /**
+     * Use case for `not` keyword.
+     *
+     * There is no such thing as a negation type, from a static code perspective.
+     * From the [PetStore](https://swagger.io/docs/specification/data-models/oneof-anyof-allof-not/) documentation:
+     *
+     * ```text
+     * In this example, user should specify the pet_type value of any type except integer...
+     * ```
+     * The closest thing I think can match this requirement is the `mixed` type,
+     * which ironically is the default in a loose-type language like PHP. However, since PHP 8.0
+     * `mixed` can be specified literally, which would make the printed type's intent more clear.
+     *
+     * Mixed references:
+     *  - [PHP Manual, types](https://www.php.net/manual/en/language.types.mixed.php)
+     *  - [PHP 8.0: New mixed pseudo type](https://php.watch/versions/8.0/mixed-type)
+     *
+     * Mixed is kinda evil and you shouldn't use it, but I do need to have at least some sort of
+     * basic detection/support for the use case so the program doesn't explode. This use case is
+     * for testing that basic support using `mixed`.
+     */
     #[Test]
     #[Group('target')]
     #[TestDox('Assert use case for keyword not')]
