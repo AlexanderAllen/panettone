@@ -1,9 +1,9 @@
 openapi: 3.0.1
 info:
-  title: Panettone oneOf schema
-  version: 1.0.1
+  title: Panettone schema for `not` keyword
+  version: 1.0.0
   description: |
-    Simple use cases for `oneOf` schema type.
+    Simple use cases for `not` schema type.
 
 servers:
   - url: https://localhost
@@ -30,19 +30,19 @@ components:
     TestSubject:
       type: object
       properties:
-        origin:
-          description: Origin.
-          type: object
-          oneOf:
-            - $ref: '#/components/schemas/Me'
-            - $ref: '#/components/schemas/User'
-          nullable: true
-        type:
-          description: Type of activity (track).
-          type: string
-        created_at:
-          description: Created timestamp.
-          type: string
+        property_scalar:
+          not:
+            type: integer
+        property_object_reference:
+          not:
+            $ref: '#/components/schemas/Me'
+        property_object_literal_nested_ref:
+          not:
+            type: object
+            allOf:
+              - $ref: '#/components/schemas/Me'
+      required:
+        - property_scalar
 
     Me:
       type: object
@@ -58,32 +58,6 @@ components:
           description: comments count. From now on, the field always has a `0` value.
           type: integer
           deprecated: true
-
-    Activities:
-      type: object
-      description: User's activities.
-      properties:
-        collection:
-          type: array
-          items:
-            type: object
-            properties:
-              type:
-                description: Type of activity (track).
-                type: string
-              created_at:
-                description: Created timestamp.
-                type: string
-              origin:
-                description: Origin.
-                type: object
-                anyOf:
-                  - $ref: '#/components/schemas/Me'
-                  - $ref: '#/components/schemas/User'
-        next_href:
-          type: string
-        future_href:
-          type: string
 
     User:
       type: object

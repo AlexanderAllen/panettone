@@ -35,8 +35,6 @@ use Nette\Utils\Type as UtilsType;
 /**
  * Test suite for nette generators.
  *
- * @phpstan-type TestTuple array{OpenApi, Printer}
- *
  * @package AlexanderAllen\Panettone\Test
  */
 #[CoversClass(MediaNoche::class)]
@@ -65,7 +63,7 @@ class MedianocheTest extends TestCase
      * @param bool $log
      *   A Nette Printer instance used for logging and debugging.
      *
-     * @return TestTuple
+     * @return array{OpenApi, Printer}
      *   A tuple with the cebe OAS graph a Nette Printer instance.
      * @throws TypeErrorException
      * @throws UnresolvableReferenceException
@@ -203,6 +201,8 @@ class MedianocheTest extends TestCase
             $classes['TooManyRequests']->getProperty('error')->getType(),
             'The type on properties that reference other types should match the referenced type'
         );
+
+        // @TODO Should assert that result type is an intersection and not an union.
     }
 
     #[Test]
@@ -313,16 +313,15 @@ class MedianocheTest extends TestCase
 
         $this->assertArrayHasKey('TestSubject', $classes, 'Test subject is present');
         $subject = $classes['TestSubject'];
-        $this->assertTrue($subject->hasProperty('origin'), 'Test member is present');
-        $member = $subject->getProperty('origin');
+        $this->assertTrue($subject->hasProperty('property_scalar'), 'Test property is present');
+        $member = $subject->getProperty('property_scalar');
 
         // See https://doc.nette.org/en/utils/type.
         $type = UtilsType::fromString($member->getType());
         $names = $type->getNames();
 
-        $this->assertContains('Me', $names, 'Assert member property references *Of type.');
-        $this->assertContains('User', $names, 'Assert member property references *Of type.');
-        $this->assertTrue($type->isUnion(), 'Assert member property type is a union');
+        $this->assertContains('mixed', $names, 'Assert member property is of type mixed.');
+        $this->assertTrue($type->isSimple() && $type->isBuiltin(), 'Assert member property type.');
     }
 
     /**
