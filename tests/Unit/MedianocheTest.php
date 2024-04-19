@@ -183,7 +183,7 @@ class MedianocheTest extends TestCase
     #[TestDox('Simple use case for keyword allOf')]
     public function schemaTypeAllOf(): void
     {
-        [$spec, $printer] = $this->realSetup('tests/fixtures/allOf-simple.yml', true);
+        [$spec, $printer] = $this->realSetup('tests/fixtures/keyword-allOf-simple.yml', true);
 
         $classes = [];
         foreach ($spec->components->schemas as $name => $schema) {
@@ -210,7 +210,7 @@ class MedianocheTest extends TestCase
     #[TestDox('Assert unsupported use case for keyword anyOf')]
     public function invalidSchemaTypeAnyOf(): void
     {
-        [$spec, $printer] = $this->realSetup('tests/fixtures/anyOf-invalid.yml');
+        [$spec, $printer] = $this->realSetup('tests/fixtures/keyword-anyOf-invalid.yml');
 
         $this->expectException(UnsupportedSchema::class);
         $classes = [];
@@ -226,7 +226,7 @@ class MedianocheTest extends TestCase
     #[TestDox('Assert union use case for keyword anyOf')]
     public function schemaTypeAnyOf(): void
     {
-        [$spec, $printer] = $this->realSetup('tests/fixtures/anyOf-simple.yml');
+        [$spec, $printer] = $this->realSetup('tests/fixtures/keyword-anyOf-simple.yml');
 
         $classes = [];
         foreach ($spec->components->schemas as $name => $schema) {
@@ -253,7 +253,7 @@ class MedianocheTest extends TestCase
     #[TestDox('Assert use case for keyword oneOf')]
     public function schemaTypeOneOf(): void
     {
-        [$spec, $printer] = $this->realSetup('tests/fixtures/oneOf-simple.yml', true);
+        [$spec, $printer] = $this->realSetup('tests/fixtures/keyword-oneOf-simple.yml', true);
 
         $classes = [];
         foreach ($spec->components->schemas as $name => $schema) {
