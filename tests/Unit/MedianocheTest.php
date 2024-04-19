@@ -342,6 +342,8 @@ class MedianocheTest extends TestCase
      * Nette class generator.
      *
      * Does two things: generate the class, populate it with properties.
+     *
+     * @TODO Issues #22, #23, namespaces and config file.
      */
     private function newNetteClass(Schema $schema, string $class_name): ClassType
     {
@@ -388,6 +390,8 @@ class MedianocheTest extends TestCase
         /**
          * Convert all cebe schema props to nette props.
          * @var Collection<string, Property> $nette_props
+         *
+         * @TODO Cleanup per tix #15.
          */
         $nette_props = Collection::fromIterable($schema->properties)->ifThenElse(
             $natives,
