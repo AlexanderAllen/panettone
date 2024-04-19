@@ -135,47 +135,6 @@ class MedianocheTest extends TestCase
         );
     }
 
-    // ADV_ALLOF_EDGECASE
-    // TooManyRequests:
-    // allOf:
-    //   - $ref: '#/components/schemas/Error'
-    //   - $ref: '#/components/schemas/Error'
-    //   - type: object
-    //     properties:
-    //       spam_warning_urn:
-    //         type: string
-    //       some_other_ref:
-    //         $ref: '#/components/schemas/Error'
-
-    /**
-     * Test for schema with a Type of "allOf".
-     *
-     * # This ...
-     * TooManyRequests:
-     *   allOf:
-     *     - $ref: '#/components/schemas/Error'
-     *     - type: object
-     *       properties:
-     *         spam_warning_urn:
-     *           type: string
-     *
-     * # Should translate to this ...
-     *   Class TooManyRequests
-     *     public readonly ?Error $error = null
-     *     public ?string $spam_warning_urn = null
-     *
-     * Notes:
-     *   - cebe interprets the first $ref as an object, complete with inline properties ready for use
-     *     when using `RESOLVE_MODE_ALL`. Adding these props straight away would result in inlined props
-     *     and therefore duplicate props between types!
-     *   - Both the first $ref Schema item and the second 'anonymous' Schema item have a cebe
-     *     Schema type of `object`. Keep an eye on the conditions on the prop generator
-     *     to prevent these getting mixed up.
-     *
-     * @TODO Test more complex edge cases w/ multiple and nested references. See ADV_ALLOF_EDGECASE above.
-     *
-     * @see https://swagger.io/docs/specification/data-models/oneof-anyof-allof-not/
-     */
     #[Test]
     #[Depends('proceduralish')]
     #[TestDox('Simple use case for keyword allOf')]
