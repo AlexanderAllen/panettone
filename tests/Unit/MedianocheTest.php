@@ -480,7 +480,7 @@ class MedianocheTest extends TestCase
          * So basically a anyOf generator should return a big ol list of types to be added to a Union.
          * Some of them just references, some of them fully populated objects or native types.
          *
-         * @TODO The above comment needs to be worded better, but the ball needs to get rollin'
+         * @TODO The commen above and code needs some sanity check per #15.
          *
          * @see https://dev.to/drupalista/dev-log-330-anyof-2jgm
          */
