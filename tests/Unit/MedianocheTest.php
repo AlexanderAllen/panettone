@@ -348,7 +348,6 @@ class MedianocheTest extends TestCase
             // $schema->enum;
             // $schema->uniqueItems;
             // $schema->additionalProperties;
-            // $schema->not
 
             // TooManyRequests is a hard one bc it contains 1. AllOf(ref), 2.add'tProps w/ object.
             // An even more hardcore test would be add'tProps object w/ ref or even more w/ all/anyOfs (refs)
