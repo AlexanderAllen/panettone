@@ -172,7 +172,7 @@ class MedianocheTest extends TestCase
      */
     #[Test]
     #[Depends('proceduralish')]
-    #[TestDox('Simple use case for schema of type allOf')]
+    #[TestDox('Simple use case for keyword allOf')]
     public function schemaTypeAllOf(): void
     {
         [$spec, $printer] = $this->realSetup('tests/fixtures/allOf-simple.yml', true);
@@ -199,7 +199,7 @@ class MedianocheTest extends TestCase
 
     #[Test]
     #[Depends('schemaTypeAllOf')]
-    #[TestDox('Assert unsupported use case for anyOf')]
+    #[TestDox('Assert unsupported use case for keyword anyOf')]
     public function invalidSchemaTypeAnyOf(): void
     {
         [$spec, $printer] = $this->realSetup('tests/fixtures/anyOf-invalid.yml');
@@ -215,7 +215,7 @@ class MedianocheTest extends TestCase
 
     #[Test]
     #[Depends('invalidSchemaTypeAnyOf')]
-    #[TestDox('Assert union use case for anyOf')]
+    #[TestDox('Assert union use case for keyword anyOf')]
     public function schemaTypeAnyOf(): void
     {
         [$spec, $printer] = $this->realSetup('tests/fixtures/anyOf-simple.yml');
@@ -242,11 +242,38 @@ class MedianocheTest extends TestCase
     }
 
     #[Test]
-    #[Group('target')]
-    #[TestDox('Assert use case for oneOf')]
+    #[TestDox('Assert use case for keyword oneOf')]
     public function schemaTypeOneOf(): void
     {
         [$spec, $printer] = $this->realSetup('tests/fixtures/oneOf-simple.yml', true);
+
+        $classes = [];
+        foreach ($spec->components->schemas as $name => $schema) {
+            $class = $this->newNetteClass($schema, $name);
+            $classes[$name] = $class;
+            $this->logger->debug($printer->printClass($class));
+        }
+
+        $this->assertArrayHasKey('TestSubject', $classes, 'Test subject is present');
+        $subject = $classes['TestSubject'];
+        $this->assertTrue($subject->hasProperty('origin'), 'Test member is present');
+        $member = $subject->getProperty('origin');
+
+        // See https://doc.nette.org/en/utils/type.
+        $type = UtilsType::fromString($member->getType());
+        $names = $type->getNames();
+
+        $this->assertContains('Me', $names, 'Assert member property references *Of type.');
+        $this->assertContains('User', $names, 'Assert member property references *Of type.');
+        $this->assertTrue($type->isUnion(), 'Assert member property type is a union');
+    }
+
+    #[Test]
+    #[Group('target')]
+    #[TestDox('Assert use case for keyword not')]
+    public function schemaTypeNot(): void
+    {
+        [$spec, $printer] = $this->realSetup('tests/fixtures/keyword-not-simple.yml', true);
 
         $classes = [];
         foreach ($spec->components->schemas as $name => $schema) {
