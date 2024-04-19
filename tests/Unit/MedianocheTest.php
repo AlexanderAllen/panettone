@@ -327,6 +327,10 @@ class MedianocheTest extends TestCase
     /**
      * What it says on the tin.
      *
+     * @TODO Test cases for
+     * - $schema->enum: Required by issue #20
+     * - Other use cases listed in issue #21
+     *
      * @param Schema $schema
      * @param string $class_name
      * @return string The type of Schema.
@@ -344,13 +348,6 @@ class MedianocheTest extends TestCase
 
         $adv_types = ['allOf', 'anyOf', 'oneOf'];
         $advanced = static function (Schema $schema) use ($unhandled_class, $class_name, $adv_types): string {
-            // @TODO tests for these use cases:
-            // $schema->enum;
-            // $schema->uniqueItems;
-            // $schema->additionalProperties;
-
-            // TooManyRequests is a hard one bc it contains 1. AllOf(ref), 2.add'tProps w/ object.
-            // An even more hardcore test would be add'tProps object w/ ref or even more w/ all/anyOfs (refs)
 
             //  Could you have a schema with multiple of these?
             $kind = Collection::fromIterable($adv_types)
@@ -364,7 +361,6 @@ class MedianocheTest extends TestCase
         };
 
         $schemaType = (static fn ($schema): string =>
-            // @TODO This is ripe for conversion into an enum match.
             match ($schema->type) {
                 /* @see https://swagger.io/specification/#data-types */
                 'string' => 'string',
