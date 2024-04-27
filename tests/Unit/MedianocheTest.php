@@ -14,7 +14,7 @@ use cebe\openapi\exceptions\{TypeErrorException, UnresolvableReferenceException,
 use Nette\PhpGenerator\ClassType;
 use loophp\collection\Collection;
 use Nette\Utils\Type as UtilsType;
-use AlexanderAllen\Panettone\Bread\Setup;
+use AlexanderAllen\Panettone\Test\Setup;
 
 /**
  * Test suite for nette generators.

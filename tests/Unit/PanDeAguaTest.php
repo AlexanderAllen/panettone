@@ -25,8 +25,7 @@ use Nette\PhpGenerator\Type;
 use Nette\Utils\Type as UtilsType;
 use MedianocheTest;
 use PHPUnit\Framework\TestCase;
-// use AlexanderAllen\Panettone\Bread\Setup;
-use AlexanderAllen\Panettone\Tests\Setup;
+use AlexanderAllen\Panettone\Test\Setup;
 
 /**
  * Test suite for file printing.
