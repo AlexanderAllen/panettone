@@ -25,7 +25,8 @@ use Nette\PhpGenerator\Type;
 use Nette\Utils\Type as UtilsType;
 use MedianocheTest;
 use PHPUnit\Framework\TestCase;
-use AlexanderAllen\Panettone\Bread\Setup;
+// use AlexanderAllen\Panettone\Bread\Setup;
+use AlexanderAllen\Panettone\Tests\Setup;
 
 /**
  * Test suite for file printing.
@@ -48,7 +49,7 @@ class PanDeAguaTest extends TestCase
     #[TestDox('Filesystem test')]
     public function testone(): void
     {
-        [$spec, $printer] = $this->realSetup('tests/fixtures/keyword-anyOf-simple.yml', true);
+        [$spec, $printer] = $this->realSetup('tests/schema/keyword-anyOf-simple.yml', true);
 
         $classes = [];
         foreach ($spec->components->schemas as $name => $schema) {
