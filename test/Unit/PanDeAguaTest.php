@@ -48,7 +48,7 @@ class PanDeAguaTest extends TestCase
     #[TestDox('Filesystem test')]
     public function testone(): void
     {
-        [$spec, $printer] = $this->realSetup('tests/schema/keyword-anyOf-simple.yml', true);
+        [$spec, $printer] = $this->realSetup('test/schema/keyword-anyOf-simple.yml', true);
 
         $classes = [];
         foreach ($spec->components->schemas as $name => $schema) {
