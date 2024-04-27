@@ -1,0 +1,157 @@
+openapi: 3.0.1
+info:
+  title: Panettone
+  version: 1.0.1
+  description: |
+    Schema for Panettone testing.
+
+    This test schema is cut from a larger, custom made SoundCloud schema in order
+    to test various OpenAPI parsing scenarios using PHP.
+
+    These schemas provide the following test scenarios:
+      - TooManyRequests: composite types (allOf Ref + object).
+      - Track: Enum types.
+      - Users: array with ref item
+
+servers:
+  - url: https://localhost
+paths:
+  /me:
+    get:
+      summary: Returns the authenticated user’s information.
+      responses:
+        '200':
+          $ref: '#/components/responses/Me'
+components:
+  schemas:
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+        link:
+          type: string
+        error:
+          type: string
+          deprecated: true
+        status:
+          type: string
+          deprecated: true
+    TooManyRequests:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+        - type: object
+          properties:
+            spam_warning_urn:
+              type: string
+    User:
+      type: object
+      description: SoundCloud User object
+      properties:
+        avatar_url:
+          description: URL to a JPEG image
+          type: string
+        city:
+          description: city
+          type: string
+        country:
+          description: country
+          type: string
+        description:
+          description: description
+          type: string
+        discogs_name:
+          description: discogs name
+          type: string
+        first_name:
+          description: first name
+          type: string
+    Me:
+      type: object
+      description: SoundCloud Me object
+      properties:
+        avatar_url:
+          description: URL to a JPEG image.
+          type: string
+        city:
+          description: city.
+          type: string
+        comments_count:
+          description: comments count. From now on, the field always has a `0` value.
+          type: integer
+          deprecated: true
+    Users:
+      type: object
+      properties:
+        collection:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+        next_href:
+          type: string
+    Track:
+      type: object
+      description: Soundcloud Track object.
+      properties:
+        title:
+          description: Track title.
+          type: string
+        tag_list:
+          description: Tags.
+          type: string
+        uri:
+          description: Track URI.
+          type: string
+        user:
+          $ref: '#/components/schemas/User'
+        user_favorite:
+          description: Is user's favourite.
+          type: boolean
+        user_playback_count:
+          description: Number of plays by a user.
+          type: integer
+        waveform_url:
+          description: Waveform URL.
+          type: string
+        available_country_codes:
+          description: List of countries where track is available.
+          type: string
+        access:
+          type: string
+          nullable: true
+          description: |
+            Level of access the user (logged in or anonymous) has to the track.
+              * `playable` - user is allowed to listen to a full track.
+              * `preview` - user is allowed to preview a track, meaning a snippet is available
+              * `blocked` - user can only see the metadata of a track, no streaming is possible
+          enum:
+            - playable
+            - preview
+            - blocked
+            - null
+        download_url:
+          description: URL to download a track.
+          type: string
+    Tracks:
+      type: object
+      properties:
+        collection:
+          type: array
+          items:
+            $ref: '#/components/schemas/Track'
+        next_href:
+          type: string
+    TracksList:
+      deprecated: true
+      type: array
+      items:
+        $ref: '#/components/schemas/Track'
+  responses:
+    Me:
+      description: Success
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Me'

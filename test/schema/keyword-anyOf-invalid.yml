@@ -1,0 +1,69 @@
+openapi: 3.0.1
+info:
+  title: Panettone starOf schemas
+  version: 1.0.0
+  description: |
+    Use case for unsupported `anyOf` schema.
+
+servers:
+  - url: https://localhost
+paths:
+  /me:
+    get:
+      summary: Boilerplate example response.
+      responses:
+        '200':
+          $ref: '#/components/responses/Panettone'
+
+components:
+
+  responses:
+    Panettone:
+      description: Success
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UnsupportedAnyOf'
+
+  schemas:
+    UnsupportedAnyOf:
+      anyOf:
+        - $ref: '#/components/schemas/Category'
+        - $ref: '#/components/schemas/Address'
+        # Anonymous inline object with no name, only props.
+        # this turns inline_obj_string into a property of UnsupportedAnyOf.
+        - type: object
+          properties:
+            inline_obj_string_prop_anyOf:
+              type: string
+
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        name:
+          type: string
+          example: Dogs
+      xml:
+        name: category
+
+    Address:
+      type: object
+      properties:
+        street:
+          type: string
+          example: 437 Lytton
+        city:
+          type: string
+          example: Palo Alto
+        state:
+          type: string
+          example: CA
+        zip:
+          type: string
+          example: '94301'
+      xml:
+        name: address
