@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace AlexanderAllen\Panettone\Bread;
+namespace AlexanderAllen\Panettone\Tests;
 
 use Psr\Log\{LoggerAwareTrait, NullLogger};
 use Symfony\Component\Console\Output\ConsoleOutput;
