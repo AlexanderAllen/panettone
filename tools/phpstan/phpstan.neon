@@ -3,7 +3,7 @@ includes:
 parameters:
 	level: 6
 	paths:
-		- src
-		- tests
+		- ../../src
+		- ../../tests
 	scanDirectories:
 		- ../phpunit/vendor
