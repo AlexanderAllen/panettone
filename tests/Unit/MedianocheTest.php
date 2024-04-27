@@ -8,29 +8,13 @@ use AlexanderAllen\Panettone\Bread\MediaNoche;
 use AlexanderAllen\Panettone\UnsupportedSchema;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\{CoversClass, CoversFunction, Group, Test, TestDox, Depends};
-use Psr\Log\{LoggerAwareTrait, NullLogger};
-use Symfony\Component\Console\Output\ConsoleOutput;
-use Symfony\Component\Console\Logger\ConsoleLogger;
 use cebe\openapi\{Reader, ReferenceContext, SpecObjectInterface};
 use cebe\openapi\spec\{OpenApi, Schema, Reference};
 use cebe\openapi\exceptions\{TypeErrorException, UnresolvableReferenceException, IOException};
-use cebe\openapi\json\JsonPointer;
-use Generator;
 use Nette\PhpGenerator\ClassType;
-use Nette\PhpGenerator\Printer;
-// use MyCLabs\Enum\Enum as MyCLabsEnum;
-use Nette\PhpGenerator\Helpers;
-use Nette\PhpGenerator\Method;
-use Nette\PhpGenerator\PhpFile;
-use Nette\PhpGenerator\PhpNamespace;
-use Nette\PhpGenerator\Property;
-use PHPUnit\Framework\Exception;
-use PHPUnit\Framework\ExpectationFailedException;
 use loophp\collection\Collection;
-use UnhandledMatchError;
-use Nette\InvalidArgumentException;
-use Nette\PhpGenerator\Type;
 use Nette\Utils\Type as UtilsType;
+use AlexanderAllen\Panettone\Bread\Setup;
 
 /**
  * Test suite for nette generators.
@@ -43,51 +27,7 @@ use Nette\Utils\Type as UtilsType;
 #[Group('nette')]
 class MedianocheTest extends TestCase
 {
-    use LoggerAwareTrait;
-
-    protected static \Generator $generator;
-
-    protected function setUp(): void
-    {
-        self::setLogger(new NullLogger());
-    }
-
-    /**
-     * The real fixture method - setup the spec and logging for every test.
-     *
-     * Most tests in this suite read from a OAS source. This method just cuts
-     * down some of that boilerplate, along with some of the logging ceremonies.
-     *
-     * @param string $spec
-     *   The path to the Open API specification.
-     * @param bool $log
-     *   A Nette Printer instance used for logging and debugging.
-     *
-     * @return array{OpenApi, Printer}
-     *   A tuple with the cebe OAS graph a Nette Printer instance.
-     * @throws TypeErrorException
-     * @throws UnresolvableReferenceException
-     * @throws IOException
-     */
-    public function realSetup(string $spec, bool $log = false): array
-    {
-        $this->setLogger($log ?
-            new ConsoleLogger(new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG)) :
-            new NullLogger());
-
-        // if (function_exists('xdebug_break') && $log === true) {
-        //     xdebug_break();
-        // }
-
-        return [
-            Reader::readFromYamlFile(
-                realpath($spec),
-                OpenAPI::class,
-                ReferenceContext::RESOLVE_MODE_ALL,
-            ),
-            new Printer()
-        ];
-    }
+    use Setup;
 
     #[Test]
     #[TestDox('Create nette class object(s)')]
@@ -98,7 +38,7 @@ class MedianocheTest extends TestCase
         $classes = [];
         $expected_count = count($spec->components->schemas);
         foreach ($spec->components->schemas as $name => $schema) {
-            $class = $this->newNetteClass($schema, $name);
+            $class = MediaNoche::newNetteClass($schema, $name);
             self::assertInstanceOf(ClassType::class, $class, 'Generator yields ClassType object(s)');
             $classes[] = $class;
         }
@@ -122,7 +62,7 @@ class MedianocheTest extends TestCase
         $classes = [];
         $expected_count = count($spec->components->schemas);
         foreach ($spec->components->schemas as $name => $schema) {
-            $class = $this->newNetteClass($schema, $name);
+            $class = MediaNoche::newNetteClass($schema, $name);
             self::assertInstanceOf(ClassType::class, $class, 'Generator yields ClassType object(s)');
             $classes[] = $class;
             $this->logger->debug($printer->printClass($class));
@@ -149,7 +89,7 @@ class MedianocheTest extends TestCase
 
         $classes = [];
         foreach ($spec->components->schemas as $name => $schema) {
-            $class = $this->newNetteClass($schema, $name);
+            $class = MediaNoche::newNetteClass($schema, $name);
             $classes[$name] = $class;
             $this->logger->debug($printer->printClass($class));
         }
@@ -177,7 +117,7 @@ class MedianocheTest extends TestCase
         $this->expectException(UnsupportedSchema::class);
         $classes = [];
         foreach ($spec->components->schemas as $name => $schema) {
-            $class = $this->newNetteClass($schema, $name);
+            $class = MediaNoche::newNetteClass($schema, $name);
             $classes[$name] = $class;
             $this->logger->debug($printer->printClass($class));
         }
@@ -192,7 +132,7 @@ class MedianocheTest extends TestCase
 
         $classes = [];
         foreach ($spec->components->schemas as $name => $schema) {
-            $class = $this->newNetteClass($schema, $name);
+            $class = MediaNoche::newNetteClass($schema, $name);
             $classes[$name] = $class;
             $this->logger->debug($printer->printClass($class));
         }
@@ -219,7 +159,7 @@ class MedianocheTest extends TestCase
 
         $classes = [];
         foreach ($spec->components->schemas as $name => $schema) {
-            $class = $this->newNetteClass($schema, $name);
+            $class = MediaNoche::newNetteClass($schema, $name);
             $classes[$name] = $class;
             $this->logger->debug($printer->printClass($class));
         }
@@ -260,7 +200,6 @@ class MedianocheTest extends TestCase
      * for testing that basic support using `mixed`.
      */
     #[Test]
-    #[Group('target')]
     #[TestDox('Assert use case for keyword not')]
     public function schemaTypeNot(): void
     {
@@ -268,7 +207,7 @@ class MedianocheTest extends TestCase
 
         $classes = [];
         foreach ($spec->components->schemas as $name => $schema) {
-            $class = $this->newNetteClass($schema, $name);
+            $class = MediaNoche::newNetteClass($schema, $name);
             $classes[$name] = $class;
             $this->logger->debug($printer->printClass($class));
         }
@@ -336,165 +275,5 @@ class MedianocheTest extends TestCase
             })($schema);
 
         return $schemaType;
-    }
-
-    /**
-     * Nette class generator.
-     *
-     * Does two things: generate the class, populate it with properties.
-     *
-     * @TODO Issues #22, #23, namespaces and config file.
-     */
-    private function newNetteClass(Schema $schema, string $class_name): ClassType
-    {
-        $schemaType = $this->typeMatcher2000($schema, $class_name);
-
-        $this->logger->debug(sprintf('Creating new class for "%s" schema "%s"', $schemaType, $class_name));
-        $class = new ClassType(
-            $class_name,
-            (new PhpNamespace('DeyFancyFooNameSpace'))
-                ->addUse('UseThisUseStmt', 'asAlias')
-        );
-
-        $props = $this->propertyGenerator($schema, $class_name);
-        foreach ($props as $key => $value) {
-            $class->addMember($value);
-        }
-
-        return $class;
-    }
-
-    /**
-     * Converts all the properties from a cebe Schema into nette Properties.
-     *
-     * @param Schema $schema
-     * @param string $class_name
-     * @return array<Property>
-     * @throws UnhandledMatchError
-     * @throws InvalidArgumentException
-     */
-    public function propertyGenerator(Schema $schema, string $class_name): array
-    {
-        $__props = [];
-
-        $last = static fn (Schema|Reference $p, ?bool $list = false): string =>
-            Collection::fromIterable(
-                $list === false ?
-                $p->getDocumentPosition()->getPath() :
-                $p->items->getDocumentPosition()->getPath()
-            )->last('');
-
-        // Native type parsing.
-        $natives = static fn ($p) => ! in_array($p->type, ['object', 'array'], true);
-
-        /**
-         * Convert all cebe schema props to nette props.
-         * @var Collection<string, Property> $nette_props
-         *
-         * @TODO Cleanup per tix #15.
-         */
-        $nette_props = Collection::fromIterable($schema->properties)->ifThenElse(
-            $natives,
-            [MediaNoche::class, 'nativeProp'],
-            [MediaNoche::class, 'nativeProp'],
-        );
-        foreach ($nette_props as $name => $prop) {
-            $this->logger->debug(sprintf('[%s/%s] Add class property', $class_name, $name));
-            $__props[$name] = $prop;
-        }
-
-        // Schema has type array.
-        // Shape: "array schema, items point to single ref"
-        if ($schema->type === 'array') {
-            // Don't flatten or inline the reference, instead reference the schema as a type.
-            $this->logger->debug(sprintf('[%s/%s] Add array class property', $class_name, 'items'));
-            $prop = MediaNoche::nativeProp($schema, 'items', null, $last($schema), $class_name);
-            $__props[] = $prop;
-        }
-
-        /**
-         * Generator maps cebe Schemas to nette Properties.
-         *
-         * @param list<Schema|Reference> $array
-         *
-         * @return Generator<mixed, Property, null, void>
-         */
-        $compositeGenerator = function ($array) use ($class_name, $last): Generator {
-            foreach ($array as $key => $property) {
-                $lastRef = $last($property);
-
-                // Pointer path with string ending is a reference to another schema.
-                if (! is_numeric($lastRef)) {
-                    yield $lastRef => MediaNoche::nativeProp($property, strtolower($lastRef), null, $lastRef, $class_name);
-                }
-
-                // Pointer path with numerical ending is an internal property.
-                if (
-                    $property->type === 'object'
-                    && is_numeric($lastRef)
-                    && isset($property->properties)
-                    && !empty($property->properties)
-                ) {
-                    // The generator steps through all the object properties, causing them to become "inline", or part
-                    // of the generated type.
-                    foreach ($property->properties as $key => $value) {
-                        yield $key => MediaNoche::nativeProp($value, $key);
-                    }
-                }
-            }
-        };
-
-        /**
-         * Detect an unsuported use case instance.
-         *
-         * If a starOf is detected in a schema item whose parent is components/schemas
-         * it means it's a top-level starOf schema. While this use case is valid OAS YAML,
-         * it represents a use case I'm not supporting.
-         */
-        $starGuard = function (Schema $schema, string $star) use ($class_name) {
-            if ('/components/schemas' == $schema->getDocumentPosition()->parent()->getPointer()) {
-                throw new UnsupportedSchema(
-                    $schema,
-                    $class_name,
-                    sprintf('Using %s on a top-level schema component', $star)
-                );
-            }
-        };
-
-        if ($schema->allOf) {
-            foreach ($compositeGenerator($schema->allOf) as $name => $prop) {
-                $this->logger->debug(sprintf('[%s/%s] Add class property', $class_name, $name));
-                $__props[] = $prop;
-            }
-        }
-
-        /**
-         * anyOf schemas:
-         * - Generate every type, regardless if it's reference or inline native/object type.
-         * - For each schema reference, generate only the type reference, not the type itself.
-         * - For schema reference, add type ref to a union of types.
-         * - Inline objects and natives are generated inline.
-         * - Inline objects are also part of a union, which capture every single type
-         *   mentioned in the anyOf.
-         *
-         * So basically a anyOf generator should return a big ol list of types to be added to a Union.
-         * Some of them just references, some of them fully populated objects or native types.
-         *
-         * @TODO The commen above and code needs some sanity check per #15.
-         *
-         * @see https://dev.to/drupalista/dev-log-330-anyof-2jgm
-         */
-        if ($schema->anyOf) {
-            $starGuard($schema, 'anyOf');
-
-            /** @var Property $prop */
-            foreach ($compositeGenerator($schema->anyOf) as $name => $prop) {
-                $this->logger->debug(sprintf('[%s/%s] Add class property', $class_name, $name));
-                $__props[] = $prop;
-            }
-            // $prop->setType()
-        }
-
-        return $__props;
     }
 }
