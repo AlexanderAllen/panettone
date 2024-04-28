@@ -44,9 +44,11 @@ final class MediaNoche
         ?string $class_name = null,
     ): Property {
 
-        $newProp = (new Property($propName))
-            ->setComment($property->description)
-            ->setValue($property->default);
+        $newProp = (new Property($propName))->setComment($property->description);
+
+        if ($property->default !== null) {
+            $newProp->setValue($property->default);
+        }
 
         if ($property->nullable) {
             $newProp->setNullable(true);
