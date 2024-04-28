@@ -13,12 +13,12 @@ use cebe\openapi\exceptions\{TypeErrorException, UnresolvableReferenceException,
 use Nette\PhpGenerator\PsrPrinter as Printer;
 
 /**
- * Test suite for file printing.
+ * Sources schema from cebe openapi and provides Nette Printer.
  *
  * @package AlexanderAllen\Panettone\Test
  * @see https://github.com/AlexanderAllen/panettone/issues/18
- * @see vendor/api-platform/schema-generator/src/Schema/Generator.php
- * @see vendor/api-platform/schema-generator/src/FilesGenerator.php
+ * @see https://github.com/api-platform/schema-generator/blob/997f6f811faa75006aeff72cec26fe291bb8eaab/src/Schema/Generator.php
+ * @see https://github.com/api-platform/schema-generator/blob/997f6f811faa75006aeff72cec26fe291bb8eaab/src/FilesGenerator.php
  */
 trait Setup
 {
