@@ -19,7 +19,7 @@ use Symfony\Component\Console\Output\{OutputInterface, ConsoleOutput};
     hidden: false,
     aliases: ['panettone:generate']
 )]
-final class BakeCommand extends Command
+final class Main extends Command
 {
     protected function configure(): void
     {
@@ -35,24 +35,18 @@ final class BakeCommand extends Command
             $openapi = Reader::readFromYamlFile(
                 realpath($input->getArgument('source')),
                 OpenAPI::class,
-                ReferenceContext::RESOLVE_MODE_INLINE
+                ReferenceContext::RESOLVE_MODE_ALL
             );
 
-            $cake = new ClassGenerator();
+            // $cake = new ClassGenerator();
             $output = new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG);
-            $cake->setLogger(new Logger($output));
-            $cake->kneadSchema($openapi);
+            // $cake->setLogger(new Logger($output));
+            // $cake->kneadSchema($openapi);
         } catch (\Exception $th) {
             return Command::FAILURE;
         }
 
-        // Inspiration from vendor/api-platform/schema-generator/src/OpenApi/ClassGenerator.php
 
-        // $showClass = null;
-        // if ($showSchema instanceof Schema) {
-        //     $showClass = $this->buildClassFromSchema($showSchema, $name, $config);
-        //     $classes = array_merge($this->buildEnumClasses($showSchema, $showClass, $config), $classes);
-        // }
 
         return Command::SUCCESS;
     }
