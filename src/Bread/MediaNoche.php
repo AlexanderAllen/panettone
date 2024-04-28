@@ -5,10 +5,16 @@ declare(strict_types=1);
 namespace AlexanderAllen\Panettone\Bread;
 
 use cebe\openapi\spec\{Schema, Reference};
-use loophp\collection\Collection;
-use Nette\PhpGenerator\Property;
 use Nette\PhpGenerator\Type;
 use RuntimeException;
+use AlexanderAllen\Panettone\UnsupportedSchema;
+use Generator;
+use Nette\PhpGenerator\ClassType;
+use Nette\PhpGenerator\PhpNamespace;
+use Nette\PhpGenerator\Property;
+use loophp\collection\Collection;
+use UnhandledMatchError;
+use Nette\InvalidArgumentException;
 
 use function Symfony\Component\String\u;
 
@@ -36,13 +42,21 @@ final class MediaNoche
         ?string $class_name = null,
     ): Property {
 
-        $newProp = (new Property($propName))
-            ->setReadOnly(true)
-            ->setComment($property->description)
-            ->setValue($property->default);
+        // The ascii and camel case combo takes care of the illegal characters for PHP symbols.
+        $_name = (string) u($propName)->ascii()->camel();
+
+        $newProp = (new Property($_name))->setComment($property->description);
+
+        if ($property->default !== null) {
+            $newProp->setValue($property->default);
+        }
 
         if ($property->nullable) {
             $newProp->setNullable(true);
+        }
+
+        if ($property->readOnly) {
+            $newProp->setReadOnly(true);
         }
 
         // The star logic does not trigger for root schemas of star type,
@@ -151,5 +165,162 @@ final class MediaNoche
         }
 
         return $lastRefs;
+    }
+
+    /**
+     * Virtual class generator accepts a cebe object and returns a nette object.
+     *
+     * Does two things: generate the class, populate it with properties.
+     *
+     * @TODO Issues #22, #23, namespaces and config file.
+     */
+    public static function newNetteClass(Schema $schema, string $class_name): ClassType
+    {
+        $class = new ClassType(
+            $class_name,
+            (new PhpNamespace('DeyFancyFooNameSpace'))
+                ->addUse('UseThisUseStmt', 'asAlias')
+        );
+
+        $props = self::propertyGenerator($schema, $class_name);
+        foreach ($props as $key => $value) {
+            $class->addMember($value);
+        }
+
+        return $class;
+    }
+
+    /**
+     * Converts all the properties from a cebe Schema into nette Properties.
+     *
+     * @param Schema $schema
+     * @param string $class_name
+     * @return array<Property>
+     * @throws UnhandledMatchError
+     * @throws InvalidArgumentException
+     */
+    private static function propertyGenerator(Schema $schema, string $class_name): array
+    {
+        $__props = [];
+
+        $last = static fn (Schema|Reference $p, ?bool $list = false): string =>
+            Collection::fromIterable(
+                $list === false ?
+                $p->getDocumentPosition()->getPath() :
+                $p->items->getDocumentPosition()->getPath()
+            )->last('');
+
+        // Native type parsing.
+        $natives = static fn ($p) => ! in_array($p->type, ['object', 'array'], true);
+
+        /**
+         * Convert all cebe schema props to nette props.
+         * @var Collection<string, Property> $nette_props
+         *
+         * @TODO Cleanup per tix #15.
+         */
+        $nette_props = Collection::fromIterable($schema->properties)->ifThenElse(
+            $natives,
+            [MediaNoche::class, 'nativeProp'],
+            [MediaNoche::class, 'nativeProp'],
+        );
+        foreach ($nette_props as $name => $prop) {
+            // $this->logger->debug(sprintf('[%s/%s] Add class property', $class_name, $name));
+            $__props[$name] = $prop;
+        }
+
+        // Schema has type array.
+        // Shape: "array schema, items point to single ref"
+        if ($schema->type === 'array') {
+            // Don't flatten or inline the reference, instead reference the schema as a type.
+            // $this->logger->debug(sprintf('[%s/%s] Add array class property', $class_name, 'items'));
+            $prop = MediaNoche::nativeProp($schema, 'items', null, $last($schema), $class_name);
+            $__props[] = $prop;
+        }
+
+        /**
+         * Generator maps cebe Schemas to nette Properties.
+         *
+         * @param list<Schema|Reference> $array
+         *
+         * @return Generator<mixed, Property, null, void>
+         */
+        $compositeGenerator = function ($array) use ($class_name, $last): Generator {
+            foreach ($array as $key => $property) {
+                $lastRef = $last($property);
+
+                // Pointer path with string ending is a reference to another schema.
+                if (! is_numeric($lastRef)) {
+                    yield $lastRef => MediaNoche::nativeProp($property, strtolower($lastRef), null, $lastRef, $class_name);
+                }
+
+                // Pointer path with numerical ending is an internal property.
+                if (
+                    $property->type === 'object'
+                    && is_numeric($lastRef)
+                    && isset($property->properties)
+                    && !empty($property->properties)
+                ) {
+                    // The generator steps through all the object properties, causing them to become "inline", or part
+                    // of the generated type.
+                    foreach ($property->properties as $key => $value) {
+                        yield $key => MediaNoche::nativeProp($value, $key);
+                    }
+                }
+            }
+        };
+
+        /**
+         * Detect an unsuported use case instance.
+         *
+         * If a starOf is detected in a schema item whose parent is components/schemas
+         * it means it's a top-level starOf schema. While this use case is valid OAS YAML,
+         * it represents a use case I'm not supporting.
+         */
+        $starGuard = function (Schema $schema, string $star) use ($class_name) {
+            if ('/components/schemas' == $schema->getDocumentPosition()->parent()->getPointer()) {
+                throw new UnsupportedSchema(
+                    $schema,
+                    $class_name,
+                    sprintf('Using %s on a top-level schema component', $star)
+                );
+            }
+        };
+
+        if ($schema->allOf) {
+            foreach ($compositeGenerator($schema->allOf) as $name => $prop) {
+                // $this->logger->debug(sprintf('[%s/%s] Add class property', $class_name, $name));
+                $__props[] = $prop;
+            }
+        }
+
+        /**
+         * anyOf schemas:
+         * - Generate every type, regardless if it's reference or inline native/object type.
+         * - For each schema reference, generate only the type reference, not the type itself.
+         * - For schema reference, add type ref to a union of types.
+         * - Inline objects and natives are generated inline.
+         * - Inline objects are also part of a union, which capture every single type
+         *   mentioned in the anyOf.
+         *
+         * So basically a anyOf generator should return a big ol list of types to be added to a Union.
+         * Some of them just references, some of them fully populated objects or native types.
+         *
+         * @TODO The commen above and code needs some sanity check per #15.
+         *
+         * @see https://dev.to/drupalista/dev-log-330-anyof-2jgm
+         */
+        if ($schema->anyOf) {
+            $starGuard($schema, 'anyOf');
+
+            /** @var Property $prop */
+            foreach ($compositeGenerator($schema->anyOf) as $name => $prop) {
+                // $this->logger->debug(sprintf('[%s/%s] Add class property', $class_name, $name));
+                $__props[] = $prop;
+            }
+            // $prop->setType()
+        }
+
+        return $__props;
     }
 }

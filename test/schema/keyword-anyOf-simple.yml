@@ -34,6 +34,8 @@ components:
         type:
           description: Type of activity (track).
           type: string
+          nullable: true
+          readOnly: true
         created_at:
           description: Created timestamp.
           type: string
@@ -43,6 +45,8 @@ components:
           anyOf:
             - $ref: '#/components/schemas/Me'
             - $ref: '#/components/schemas/User'
+          nullable: true
+          readOnly: true
 
     Me:
       type: object

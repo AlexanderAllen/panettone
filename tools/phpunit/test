@@ -3,7 +3,7 @@
 echo "Running tests for group '${1}'"
 
 php tools/phpunit/vendor/bin/phpunit --no-progress \
-tests \
+test \
 --configuration tools/phpunit/phpunit.xml \
 --testdox \
 --log-junit $PWD/junit.xml \

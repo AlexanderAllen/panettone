@@ -44,8 +44,9 @@ jobs:
 
     - name: Run PHPUnit tests
       run: |
-        php tools/phpunit/vendor/bin/phpunit --no-progress \
-            tests \
+        mkdir -p tmp \
+        && php tools/phpunit/vendor/bin/phpunit --no-progress \
+            test \
             --configuration tools/phpunit/phpunit.xml \
             --testdox \
             --log-junit $PWD/build/junit.xml \
