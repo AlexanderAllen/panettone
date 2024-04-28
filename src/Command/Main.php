@@ -6,13 +6,11 @@ namespace AlexanderAllen\Panettone\Command;
 
 use AlexanderAllen\Panettone\Bread\MediaNoche;
 use AlexanderAllen\Panettone\Bread\PanDeAgua;
-use Nette\PhpGenerator\PsrPrinter as Printer;
-use cebe\openapi\{Reader, ReferenceContext};
-use cebe\openapi\spec\OpenApi;
+use AlexanderAllen\Panettone\Setup;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\{InputInterface, InputArgument};
-use Symfony\Component\Console\Output\{OutputInterface, ConsoleOutput};
+use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
     name: 'panettone:bake',
@@ -22,23 +20,20 @@ use Symfony\Component\Console\Output\{OutputInterface, ConsoleOutput};
 )]
 final class Main extends Command
 {
+    use Setup;
+
     protected function configure(): void
     {
         $this
             ->setHelp('Generates PHP types from a Open API source.')
-            ->addArgument('source', InputArgument::REQUIRED, 'Open API YAML source')
-        ;
+            ->addArgument('source', InputArgument::REQUIRED, 'Open API YAML source');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         try {
-            $spec = Reader::readFromYamlFile(
-                realpath($input->getArgument('source')),
-                OpenAPI::class,
-                ReferenceContext::RESOLVE_MODE_ALL
-            );
-            $printer = new Printer();
+            [$spec, $printer] = $this->realSetup($input->getArgument('source'), false);
+
 
             $classes = [];
             foreach ($spec->components->schemas as $name => $schema) {
