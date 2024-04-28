@@ -40,7 +40,7 @@ class PanDeAguaTest extends TestCase
     #[TestDox('File printer test')]
     public function testFilePrinter(): void
     {
-        [$spec, $printer] = $this->realSetup('schema/soundcloud/oas-1.0.1.yml', true);
+        [$spec, $printer] = $this->realSetup('test/schema/keyword-anyOf-simple.yml', true);
 
         $classes = [];
         foreach ($spec->components->schemas as $name => $schema) {
