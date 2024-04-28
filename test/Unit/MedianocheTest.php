@@ -212,8 +212,8 @@ class MedianocheTest extends TestCase
 
         $this->assertArrayHasKey('TestSubject', $classes, 'Test subject is present');
         $subject = $classes['TestSubject'];
-        $this->assertTrue($subject->hasProperty('property_scalar'), 'Test property is present');
-        $member = $subject->getProperty('property_scalar');
+        $this->assertTrue($subject->hasProperty('propertyScalar'), 'Test property is present');
+        $member = $subject->getProperty('propertyScalar');
 
         // See https://doc.nette.org/en/utils/type.
         $type = UtilsType::fromString($member->getType());
