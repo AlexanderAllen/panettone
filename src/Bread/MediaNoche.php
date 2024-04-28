@@ -45,12 +45,15 @@ final class MediaNoche
     ): Property {
 
         $newProp = (new Property($propName))
-            ->setReadOnly(true)
             ->setComment($property->description)
             ->setValue($property->default);
 
         if ($property->nullable) {
             $newProp->setNullable(true);
+        }
+
+        if ($property->readOnly) {
+            $newProp->setReadOnly(true);
         }
 
         // The star logic does not trigger for root schemas of star type,
