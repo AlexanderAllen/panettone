@@ -10,8 +10,11 @@ use Nette\PhpGenerator\PhpFile;
 use Nette\PhpGenerator\PhpNamespace;
 
 /**
+ * File generator for Nette class objects.
  *
  * @package AlexanderAllen\Panettone\Bread
+ * @see https://doc.nette.org/en/php-generator#toc-namespace
+ * @see https://doc.nette.org/en/php-generator#toc-php-files
  */
 final class PanDeAgua
 {
