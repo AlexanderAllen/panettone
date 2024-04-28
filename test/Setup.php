@@ -10,7 +10,7 @@ use Symfony\Component\Console\Logger\ConsoleLogger;
 use cebe\openapi\{Reader, ReferenceContext};
 use cebe\openapi\spec\{OpenApi};
 use cebe\openapi\exceptions\{TypeErrorException, UnresolvableReferenceException, IOException};
-use Nette\PhpGenerator\Printer;
+use Nette\PhpGenerator\PsrPrinter as Printer;
 
 /**
  * Test suite for file printing.
