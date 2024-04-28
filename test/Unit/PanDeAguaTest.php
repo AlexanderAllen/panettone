@@ -23,9 +23,9 @@ use PHPUnit\Framework\Exception;
 use PHPUnit\Framework\ExpectationFailedException;
 use Nette\PhpGenerator\Type;
 use Nette\Utils\Type as UtilsType;
-use MedianocheTest;
 use PHPUnit\Framework\TestCase;
 use AlexanderAllen\Panettone\Test\Setup;
+use Nette\InvalidArgumentException as NetteInvalidArgumentException;
 
 /**
  * Test suite for file printing.
@@ -36,7 +36,6 @@ use AlexanderAllen\Panettone\Test\Setup;
  * @see vendor/api-platform/schema-generator/src/FilesGenerator.php
  */
 #[CoversClass(PanDeAgua::class)]
-#[CoversClass(Setup::class)]
 #[UsesClass(MediaNoche::class)]
 #[TestDox('PanDeAgua')]
 class PanDeAguaTest extends TestCase
@@ -54,20 +53,33 @@ class PanDeAguaTest extends TestCase
         foreach ($spec->components->schemas as $name => $schema) {
             $class = MediaNoche::newNetteClass($schema, $name);
             $classes[$name] = $class;
-            $this->logger->debug($printer->printClass($class));
         }
 
-        $this->assertArrayHasKey('PanettoneAnyOf', $classes, 'Test subject is present');
-        $subject = $classes['PanettoneAnyOf'];
-        $this->assertTrue($subject->hasProperty('origin'), 'Test member is present');
-        $member = $classes['PanettoneAnyOf']->getProperty('origin');
 
-        // See https://doc.nette.org/en/utils/type.
-        $type = UtilsType::fromString($member->getType());
-        $names = $type->getNames();
+        foreach ($classes as $name => $class_type) {
+            $this->printFile($printer, $class_type, 'Foo');
+        }
+    }
 
-        $this->assertContains('Me', $names, 'Assert member property references anyOf type.');
-        $this->assertContains('User', $names, 'Assert member property references anyOf type.');
-        $this->assertTrue($type->isUnion(), 'Assert member property type is a union');
+    public function printFile(Printer $printer, ClassType $class, string $namespace): void
+    {
+        $namespace = new PhpNamespace($namespace);
+        $namespace->add($class);
+
+        $file = new PhpFile();
+        $file->addComment('This file is auto-generated.');
+        $file->setStrictTypes();
+        $file->addNamespace($namespace);
+
+        $path = sprintf('%s.php', $class->getName());
+
+        $content = $printer->printFile($file);
+        $this->logger->debug($content);
+
+        try {
+            file_put_contents($path, $content);
+        } catch (NetteInvalidArgumentException $exception) {
+            $this->logger->error($exception->getMessage());
+        }
     }
 }
