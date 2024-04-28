@@ -2,6 +2,7 @@
 
 echo "Running tests for group '${1}'"
 
+mkdir -p tmp
 php tools/phpunit/vendor/bin/phpunit --no-progress \
 test \
 --configuration tools/phpunit/phpunit.xml \
