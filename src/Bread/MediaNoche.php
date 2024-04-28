@@ -8,8 +8,6 @@ use cebe\openapi\spec\{Schema, Reference};
 use Nette\PhpGenerator\Type;
 use RuntimeException;
 use AlexanderAllen\Panettone\UnsupportedSchema;
-use cebe\openapi\{Reader, ReferenceContext, SpecObjectInterface};
-use cebe\openapi\exceptions\{TypeErrorException, UnresolvableReferenceException, IOException};
 use Generator;
 use Nette\PhpGenerator\ClassType;
 use Nette\PhpGenerator\PhpNamespace;
