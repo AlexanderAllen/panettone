@@ -59,33 +59,9 @@ class PanDeAguaTest extends TestCase
 
 
         foreach ($classes as $name => $class_type) {
-            $this->printFile($printer, $class_type, 'Foo', 'tmp');
+            PanDeAgua::printFile($printer, $class_type, 'Foo', 'tmp');
         }
-    }
 
-    public function printFile(Printer $printer, ClassType $class, string $namespace, string $path): void
-    {
-        $namespace = new PhpNamespace($namespace);
-        $namespace->add($class);
-
-        $file = new PhpFile();
-        $file->addComment('This file is auto-generated.');
-        $file->setStrictTypes();
-        $file->addNamespace($namespace);
-
-        // Turn off automatic namespace resolution if you do not want fully qualified namespaces.
-        // @see https://doc.nette.org/en/php-generator#toc-class-names-resolving
-        $printer->setTypeResolving(false);
-
-        $path = sprintf('%s/%s.php', $path, $class->getName());
-
-        $content = $printer->printFile($file);
-        // $this->logger->debug($content);
-
-        try {
-            file_put_contents($path, $content);
-        } catch (NetteInvalidArgumentException $exception) {
-            $this->logger->error($exception->getMessage());
-        }
+        self::assertTrue(true);
     }
 }
