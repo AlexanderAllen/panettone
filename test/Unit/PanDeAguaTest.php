@@ -53,15 +53,17 @@ class PanDeAguaTest extends TestCase
         foreach ($spec->components->schemas as $name => $schema) {
             $class = MediaNoche::newNetteClass($schema, $name);
             $classes[$name] = $class;
+
+            $this->logger->debug($printer->printClass($class));
         }
 
 
         foreach ($classes as $name => $class_type) {
-            $this->printFile($printer, $class_type, 'Foo');
+            $this->printFile($printer, $class_type, 'Foo', 'tmp');
         }
     }
 
-    public function printFile(Printer $printer, ClassType $class, string $namespace): void
+    public function printFile(Printer $printer, ClassType $class, string $namespace, string $path): void
     {
         $namespace = new PhpNamespace($namespace);
         $namespace->add($class);
@@ -71,10 +73,14 @@ class PanDeAguaTest extends TestCase
         $file->setStrictTypes();
         $file->addNamespace($namespace);
 
-        $path = sprintf('%s.php', $class->getName());
+        // Turn off automatic namespace resolution if you do not want fully qualified namespaces.
+        // @see https://doc.nette.org/en/php-generator#toc-class-names-resolving
+        $printer->setTypeResolving(false);
+
+        $path = sprintf('%s/%s.php', $path, $class->getName());
 
         $content = $printer->printFile($file);
-        $this->logger->debug($content);
+        // $this->logger->debug($content);
 
         try {
             file_put_contents($path, $content);

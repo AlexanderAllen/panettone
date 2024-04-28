@@ -5,3 +5,6 @@ vendor
 *.cobertura.xml
 junit.xml
 .phpunit.*
+
+# File output testing.
+/tmp

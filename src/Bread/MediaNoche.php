@@ -162,7 +162,7 @@ final class MediaNoche
     }
 
     /**
-     * Nette class generator.
+     * Virtual class generator accepts a cebe object and returns a nette object.
      *
      * Does two things: generate the class, populate it with properties.
      *
