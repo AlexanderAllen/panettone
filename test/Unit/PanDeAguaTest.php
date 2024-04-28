@@ -6,14 +6,9 @@ namespace AlexanderAllen\Panettone\Test\Unit;
 
 use AlexanderAllen\Panettone\Bread\MediaNoche;
 use AlexanderAllen\Panettone\Bread\PanDeAgua;
-use AlexanderAllen\Panettone\UnsupportedSchema;
-use PHPUnit\Framework\Attributes\{CoversClass, CoversFunction, Group, Test, TestDox, Depends, UsesClass};
-use cebe\openapi\{Reader, ReferenceContext, SpecObjectInterface};
-use cebe\openapi\spec\{OpenApi, Schema, Reference};
-use cebe\openapi\exceptions\{TypeErrorException, UnresolvableReferenceException, IOException};
+use PHPUnit\Framework\Attributes\{CoversClass, Group, Test, TestDox, UsesClass};
 use Nette\PhpGenerator\ClassType;
 use Nette\PhpGenerator\Printer;
-// use MyCLabs\Enum\Enum as MyCLabsEnum;
 use Nette\PhpGenerator\Helpers;
 use Nette\PhpGenerator\Method;
 use Nette\PhpGenerator\PhpFile;
@@ -25,7 +20,6 @@ use Nette\PhpGenerator\Type;
 use Nette\Utils\Type as UtilsType;
 use PHPUnit\Framework\TestCase;
 use AlexanderAllen\Panettone\Test\Setup;
-use Nette\InvalidArgumentException as NetteInvalidArgumentException;
 
 /**
  * Test suite for file printing.
@@ -42,10 +36,9 @@ class PanDeAguaTest extends TestCase
 {
     use Setup;
 
-    #[Test]
     #[Group('target')]
-    #[TestDox('Filesystem test')]
-    public function testone(): void
+    #[TestDox('File printer test')]
+    public function testFilePrinter(): void
     {
         [$spec, $printer] = $this->realSetup('test/schema/keyword-anyOf-simple.yml', true);
 
@@ -57,11 +50,16 @@ class PanDeAguaTest extends TestCase
             $this->logger->debug($printer->printClass($class));
         }
 
-
         foreach ($classes as $name => $class_type) {
-            PanDeAgua::printFile($printer, $class_type, 'Foo', 'tmp');
-        }
+            $path = 'tmp';
+            PanDeAgua::printFile($printer, $class_type, 'Foo', $path);
 
-        self::assertTrue(true);
+            $target = sprintf('%s/%s.php', $path, $name);
+            $file = PhpFile::fromCode(file_get_contents($target));
+
+            foreach ($file->getClasses() as $readName => $readClass) {
+                self::assertTrue($name === $readClass->getName(), 'Printed file contains source class');
+            };
+        }
     }
 }
