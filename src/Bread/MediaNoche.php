@@ -44,7 +44,10 @@ final class MediaNoche
         ?string $class_name = null,
     ): Property {
 
-        $newProp = (new Property($propName))->setComment($property->description);
+        // The ascii and camel case combo takes care of the illegal characters for PHP symbols.
+        $_name = (string) u($propName)->ascii()->camel();
+
+        $newProp = (new Property($_name))->setComment($property->description);
 
         if ($property->default !== null) {
             $newProp->setValue($property->default);
