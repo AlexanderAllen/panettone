@@ -57,8 +57,7 @@ class PampushkaTest extends TestCase
         foreach ($spec->components->schemas as $name => $schema) {
             $class = MediaNoche::newNetteClass($schema, $name);
             $classes[$name] = $class;
-
-            $this->logger->debug($printer->printClass($class));
+            // $this->logger->debug($printer->printClass($class));
         }
 
         foreach ($classes as $name => $class_type) {
@@ -68,8 +67,12 @@ class PampushkaTest extends TestCase
             $file = PhpFile::fromCode(file_get_contents($target));
 
             foreach ($file->getClasses() as $readName => $readClass) {
-                self::assertTrue($name === $readClass->getName(), 'Printed file contains source class');
+                self::assertTrue($name === $readClass->getName(), 'Generated file contains source class');
             };
+
+            // Testing for existance of single namespace.
+            $namespaces = $file->getNamespaces();
+            self::assertArrayHasKey($namespace, $namespaces, 'Generated file contains specified namespace');
         }
     }
 }
