@@ -31,12 +31,12 @@ use AlexanderAllen\Panettone\Test\Setup;
  */
 #[CoversClass(PanDeAgua::class)]
 #[UsesClass(MediaNoche::class)]
-#[TestDox('PanDeAgua')]
+#[TestDox('Pan de agua')]
 class PanDeAguaTest extends TestCase
 {
     use Setup;
 
-    #[Group('target')]
+    // #[Group('target')]
     #[TestDox('File printer test')]
     public function testFilePrinter(): void
     {
@@ -60,6 +60,48 @@ class PanDeAguaTest extends TestCase
             foreach ($file->getClasses() as $readName => $readClass) {
                 self::assertTrue($name === $readClass->getName(), 'Printed file contains source class');
             };
+        }
+    }
+
+    /**
+     * Test for configuration files.
+     *
+     * Things that I need in settings:
+     * - Type output path, currently hardcoded usually to tmp.
+     * - Namespace to be used for generated types.
+     *
+     * @return void
+     */
+    #[Group('target')]
+    #[TestDox('Source INI configuration file')]
+    public function testLoading(): void
+    {
+        $settings = parse_ini_file("test/schema/settings.ini", true, INI_SCANNER_TYPED);
+        $output_path = $settings['global']['output_path'];
+        $namespace = $settings['global']['namespace'];
+
+        [$spec, $printer] = $this->realSetup('test/schema/keyword-anyOf-simple.yml', true);
+
+        $classes = [];
+        foreach ($spec->components->schemas as $name => $schema) {
+            $class = MediaNoche::newNetteClass($schema, $name);
+            $classes[$name] = $class;
+            // $this->logger->debug($printer->printClass($class));
+        }
+
+        foreach ($classes as $name => $class_type) {
+            PanDeAgua::printFile($printer, $class_type, $namespace, $output_path);
+
+            $target = sprintf('%s/%s.php', $output_path, $name);
+            $file = PhpFile::fromCode(file_get_contents($target));
+
+            foreach ($file->getClasses() as $readName => $readClass) {
+                self::assertTrue($name === $readClass->getName(), 'Generated file contains source class');
+            };
+
+            // Testing for existance of single namespace.
+            $namespaces = $file->getNamespaces();
+            self::assertArrayHasKey($namespace, $namespaces, 'Generated file contains specified namespace');
         }
     }
 }
