@@ -58,10 +58,6 @@ class PanDeAguaTest extends TestCase
     /**
      * Test for configuration files.
      *
-     * Things that I need in settings:
-     * - Type output path, currently hardcoded usually to tmp.
-     * - Namespace to be used for generated types.
-     *
      * @return void
      */
     #[Group('target')]
