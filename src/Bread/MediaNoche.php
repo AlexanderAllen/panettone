@@ -176,15 +176,11 @@ final class MediaNoche
      */
     public static function newNetteClass(Schema $schema, string $class_name): ClassType
     {
-        $class = new ClassType(
-            $class_name,
-            (new PhpNamespace('DeyFancyFooNameSpace'))
-                ->addUse('UseThisUseStmt', 'asAlias')
-        );
+        $class = new ClassType($class_name);
 
         $props = self::propertyGenerator($schema, $class_name);
-        foreach ($props as $key => $value) {
-            $class->addMember($value);
+        foreach ($props as $prop) {
+            $class->addMember($prop);
         }
 
         return $class;

@@ -19,6 +19,7 @@ use PHPUnit\Framework\ExpectationFailedException;
 use Nette\PhpGenerator\Type;
 use Nette\Utils\Type as UtilsType;
 use PHPUnit\Framework\TestCase;
+use AlexanderAllen\Panettone\Setup as ParentSetup;
 use AlexanderAllen\Panettone\Test\Setup;
 
 /**
@@ -31,16 +32,18 @@ use AlexanderAllen\Panettone\Test\Setup;
  */
 #[CoversClass(PanDeAgua::class)]
 #[UsesClass(MediaNoche::class)]
+#[UsesClass(ParentSetup::class)]
 #[TestDox('Pan de agua')]
 class PanDeAguaTest extends TestCase
 {
     use Setup;
 
-    // #[Group('target')]
+    #[Group('target')]
     #[TestDox('File printer test')]
     public function testFilePrinter(): void
     {
-        [$spec, $printer] = $this->realSetup('test/schema/keyword-anyOf-simple.yml', true);
+        $settings = PanDeAgua::getSettings("test/schema/settings.ini");
+        [$spec, $printer] = $this->realSetup('test/schema/keyword-anyOf-simple.yml', false);
 
         $classes = [];
         foreach ($spec->components->schemas as $name => $schema) {
@@ -51,10 +54,9 @@ class PanDeAguaTest extends TestCase
         }
 
         foreach ($classes as $name => $class_type) {
-            $path = 'tmp';
-            PanDeAgua::printFile($printer, $class_type, 'Foo', $path);
+            PanDeAgua::printFile($printer, $class_type, $settings);
 
-            $target = sprintf('%s/%s.php', $path, $name);
+            $target = sprintf('%s/%s.php', $settings['file']['output_path'], $name);
             $file = PhpFile::fromCode(file_get_contents($target));
 
             foreach ($file->getClasses() as $readName => $readClass) {
@@ -74,11 +76,11 @@ class PanDeAguaTest extends TestCase
      */
     #[Group('target')]
     #[TestDox('Source INI configuration file')]
-    public function testLoading(): void
+    public function testIniLoading(): void
     {
-        $settings = parse_ini_file("test/schema/settings.ini", true, INI_SCANNER_TYPED);
-        $output_path = $settings['global']['output_path'];
-        $namespace = $settings['global']['namespace'];
+        $settings = PanDeAgua::getSettings("test/schema/settings.ini");
+        $output_path = $settings['file']['output_path'];
+        $namespace = $settings['file']['namespace'];
 
         [$spec, $printer] = $this->realSetup('test/schema/keyword-anyOf-simple.yml', true);
 
@@ -90,14 +92,10 @@ class PanDeAguaTest extends TestCase
         }
 
         foreach ($classes as $name => $class_type) {
-            PanDeAgua::printFile($printer, $class_type, $namespace, $output_path);
+            PanDeAgua::printFile($printer, $class_type, $settings);
 
             $target = sprintf('%s/%s.php', $output_path, $name);
             $file = PhpFile::fromCode(file_get_contents($target));
-
-            foreach ($file->getClasses() as $readName => $readClass) {
-                self::assertTrue($name === $readClass->getName(), 'Generated file contains source class');
-            };
 
             // Testing for existance of single namespace.
             $namespaces = $file->getNamespaces();
