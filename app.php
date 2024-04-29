@@ -23,10 +23,10 @@ declare(strict_types=1);
 require __DIR__ . '/vendor/autoload.php';
 
 use Symfony\Component\Console\Application;
-use AlexanderAllen\Panettone\Command\BakeCommand;
+use AlexanderAllen\Panettone\Command\Main;
 
 $application = new Application();
-$baker = new BakeCommand();
-$application->add($baker);
-$application->setDefaultCommand($baker->getName(), true);
+$main = new Main();
+$application->add($main);
+$application->setDefaultCommand($main->getName(), true);
 $application->run();

@@ -6,19 +6,10 @@ namespace AlexanderAllen\Panettone\Test\Unit;
 
 use AlexanderAllen\Panettone\Bread\MediaNoche;
 use AlexanderAllen\Panettone\Bread\PanDeAgua;
-use PHPUnit\Framework\Attributes\{CoversClass, Group, Test, TestDox, UsesClass};
-use Nette\PhpGenerator\ClassType;
-use Nette\PhpGenerator\Printer;
-use Nette\PhpGenerator\Helpers;
-use Nette\PhpGenerator\Method;
+use PHPUnit\Framework\Attributes\{CoversClass, Group, TestDox, UsesClass};
 use Nette\PhpGenerator\PhpFile;
-use Nette\PhpGenerator\PhpNamespace;
-use Nette\PhpGenerator\Property;
-use PHPUnit\Framework\Exception;
-use PHPUnit\Framework\ExpectationFailedException;
-use Nette\PhpGenerator\Type;
-use Nette\Utils\Type as UtilsType;
 use PHPUnit\Framework\TestCase;
+use AlexanderAllen\Panettone\Setup as ParentSetup;
 use AlexanderAllen\Panettone\Test\Setup;
 
 /**
@@ -31,7 +22,8 @@ use AlexanderAllen\Panettone\Test\Setup;
  */
 #[CoversClass(PanDeAgua::class)]
 #[UsesClass(MediaNoche::class)]
-#[TestDox('PanDeAgua')]
+#[UsesClass(ParentSetup::class)]
+#[TestDox('Pan de agua')]
 class PanDeAguaTest extends TestCase
 {
     use Setup;
@@ -40,7 +32,8 @@ class PanDeAguaTest extends TestCase
     #[TestDox('File printer test')]
     public function testFilePrinter(): void
     {
-        [$spec, $printer] = $this->realSetup('test/schema/keyword-anyOf-simple.yml', true);
+        $settings = PanDeAgua::getSettings("test/schema/settings.ini");
+        [$spec, $printer] = $this->realSetup('test/schema/keyword-anyOf-simple.yml', false);
 
         $classes = [];
         foreach ($spec->components->schemas as $name => $schema) {
@@ -51,15 +44,48 @@ class PanDeAguaTest extends TestCase
         }
 
         foreach ($classes as $name => $class_type) {
-            $path = 'tmp';
-            PanDeAgua::printFile($printer, $class_type, 'Foo', $path);
+            PanDeAgua::printFile($printer, $class_type, $settings);
 
-            $target = sprintf('%s/%s.php', $path, $name);
+            $target = sprintf('%s/%s.php', $settings['file']['output_path'], $name);
             $file = PhpFile::fromCode(file_get_contents($target));
 
             foreach ($file->getClasses() as $readName => $readClass) {
                 self::assertTrue($name === $readClass->getName(), 'Printed file contains source class');
             };
+        }
+    }
+
+    /**
+     * Test for configuration files.
+     *
+     * @return void
+     */
+    #[Group('target')]
+    #[TestDox('Source INI configuration file')]
+    public function testIniLoading(): void
+    {
+        $settings = PanDeAgua::getSettings("test/schema/settings.ini");
+        $output_path = $settings['file']['output_path'];
+        $namespace = $settings['file']['namespace'];
+
+        [$spec, $printer] = $this->realSetup('test/schema/keyword-anyOf-simple.yml', true);
+
+        $classes = [];
+        foreach ($spec->components->schemas as $name => $schema) {
+            $class = MediaNoche::newNetteClass($schema, $name);
+            $classes[$name] = $class;
+            // $this->logger->debug($printer->printClass($class));
+        }
+
+        foreach ($classes as $name => $class_type) {
+            PanDeAgua::printFile($printer, $class_type, $settings);
+
+            $target = sprintf('%s/%s.php', $output_path, $name);
+            $file = PhpFile::fromCode(file_get_contents($target));
+
+            // Testing for existance of single namespace.
+            $namespaces = $file->getNamespaces();
+            self::assertArrayHasKey($namespace, $namespaces, 'Generated file contains specified namespace');
         }
     }
 }
