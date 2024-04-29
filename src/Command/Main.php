@@ -33,7 +33,7 @@ final class Main extends Command
     {
         try {
             [$spec, $printer] = $this->realSetup($input->getArgument('source'), false);
-
+            $config = $input->hasArgument('config') ? $input->getArgument('config') : null;
 
             $classes = [];
             foreach ($spec->components->schemas as $name => $schema) {
@@ -42,8 +42,11 @@ final class Main extends Command
             }
 
             foreach ($classes as $name => $class_type) {
-                $path = 'tmp';
-                PanDeAgua::printFile($printer, $class_type, 'Panettone', $path);
+                PanDeAgua::printFile(
+                    $printer,
+                    $class_type,
+                    PanDeAgua::getSettings($config)
+                );
             }
         } catch (\Exception $th) {
             return Command::FAILURE;
