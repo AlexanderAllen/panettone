@@ -79,5 +79,9 @@ class PampushkaTest extends TestCase
             $namespaces = $file->getNamespaces();
             self::assertArrayHasKey($namespace, $namespaces, 'Generated file contains specified namespace');
         }
+
+        $input = ['source' => 'test/schema/keyword-anyOf-simple.yml'];
+        $commandTester = new CommandTester(new Main());
+        $this->assertEquals(0, $commandTester->execute($input, []));
     }
 }
