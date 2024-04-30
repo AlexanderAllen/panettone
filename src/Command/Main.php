@@ -48,7 +48,7 @@ final class Main extends Command
                     PanDeAgua::getSettings($config)
                 );
             }
-        } catch (\Exception $th) {
+        } catch (\Exception | \TypeError $th) {
             return Command::FAILURE;
         }
 
