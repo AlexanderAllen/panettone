@@ -11,6 +11,8 @@ test \
 --log-junit $PWD/junit.xml \
 --coverage-text \
 --coverage-cobertura $PWD/coverage.cobertura.xml \
---group $1 \
 --exclude-group ignore \
 --coverage-filter src
+
+# To use targeted tests, add the following.
+# --group $1 \
