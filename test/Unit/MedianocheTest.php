@@ -9,13 +9,10 @@ use AlexanderAllen\Panettone\Bread\PanDeAgua;
 use AlexanderAllen\Panettone\UnsupportedSchema;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\{CoversClass, Group, Test, TestDox, Depends, UsesClass};
-use cebe\openapi\spec\Schema;
 use Nette\PhpGenerator\ClassType;
-use loophp\collection\Collection;
 use Nette\Utils\Type as UtilsType;
 use AlexanderAllen\Panettone\Setup as ParentSetup;
 use AlexanderAllen\Panettone\Test\Setup;
-use Symfony\Component\Console\Logger\ConsoleLogger;
 
 /**
  * Test suite for nette generators.
@@ -235,56 +232,4 @@ class MedianocheTest extends TestCase
             'Assert logging is turned off'
         );
     }
-
-    // /**
-    //  * What it says on the tin.
-    //  *
-    //  * @TODO Test cases for
-    //  * - $schema->enum: Required by issue #20
-    //  * - Other use cases listed in issue #21
-    //  *
-    //  * @param Schema $schema
-    //  * @param string $class_name
-    //  * @return string The type of Schema.
-    //  */
-    // private function typeMatcher2000(Schema $schema, string $class_name): string
-    // {
-    //     $unhandled_class = static fn ($type, $class_name): \UnhandledMatchError =>
-    //         new \UnhandledMatchError(
-    //             sprintf(
-    //                 'Unhandled type "%s" for schema "%s"',
-    //                 $type,
-    //                 $class_name
-    //             )
-    //         );
-
-    //     $adv_types = ['allOf', 'anyOf', 'oneOf'];
-    //     $advanced = static function (Schema $schema) use ($unhandled_class, $class_name, $adv_types): string {
-
-    //         //  Could you have a schema with multiple of these?
-    //         $kind = Collection::fromIterable($adv_types)
-    //             ->reject(static fn ($v) => is_null($schema->{$v}))
-    //             ->first('');
-    //         if (empty($kind)) {
-    //             // Out of schema types to match, time to throw an exception.
-    //             throw $unhandled_class('unknown', $class_name);
-    //         }
-    //         return $kind;
-    //     };
-
-    //     $schemaType = (static fn ($schema): string =>
-    //         match ($schema->type) {
-    //             /* @see https://swagger.io/specification/#data-types */
-    //             'string' => 'string',
-    //             'integer' => 'int',
-    //             'boolean' => 'bool',
-    //             'float', 'double' => 'float',
-    //             'object' => 'object',
-    //             'array' => 'array',
-    //             'date', 'dateTime' => \DateTimeInterface::class,
-    //             default => $advanced($schema),
-    //         })($schema);
-
-    //     return $schemaType;
-    // }
 }
