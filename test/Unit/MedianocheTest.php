@@ -206,6 +206,21 @@ class MedianocheTest extends TestCase
         $this->assertTrue($type->isSimple() && $type->isBuiltin(), 'Assert member property type.');
     }
 
+    #[Group('target')]
+    #[TestDox('Assert nullable and default settings')]
+    public function testNullableDefault(): void
+    {
+        $settings = parse_ini_file('test/schema/settings-nullable.ini', true, INI_SCANNER_TYPED);
+        $classes = (new MediaNoche())->sourceSchema($settings, 'test/schema/keyword-allOf-simple.yml');
+
+        foreach ($classes as $class) {
+            foreach ($class->getProperties() as $prop) {
+                $this->assertTrue($prop->isInitialized(), 'Property has default value assinged');
+                $this->assertTrue($prop->isNullable(), 'Property is set as nullable');
+            }
+        }
+    }
+
     /**
      * What it says on the tin.
      *
