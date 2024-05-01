@@ -56,4 +56,13 @@ trait Setup
             new Printer()
         ];
     }
+
+    /**
+     * Return the class-string for the protected logger instance.
+     * @return class-string
+     */
+    public function getLoggerClass(): string
+    {
+        return ($this->logger)::class;
+    }
 }
