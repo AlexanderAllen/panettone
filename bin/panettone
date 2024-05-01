@@ -8,23 +8,8 @@ include $_composer_autoload_path ?? __DIR__ . '/../vendor/autoload.php';
 
 /**
  * @file
- * Script for generating DTO types from a OAS file.
- *
- * - Specify OAS with cebe openapi.
- * - Iterate through paths to select objects to output, or just use the schema.
- * - Use nette generator to dump object graph into PHP file-based objects.
- *
- * Extra
- * - Is the semantic web dead?
- * - Is it worth to inherit from a semwnatic superclass?
- *
- * Problems with openapi generator
- * - Paths. Only paths ending with a parameter in OAS are considered.
- * - Duplicate schemas, because object resolution is based on paths -> schema.
- * - Instead, it should be just schemas.
+ * Command for generating PHP types from Open Api sources.
  */
-
-// require __DIR__ . '/vendor/autoload.php';
 
 use Symfony\Component\Console\Application;
 use AlexanderAllen\Panettone\Command\Main;
