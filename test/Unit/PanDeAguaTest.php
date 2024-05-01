@@ -28,7 +28,7 @@ class PanDeAguaTest extends TestCase
 {
     use Setup;
 
-    #[Group('target')]
+    // #[Group('target')]
     #[TestDox('File printer test')]
     public function testFilePrinter(): void
     {
@@ -37,7 +37,7 @@ class PanDeAguaTest extends TestCase
 
         $classes = [];
         foreach ($spec->components->schemas as $name => $schema) {
-            $class = MediaNoche::newNetteClass($schema, $name);
+            $class = MediaNoche::newNetteClass($schema, $name, $settings);
             $classes[$name] = $class;
 
             $this->logger->debug($printer->printClass($class));
@@ -60,7 +60,7 @@ class PanDeAguaTest extends TestCase
      *
      * @return void
      */
-    #[Group('target')]
+    // #[Group('target')]
     #[TestDox('Source INI configuration file')]
     public function testIniLoading(): void
     {
@@ -72,7 +72,7 @@ class PanDeAguaTest extends TestCase
 
         $classes = [];
         foreach ($spec->components->schemas as $name => $schema) {
-            $class = MediaNoche::newNetteClass($schema, $name);
+            $class = MediaNoche::newNetteClass($schema, $name, $settings);
             $classes[$name] = $class;
             // $this->logger->debug($printer->printClass($class));
         }
@@ -83,7 +83,7 @@ class PanDeAguaTest extends TestCase
             $target = sprintf('%s/%s.php', $output_path, $name);
             $file = PhpFile::fromCode(file_get_contents($target));
 
-            // Testing for existance of single namespace.
+            // Testing for existence of single namespace.
             $namespaces = $file->getNamespaces();
             self::assertArrayHasKey($namespace, $namespaces, 'Generated file contains specified namespace');
         }

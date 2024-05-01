@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace AlexanderAllen\Panettone\Bread;
 
+use AlexanderAllen\Panettone\Test\Setup;
 use cebe\openapi\spec\{Schema, Reference};
 use Nette\PhpGenerator\Type;
 use RuntimeException;
 use AlexanderAllen\Panettone\UnsupportedSchema;
-use Generator;
 use Nette\PhpGenerator\ClassType;
-use Nette\PhpGenerator\PhpNamespace;
 use Nette\PhpGenerator\Property;
 use loophp\collection\Collection;
-use UnhandledMatchError;
 use Nette\InvalidArgumentException;
+use UnhandledMatchError;
+use Generator;
 
 use function Symfony\Component\String\u;
 
@@ -24,20 +24,22 @@ use function Symfony\Component\String\u;
  */
 final class MediaNoche
 {
+    use Setup;
+
     /**
      * Converts a property from a cebe to a nette object.
      *
+     * @param array<string, mixed> $settings
      * @param Schema $property
      * @param string $propName
-     * @param null|Collection<Property, string> $collection Present when calling from a `Collection::method()`.
      * @param null|string $typeName
      * @param null|string $class_name
      * @return Property
      */
     public static function nativeProp(
+        array $settings,
         Schema $property,
         string $propName,
-        ?Collection $collection = null,
         ?string $typeName = null,
         ?string $class_name = null,
     ): Property {
@@ -47,11 +49,23 @@ final class MediaNoche
 
         $newProp = (new Property($_name))->setComment($property->description);
 
+        $nullable = $settings['class']['nullable'] ?? false;
+
+        // Default *can* be set to "null" on settings, but must walk on eggshells
+        // because of PHP.
+        if (
+            array_key_exists('class', $settings) &&
+            array_key_exists('default', $settings['class']) &&
+            $settings['class']['default'] === null
+        ) {
+            $newProp->setValue(null);
+        }
+
         if ($property->default !== null) {
             $newProp->setValue($property->default);
         }
 
-        if ($property->nullable) {
+        if ($property->nullable || $nullable === true) {
             $newProp->setNullable(true);
         }
 
@@ -168,17 +182,37 @@ final class MediaNoche
     }
 
     /**
+     * Interprets a given Open Api schema into Nette class instances.
+     *
+     * @param array<string, mixed> $settings
+     * @return array<string, ClassType>
+     */
+    public function sourceSchema(array $settings, string $source): array
+    {
+        [$spec, $printer] = $this->realSetup($source, false);
+        $classes = [];
+        foreach ($spec->components->schemas as $name => $schema) {
+            $class = self::newNetteClass($schema, $name, $settings);
+            $classes[$name] = $class;
+            $this->logger->debug($printer->printClass($class));
+        }
+        return $classes;
+    }
+
+    /**
      * Virtual class generator accepts a cebe object and returns a nette object.
      *
      * Does two things: generate the class, populate it with properties.
      *
      * @TODO Issues #22, #23, namespaces and config file.
+     *
+     * @param array<string, mixed> $settings
      */
-    public static function newNetteClass(Schema $schema, string $class_name): ClassType
+    public static function newNetteClass(Schema $schema, string $class_name, array $settings): ClassType
     {
         $class = new ClassType($class_name);
 
-        $props = self::propertyGenerator($schema, $class_name);
+        $props = self::propertyGenerator($schema, $class_name, $settings);
         foreach ($props as $prop) {
             $class->addMember($prop);
         }
@@ -191,11 +225,12 @@ final class MediaNoche
      *
      * @param Schema $schema
      * @param string $class_name
+     * @param array<string, mixed> $settings
      * @return array<Property>
      * @throws UnhandledMatchError
      * @throws InvalidArgumentException
      */
-    private static function propertyGenerator(Schema $schema, string $class_name): array
+    private static function propertyGenerator(Schema $schema, string $class_name, array $settings): array
     {
         $__props = [];
 
@@ -207,30 +242,30 @@ final class MediaNoche
             )->last('');
 
         // Native type parsing.
-        $natives = static fn ($p) => ! in_array($p->type, ['object', 'array'], true);
+        // $natives = static fn ($p) => ! in_array($p->type, ['object', 'array'], true);
 
-        /**
-         * Convert all cebe schema props to nette props.
-         * @var Collection<string, Property> $nette_props
-         *
-         * @TODO Cleanup per tix #15.
-         */
-        $nette_props = Collection::fromIterable($schema->properties)->ifThenElse(
-            $natives,
-            [MediaNoche::class, 'nativeProp'],
-            [MediaNoche::class, 'nativeProp'],
-        );
-        foreach ($nette_props as $name => $prop) {
-            // $this->logger->debug(sprintf('[%s/%s] Add class property', $class_name, $name));
-            $__props[$name] = $prop;
-        }
+        // /**
+        //  * Convert all cebe schema props to nette props.
+        //  * @var Collection<string, Property> $nette_props
+        //  *
+        //  * @TODO Cleanup per tix #15.
+        //  */
+        // $nette_props = Collection::fromIterable($schema->properties)->ifThenElse(
+        //     $natives,
+        //     [MediaNoche::class, 'nativeProp'],
+        //     [MediaNoche::class, 'nativeProp'],
+        // );
+        // foreach ($nette_props as $name => $prop) {
+        //     // $this->logger->debug(sprintf('[%s/%s] Add class property', $class_name, $name));
+        //     $__props[$name] = $prop;
+        // }
 
         // Schema has type array.
         // Shape: "array schema, items point to single ref"
         if ($schema->type === 'array') {
             // Don't flatten or inline the reference, instead reference the schema as a type.
             // $this->logger->debug(sprintf('[%s/%s] Add array class property', $class_name, 'items'));
-            $prop = MediaNoche::nativeProp($schema, 'items', null, $last($schema), $class_name);
+            $prop = MediaNoche::nativeProp($settings, $schema, 'items', $last($schema), $class_name);
             $__props[] = $prop;
         }
 
@@ -241,13 +276,13 @@ final class MediaNoche
          *
          * @return Generator<mixed, Property, null, void>
          */
-        $compositeGenerator = function ($array) use ($class_name, $last): Generator {
+        $compositeGenerator = function ($array) use ($class_name, $last, $settings): Generator {
             foreach ($array as $key => $property) {
                 $lastRef = $last($property);
 
                 // Pointer path with string ending is a reference to another schema.
                 if (! is_numeric($lastRef)) {
-                    yield $lastRef => MediaNoche::nativeProp($property, strtolower($lastRef), null, $lastRef, $class_name);
+                    yield $lastRef => MediaNoche::nativeProp($settings, $property, strtolower($lastRef), $lastRef, $class_name);
                 }
 
                 // Pointer path with numerical ending is an internal property.
@@ -260,7 +295,7 @@ final class MediaNoche
                     // The generator steps through all the object properties, causing them to become "inline", or part
                     // of the generated type.
                     foreach ($property->properties as $key => $value) {
-                        yield $key => MediaNoche::nativeProp($value, $key);
+                        yield $key => MediaNoche::nativeProp($settings, $value, $key);
                     }
                 }
             }
@@ -286,7 +321,7 @@ final class MediaNoche
         if ($schema->allOf) {
             foreach ($compositeGenerator($schema->allOf) as $name => $prop) {
                 // $this->logger->debug(sprintf('[%s/%s] Add class property', $class_name, $name));
-                $__props[] = $prop;
+                $__props[$name] = $prop;
             }
         }
 
@@ -312,9 +347,12 @@ final class MediaNoche
             /** @var Property $prop */
             foreach ($compositeGenerator($schema->anyOf) as $name => $prop) {
                 // $this->logger->debug(sprintf('[%s/%s] Add class property', $class_name, $name));
-                $__props[] = $prop;
+                $__props[$name] = $prop;
             }
-            // $prop->setType()
+        }
+
+        foreach ($compositeGenerator($schema->properties) as $name => $prop) {
+            $__props[$name] = $prop;
         }
 
         return $__props;

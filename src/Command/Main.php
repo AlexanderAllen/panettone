@@ -7,6 +7,7 @@ namespace AlexanderAllen\Panettone\Command;
 use AlexanderAllen\Panettone\Bread\MediaNoche;
 use AlexanderAllen\Panettone\Bread\PanDeAgua;
 use AlexanderAllen\Panettone\Setup;
+use Nette\PhpGenerator\PsrPrinter;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\{InputInterface, InputArgument};
@@ -26,26 +27,23 @@ final class Main extends Command
     {
         $this
             ->setHelp('Generates PHP types from a Open API source.')
-            ->addArgument('source', InputArgument::REQUIRED, 'Open API YAML source');
+            ->addArgument('source', InputArgument::REQUIRED, 'Open API YAML source')
+            ->addArgument('config', InputArgument::OPTIONAL, 'Path to .ini configuration file');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         try {
-            [$spec, $printer] = $this->realSetup($input->getArgument('source'), false);
             $config = $input->hasArgument('config') ? $input->getArgument('config') : null;
+            $settings = PanDeAgua::getSettings($config);
 
-            $classes = [];
-            foreach ($spec->components->schemas as $name => $schema) {
-                $class = MediaNoche::newNetteClass($schema, $name);
-                $classes[$name] = $class;
-            }
+            $classes = (new MediaNoche())->sourceSchema($settings, $input->getArgument('source'));
 
-            foreach ($classes as $name => $class_type) {
+            foreach ($classes as $class_type) {
                 PanDeAgua::printFile(
-                    $printer,
+                    new PsrPrinter(),
                     $class_type,
-                    PanDeAgua::getSettings($config)
+                    $settings,
                 );
             }
         } catch (\Exception | \TypeError $th) {

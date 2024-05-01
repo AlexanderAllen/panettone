@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace AlexanderAllen\Panettone\Test\Unit;
 
 use AlexanderAllen\Panettone\Bread\MediaNoche;
+use AlexanderAllen\Panettone\Bread\PanDeAgua;
 use AlexanderAllen\Panettone\UnsupportedSchema;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\{CoversClass, Group, Test, TestDox, Depends, UsesClass};
@@ -23,6 +24,7 @@ use AlexanderAllen\Panettone\Test\Setup;
 #[CoversClass(MediaNoche::class)]
 #[CoversClass(UnsupportedSchema::class)]
 #[UsesClass(ParentSetup::class)]
+#[UsesClass(PanDeAgua::class)]
 #[TestDox('Medianoche')]
 #[Group('nette')]
 class MedianocheTest extends TestCase
@@ -34,11 +36,12 @@ class MedianocheTest extends TestCase
     public function cebeToNetteObject(): void
     {
         [$spec, $printer] = $this->realSetup('test/schema/medianoche.yml');
+        $settings = PanDeAgua::getSettings("test/schema/settings.ini");
 
         $classes = [];
         $expected_count = count($spec->components->schemas);
         foreach ($spec->components->schemas as $name => $schema) {
-            $class = MediaNoche::newNetteClass($schema, $name);
+            $class = MediaNoche::newNetteClass($schema, $name, $settings);
             self::assertInstanceOf(ClassType::class, $class, 'Generator yields ClassType object(s)');
             $classes[] = $class;
         }
@@ -58,11 +61,12 @@ class MedianocheTest extends TestCase
     public function proceduralish(): void
     {
         [$spec, $printer] = $this->realSetup('test/schema/medianoche-1.yml');
+        $settings = PanDeAgua::getSettings("test/schema/settings.ini");
 
         $classes = [];
         $expected_count = count($spec->components->schemas);
         foreach ($spec->components->schemas as $name => $schema) {
-            $class = MediaNoche::newNetteClass($schema, $name);
+            $class = MediaNoche::newNetteClass($schema, $name, $settings);
             self::assertInstanceOf(ClassType::class, $class, 'Generator yields ClassType object(s)');
             $classes[] = $class;
             $this->logger->debug($printer->printClass($class));
@@ -85,14 +89,8 @@ class MedianocheTest extends TestCase
     #[TestDox('Simple use case for keyword allOf')]
     public function schemaTypeAllOf(): void
     {
-        [$spec, $printer] = $this->realSetup('test/schema/keyword-allOf-simple.yml', true);
-
-        $classes = [];
-        foreach ($spec->components->schemas as $name => $schema) {
-            $class = MediaNoche::newNetteClass($schema, $name);
-            $classes[$name] = $class;
-            $this->logger->debug($printer->printClass($class));
-        }
+        $settings = PanDeAgua::getSettings('test/schema/settings.ini');
+        $classes = (new MediaNoche())->sourceSchema($settings, 'test/schema/keyword-allOf-simple.yml');
 
         self::assertCount(
             2,
@@ -113,11 +111,12 @@ class MedianocheTest extends TestCase
     public function invalidSchemaTypeAnyOf(): void
     {
         [$spec, $printer] = $this->realSetup('test/schema/keyword-anyOf-invalid.yml');
+        $settings = PanDeAgua::getSettings("test/schema/settings.ini");
 
         $this->expectException(UnsupportedSchema::class);
         $classes = [];
         foreach ($spec->components->schemas as $name => $schema) {
-            $class = MediaNoche::newNetteClass($schema, $name);
+            $class = MediaNoche::newNetteClass($schema, $name, $settings);
             $classes[$name] = $class;
             $this->logger->debug($printer->printClass($class));
         }
@@ -128,14 +127,8 @@ class MedianocheTest extends TestCase
     #[TestDox('Assert union use case for keyword anyOf')]
     public function schemaTypeAnyOf(): void
     {
-        [$spec, $printer] = $this->realSetup('test/schema/keyword-anyOf-simple.yml');
-
-        $classes = [];
-        foreach ($spec->components->schemas as $name => $schema) {
-            $class = MediaNoche::newNetteClass($schema, $name);
-            $classes[$name] = $class;
-            $this->logger->debug($printer->printClass($class));
-        }
+        $settings = PanDeAgua::getSettings('test/schema/settings.ini');
+        $classes = (new MediaNoche())->sourceSchema($settings, 'test/schema/keyword-anyOf-simple.yml');
 
         $this->assertArrayHasKey('PanettoneAnyOf', $classes, 'Test subject is present');
         $subject = $classes['PanettoneAnyOf'];
@@ -155,14 +148,8 @@ class MedianocheTest extends TestCase
     #[TestDox('Assert use case for keyword oneOf')]
     public function schemaTypeOneOf(): void
     {
-        [$spec, $printer] = $this->realSetup('test/schema/keyword-oneOf-simple.yml', true);
-
-        $classes = [];
-        foreach ($spec->components->schemas as $name => $schema) {
-            $class = MediaNoche::newNetteClass($schema, $name);
-            $classes[$name] = $class;
-            $this->logger->debug($printer->printClass($class));
-        }
+        $settings = PanDeAgua::getSettings('test/schema/settings.ini');
+        $classes = (new MediaNoche())->sourceSchema($settings, 'test/schema/keyword-oneOf-simple.yml');
 
         $this->assertArrayHasKey('TestSubject', $classes, 'Test subject is present');
         $subject = $classes['TestSubject'];
@@ -203,14 +190,8 @@ class MedianocheTest extends TestCase
     #[TestDox('Assert use case for keyword not')]
     public function schemaTypeNot(): void
     {
-        [$spec, $printer] = $this->realSetup('test/schema/keyword-not-simple.yml', true);
-
-        $classes = [];
-        foreach ($spec->components->schemas as $name => $schema) {
-            $class = MediaNoche::newNetteClass($schema, $name);
-            $classes[$name] = $class;
-            $this->logger->debug($printer->printClass($class));
-        }
+        $settings = PanDeAgua::getSettings('test/schema/settings.ini');
+        $classes = (new MediaNoche())->sourceSchema($settings, 'test/schema/keyword-not-simple.yml');
 
         $this->assertArrayHasKey('TestSubject', $classes, 'Test subject is present');
         $subject = $classes['TestSubject'];
@@ -223,6 +204,21 @@ class MedianocheTest extends TestCase
 
         $this->assertContains('mixed', $names, 'Assert member property is of type mixed.');
         $this->assertTrue($type->isSimple() && $type->isBuiltin(), 'Assert member property type.');
+    }
+
+    #[Group('target')]
+    #[TestDox('Assert nullable and default settings')]
+    public function testNullableDefault(): void
+    {
+        $settings = parse_ini_file('test/schema/settings-nullable.ini', true, INI_SCANNER_TYPED);
+        $classes = (new MediaNoche())->sourceSchema($settings, 'test/schema/keyword-allOf-simple.yml');
+
+        foreach ($classes as $class) {
+            foreach ($class->getProperties() as $prop) {
+                $this->assertTrue($prop->isInitialized(), 'Property has default value assinged');
+                $this->assertTrue($prop->isNullable(), 'Property is set as nullable');
+            }
+        }
     }
 
     /**

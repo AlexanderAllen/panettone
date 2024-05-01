@@ -22,7 +22,7 @@ use Symfony\Component\Console\Tester\CommandTester;
  * For a really good CLI test example,
  * @see https://github.com/api-platform/schema-generator/blob/997f6f811faa75006aeff72cec26fe291bb8eaab/tests/Command/GenerateCommandTest.php
  */
-#[UsesClass(PanDeAgua::class)]
+#[CoversClass(PanDeAgua::class)]
 #[UsesClass(MediaNoche::class)]
 #[UsesClass(ParentSetup::class)]
 #[CoversClass(Main::class)]
@@ -31,7 +31,6 @@ class PampushkaTest extends TestCase
 {
     use Setup;
 
-    #[Group('target')]
     #[TestDox('Test command')]
     public function testCommand(): void
     {
@@ -43,7 +42,6 @@ class PampushkaTest extends TestCase
         $this->assertEquals(0, $commandTester->execute($input, []));
     }
 
-    #[Group('target')]
     #[TestDox('Assert bad source results in command failure')]
     public function testCommandFail(): void
     {
