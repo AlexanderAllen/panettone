@@ -28,7 +28,8 @@ final class Main extends Command
         $this
             ->setHelp('Generates PHP types from a Open API source.')
             ->addArgument('source', InputArgument::REQUIRED, 'Open API YAML source')
-            ->addArgument('config', InputArgument::OPTIONAL, 'Path to .ini configuration file');
+            ->addArgument('config', InputArgument::OPTIONAL, 'Path to .ini configuration file')
+            ->addArgument('debug', InputArgument::OPTIONAL, 'Print verbose output');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int

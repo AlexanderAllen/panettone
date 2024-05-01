@@ -68,7 +68,7 @@ class PanDeAguaTest extends TestCase
         $output_path = $settings['file']['output_path'];
         $namespace = $settings['file']['namespace'];
 
-        [$spec, $printer] = $this->realSetup('test/schema/keyword-anyOf-simple.yml', true);
+        [$spec, $printer] = $this->realSetup('test/schema/keyword-anyOf-simple.yml', false);
 
         $classes = [];
         foreach ($spec->components->schemas as $name => $schema) {

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace AlexanderAllen\Panettone;
 
-use Psr\Log\{LoggerAwareTrait, NullLogger};
+use Psr\Log\{LoggerAwareTrait, LoggerInterface, NullLogger};
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Logger\ConsoleLogger;
 use cebe\openapi\{Reader, ReferenceContext};
@@ -23,6 +23,8 @@ use Nette\PhpGenerator\PsrPrinter as Printer;
 trait Setup
 {
     use LoggerAwareTrait;
+
+    protected static ?LoggerInterface $staticLogger;
 
     /**
      * The real fixture method - setup the spec and logging for every test.
@@ -43,9 +45,13 @@ trait Setup
      */
     public function realSetup(string $spec, bool $log = false): array
     {
-        $this->setLogger($log ?
+        // Logger instance copy for static methods.
+        self::$staticLogger = $log ?
             new ConsoleLogger(new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG)) :
-            new NullLogger());
+            new NullLogger();
+
+        // PSR logger access.
+        $this->setLogger(self::$staticLogger);
 
         return [
             Reader::readFromYamlFile(
@@ -55,5 +61,14 @@ trait Setup
             ),
             new Printer()
         ];
+    }
+
+    /**
+     * Return the class-string for the protected logger instance.
+     * @return class-string
+     */
+    public function getLoggerClass(): string
+    {
+        return ($this->logger)::class;
     }
 }

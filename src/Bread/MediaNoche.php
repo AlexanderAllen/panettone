@@ -189,7 +189,12 @@ final class MediaNoche
      */
     public function sourceSchema(array $settings, string $source): array
     {
-        [$spec, $printer] = $this->realSetup($source, false);
+        $debug = false;
+        if ($settings['debug'] ??= false) {
+            $debug = true;
+        }
+        [$spec, $printer] = $this->realSetup($source, $debug);
+
         $classes = [];
         foreach ($spec->components->schemas as $name => $schema) {
             $class = self::newNetteClass($schema, $name, $settings);
@@ -234,6 +239,8 @@ final class MediaNoche
     {
         $__props = [];
 
+        self::$staticLogger->debug(sprintf('Processing class %s', $class_name));
+
         $last = static fn (Schema|Reference $p, ?bool $list = false): string =>
             Collection::fromIterable(
                 $list === false ?
@@ -264,7 +271,7 @@ final class MediaNoche
         // Shape: "array schema, items point to single ref"
         if ($schema->type === 'array') {
             // Don't flatten or inline the reference, instead reference the schema as a type.
-            // $this->logger->debug(sprintf('[%s/%s] Add array class property', $class_name, 'items'));
+            self::$staticLogger->debug(sprintf('[%s/%s] Add array class property', $class_name, 'items'));
             $prop = MediaNoche::nativeProp($settings, $schema, 'items', $last($schema), $class_name);
             $__props[] = $prop;
         }
@@ -320,7 +327,7 @@ final class MediaNoche
 
         if ($schema->allOf) {
             foreach ($compositeGenerator($schema->allOf) as $name => $prop) {
-                // $this->logger->debug(sprintf('[%s/%s] Add class property', $class_name, $name));
+                self::$staticLogger->debug(sprintf('[%s/%s] Add class property', $class_name, $name));
                 $__props[$name] = $prop;
             }
         }
@@ -346,7 +353,7 @@ final class MediaNoche
 
             /** @var Property $prop */
             foreach ($compositeGenerator($schema->anyOf) as $name => $prop) {
-                // $this->logger->debug(sprintf('[%s/%s] Add class property', $class_name, $name));
+                self::$staticLogger->debug(sprintf('[%s/%s] Add class property', $class_name, $name));
                 $__props[$name] = $prop;
             }
         }
