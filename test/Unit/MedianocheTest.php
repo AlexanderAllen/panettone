@@ -232,7 +232,17 @@ class MedianocheTest extends TestCase
         $this->assertEquals(
             'Symfony\Component\Console\Logger\ConsoleLogger',
             $instance->getLoggerClass(),
-            'Assert console (debug) logger instance is used'
+            'Assert logging is turned on'
+        );
+
+        $settings = parse_ini_file('test/schema/settings-nullable.ini', true, INI_SCANNER_TYPED);
+        $instance = new MediaNoche();
+        $instance->sourceSchema($settings, 'test/schema/keyword-allOf-simple.yml');
+
+        $this->assertEquals(
+            'Psr\Log\NullLogger',
+            $instance->getLoggerClass(),
+            'Assert logging is turned off'
         );
     }
 
