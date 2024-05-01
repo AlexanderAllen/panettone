@@ -19,7 +19,6 @@
             "email": "14018885+AlexanderAllen@users.noreply.github.com"
         }
     ],
-    "composer-runtime-api": "^2.2",
     "bin": ["bin/panettone"],
     "autoload": {
         "psr-4": {
@@ -38,7 +37,8 @@
         "loophp/collection": "^7.5",
         "nikic/iter": "^2.4",
         "cebe/php-openapi": "^1.7",
-        "nette/php-generator":"^4.1"
+        "nette/php-generator":"^4.1",
+        "composer-runtime-api": "^2.2"
     },
     "require-dev": {
         "myclabs/php-enum": "^1.8",
