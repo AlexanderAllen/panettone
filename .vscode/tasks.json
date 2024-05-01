@@ -128,7 +128,7 @@
         }
       },
       "problemMatcher": "$eslint-compact",
-      "command": "php typegen.php ${input:source}",
+      "command": "php bin/panettone ${input:source}",
       "group": "none",
       "isBackground": false,
       "icon": {"id": "server-process", "color": "terminal.ansiGreen"},
