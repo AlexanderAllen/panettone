@@ -49,11 +49,23 @@ final class MediaNoche
 
         $newProp = (new Property($_name))->setComment($property->description);
 
+        $nullable = $settings['class']['nullable'] ?? false;
+
+        // Default *can* be set to "null" on settings, but must walk on eggshells
+        // because of PHP.
+        if (
+            array_key_exists('class', $settings) &&
+            array_key_exists('default', $settings['class']) &&
+            $settings['class']['default'] === null
+        ) {
+            $newProp->setValue(null);
+        }
+
         if ($property->default !== null) {
             $newProp->setValue($property->default);
         }
 
-        if ($property->nullable) {
+        if ($property->nullable || $nullable === true) {
             $newProp->setNullable(true);
         }
 

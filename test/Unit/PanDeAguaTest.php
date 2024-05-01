@@ -28,7 +28,7 @@ class PanDeAguaTest extends TestCase
 {
     use Setup;
 
-    #[Group('target')]
+    // #[Group('target')]
     #[TestDox('File printer test')]
     public function testFilePrinter(): void
     {
@@ -60,7 +60,7 @@ class PanDeAguaTest extends TestCase
      *
      * @return void
      */
-    #[Group('target')]
+    // #[Group('target')]
     #[TestDox('Source INI configuration file')]
     public function testIniLoading(): void
     {

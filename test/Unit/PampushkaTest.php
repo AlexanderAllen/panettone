@@ -31,7 +31,6 @@ class PampushkaTest extends TestCase
 {
     use Setup;
 
-    #[Group('target')]
     #[TestDox('Test command')]
     public function testCommand(): void
     {
@@ -43,7 +42,6 @@ class PampushkaTest extends TestCase
         $this->assertEquals(0, $commandTester->execute($input, []));
     }
 
-    #[Group('target')]
     #[TestDox('Assert bad source results in command failure')]
     public function testCommandFail(): void
     {
