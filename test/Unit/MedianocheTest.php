@@ -89,15 +89,8 @@ class MedianocheTest extends TestCase
     #[TestDox('Simple use case for keyword allOf')]
     public function schemaTypeAllOf(): void
     {
-        [$spec, $printer] = $this->realSetup('test/schema/keyword-allOf-simple.yml', true);
-        $settings = PanDeAgua::getSettings("test/schema/settings.ini");
-
-        $classes = [];
-        foreach ($spec->components->schemas as $name => $schema) {
-            $class = MediaNoche::newNetteClass($schema, $name, $settings);
-            $classes[$name] = $class;
-            $this->logger->debug($printer->printClass($class));
-        }
+        $settings = PanDeAgua::getSettings('test/schema/settings.ini');
+        $classes = (new MediaNoche())->sourceSchema($settings, 'test/schema/keyword-allOf-simple.yml');
 
         self::assertCount(
             2,
@@ -134,15 +127,8 @@ class MedianocheTest extends TestCase
     #[TestDox('Assert union use case for keyword anyOf')]
     public function schemaTypeAnyOf(): void
     {
-        [$spec, $printer] = $this->realSetup('test/schema/keyword-anyOf-simple.yml');
-        $settings = PanDeAgua::getSettings("test/schema/settings.ini");
-
-        $classes = [];
-        foreach ($spec->components->schemas as $name => $schema) {
-            $class = MediaNoche::newNetteClass($schema, $name, $settings);
-            $classes[$name] = $class;
-            $this->logger->debug($printer->printClass($class));
-        }
+        $settings = PanDeAgua::getSettings('test/schema/settings.ini');
+        $classes = (new MediaNoche())->sourceSchema($settings, 'test/schema/keyword-anyOf-simple.yml');
 
         $this->assertArrayHasKey('PanettoneAnyOf', $classes, 'Test subject is present');
         $subject = $classes['PanettoneAnyOf'];
@@ -162,15 +148,8 @@ class MedianocheTest extends TestCase
     #[TestDox('Assert use case for keyword oneOf')]
     public function schemaTypeOneOf(): void
     {
-        [$spec, $printer] = $this->realSetup('test/schema/keyword-oneOf-simple.yml', true);
-        $settings = PanDeAgua::getSettings("test/schema/settings.ini");
-
-        $classes = [];
-        foreach ($spec->components->schemas as $name => $schema) {
-            $class = MediaNoche::newNetteClass($schema, $name, $settings);
-            $classes[$name] = $class;
-            $this->logger->debug($printer->printClass($class));
-        }
+        $settings = PanDeAgua::getSettings('test/schema/settings.ini');
+        $classes = (new MediaNoche())->sourceSchema($settings, 'test/schema/keyword-oneOf-simple.yml');
 
         $this->assertArrayHasKey('TestSubject', $classes, 'Test subject is present');
         $subject = $classes['TestSubject'];
@@ -211,15 +190,8 @@ class MedianocheTest extends TestCase
     #[TestDox('Assert use case for keyword not')]
     public function schemaTypeNot(): void
     {
-        [$spec, $printer] = $this->realSetup('test/schema/keyword-not-simple.yml', true);
-        $settings = PanDeAgua::getSettings("test/schema/settings.ini");
-
-        $classes = [];
-        foreach ($spec->components->schemas as $name => $schema) {
-            $class = MediaNoche::newNetteClass($schema, $name, $settings);
-            $classes[$name] = $class;
-            $this->logger->debug($printer->printClass($class));
-        }
+        $settings = PanDeAgua::getSettings('test/schema/settings.ini');
+        $classes = (new MediaNoche())->sourceSchema($settings, 'test/schema/keyword-not-simple.yml');
 
         $this->assertArrayHasKey('TestSubject', $classes, 'Test subject is present');
         $subject = $classes['TestSubject'];

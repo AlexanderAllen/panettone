@@ -172,13 +172,12 @@ final class MediaNoche
     /**
      * Interprets a given Open Api schema into Nette class instances.
      *
+     * @param array<string, mixed> $settings
      * @return array<string, ClassType>
      */
-    public function sourceSchema(string $source): array
+    public function sourceSchema(array $settings, string $source): array
     {
         [$spec, $printer] = $this->realSetup($source, false);
-        $settings = PanDeAgua::getSettings();
-
         $classes = [];
         foreach ($spec->components->schemas as $name => $schema) {
             $class = self::newNetteClass($schema, $name, $settings);
