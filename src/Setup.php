@@ -45,15 +45,13 @@ trait Setup
      */
     public function realSetup(string $spec, bool $log = false): array
     {
-        $logger = $log ?
+        // Logger instance copy for static methods.
+        self::$staticLogger = $log ?
             new ConsoleLogger(new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG)) :
             new NullLogger();
 
-        // PSR logger.
-        $this->setLogger($logger);
-
-        // Logger instance copy for static methods.
-        self::$staticLogger = $logger;
+        // PSR logger access.
+        $this->setLogger(self::$staticLogger);
 
         return [
             Reader::readFromYamlFile(

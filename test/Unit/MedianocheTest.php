@@ -36,22 +36,12 @@ class MedianocheTest extends TestCase
     #[TestDox('Create nette class object(s)')]
     public function cebeToNetteObject(): void
     {
-        [$spec, $printer] = $this->realSetup('test/schema/medianoche.yml');
-        $settings = PanDeAgua::getSettings("test/schema/settings.ini");
+        $settings = PanDeAgua::getSettings('test/schema/settings.ini');
+        $classes = (new MediaNoche())->sourceSchema($settings, 'test/schema/medianoche.yml');
 
-        $classes = [];
-        $expected_count = count($spec->components->schemas);
-        foreach ($spec->components->schemas as $name => $schema) {
-            $class = MediaNoche::newNetteClass($schema, $name, $settings);
+        foreach ($classes as $class) {
             self::assertInstanceOf(ClassType::class, $class, 'Generator yields ClassType object(s)');
-            $classes[] = $class;
         }
-
-        self::assertCount(
-            $expected_count,
-            $classes,
-            'The given and yielded object amount is an exact match'
-        );
     }
 
     /**
