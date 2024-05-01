@@ -34,10 +34,11 @@ final class Main extends Command
         try {
             [$spec, $printer] = $this->realSetup($input->getArgument('source'), false);
             $config = $input->hasArgument('config') ? $input->getArgument('config') : null;
+            $settings = PanDeAgua::getSettings($config);
 
             $classes = [];
             foreach ($spec->components->schemas as $name => $schema) {
-                $class = MediaNoche::newNetteClass($schema, $name);
+                $class = MediaNoche::newNetteClass($schema, $name, $settings);
                 $classes[$name] = $class;
             }
 
@@ -45,7 +46,7 @@ final class Main extends Command
                 PanDeAgua::printFile(
                     $printer,
                     $class_type,
-                    PanDeAgua::getSettings($config)
+                    $settings,
                 );
             }
         } catch (\Exception | \TypeError $th) {
