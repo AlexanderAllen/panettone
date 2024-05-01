@@ -248,25 +248,6 @@ final class MediaNoche
                 $p->items->getDocumentPosition()->getPath()
             )->last('');
 
-        // Native type parsing.
-        // $natives = static fn ($p) => ! in_array($p->type, ['object', 'array'], true);
-
-        // /**
-        //  * Convert all cebe schema props to nette props.
-        //  * @var Collection<string, Property> $nette_props
-        //  *
-        //  * @TODO Cleanup per tix #15.
-        //  */
-        // $nette_props = Collection::fromIterable($schema->properties)->ifThenElse(
-        //     $natives,
-        //     [MediaNoche::class, 'nativeProp'],
-        //     [MediaNoche::class, 'nativeProp'],
-        // );
-        // foreach ($nette_props as $name => $prop) {
-        //     // $this->logger->debug(sprintf('[%s/%s] Add class property', $class_name, $name));
-        //     $__props[$name] = $prop;
-        // }
-
         // Schema has type array.
         // Shape: "array schema, items point to single ref"
         if ($schema->type === 'array') {
