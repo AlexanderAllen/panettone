@@ -189,7 +189,12 @@ final class MediaNoche
      */
     public function sourceSchema(array $settings, string $source): array
     {
-        [$spec, $printer] = $this->realSetup($source, false);
+        $debug = false;
+        if ($settings['debug'] ??= false) {
+            $debug = true;
+        }
+        [$spec, $printer] = $this->realSetup($source, $debug);
+
         $classes = [];
         foreach ($spec->components->schemas as $name => $schema) {
             $class = self::newNetteClass($schema, $name, $settings);

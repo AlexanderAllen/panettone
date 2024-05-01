@@ -15,6 +15,7 @@ use loophp\collection\Collection;
 use Nette\Utils\Type as UtilsType;
 use AlexanderAllen\Panettone\Setup as ParentSetup;
 use AlexanderAllen\Panettone\Test\Setup;
+use Symfony\Component\Console\Logger\ConsoleLogger;
 
 /**
  * Test suite for nette generators.
@@ -23,7 +24,7 @@ use AlexanderAllen\Panettone\Test\Setup;
  */
 #[CoversClass(MediaNoche::class)]
 #[CoversClass(UnsupportedSchema::class)]
-#[UsesClass(ParentSetup::class)]
+#[CoversClass(ParentSetup::class)]
 #[UsesClass(PanDeAgua::class)]
 #[TestDox('Medianoche')]
 #[Group('nette')]
@@ -206,7 +207,6 @@ class MedianocheTest extends TestCase
         $this->assertTrue($type->isSimple() && $type->isBuiltin(), 'Assert member property type.');
     }
 
-    #[Group('target')]
     #[TestDox('Assert nullable and default settings')]
     public function testNullableDefault(): void
     {
@@ -221,55 +221,70 @@ class MedianocheTest extends TestCase
         }
     }
 
-    /**
-     * What it says on the tin.
-     *
-     * @TODO Test cases for
-     * - $schema->enum: Required by issue #20
-     * - Other use cases listed in issue #21
-     *
-     * @param Schema $schema
-     * @param string $class_name
-     * @return string The type of Schema.
-     */
-    private function typeMatcher2000(Schema $schema, string $class_name): string
+    #[Group('target')]
+    #[TestDox('Test debug setting')]
+    public function testDebugSetting(): void
     {
-        $unhandled_class = static fn ($type, $class_name): \UnhandledMatchError =>
-            new \UnhandledMatchError(
-                sprintf(
-                    'Unhandled type "%s" for schema "%s"',
-                    $type,
-                    $class_name
-                )
-            );
+        $settings = parse_ini_file('test/schema/settings-debug.ini', true, INI_SCANNER_TYPED);
+        $instance = new MediaNoche();
+        $instance->sourceSchema($settings, 'test/schema/keyword-allOf-simple.yml');
 
-        $adv_types = ['allOf', 'anyOf', 'oneOf'];
-        $advanced = static function (Schema $schema) use ($unhandled_class, $class_name, $adv_types): string {
-
-            //  Could you have a schema with multiple of these?
-            $kind = Collection::fromIterable($adv_types)
-                ->reject(static fn ($v) => is_null($schema->{$v}))
-                ->first('');
-            if (empty($kind)) {
-                // Out of schema types to match, time to throw an exception.
-                throw $unhandled_class('unknown', $class_name);
-            }
-            return $kind;
-        };
-
-        $schemaType = (static fn ($schema): string =>
-            match ($schema->type) {
-                /* @see https://swagger.io/specification/#data-types */
-                'string' => 'string',
-                'integer' => 'int',
-                'boolean' => 'bool',
-                'float', 'double' => 'float',
-                'object' => 'object',
-                'array' => 'array',
-                'date', 'dateTime' => \DateTimeInterface::class,
-                default => $advanced($schema),
-            })($schema);
-
-        return $schemaType;
+        $this->assertEquals(
+            'Symfony\Component\Console\Logger\ConsoleLogger',
+            $instance->getLoggerClass(),
+            'Assert console (debug) logger instance is used'
+        );
     }
+
+    // /**
+    //  * What it says on the tin.
+    //  *
+    //  * @TODO Test cases for
+    //  * - $schema->enum: Required by issue #20
+    //  * - Other use cases listed in issue #21
+    //  *
+    //  * @param Schema $schema
+    //  * @param string $class_name
+    //  * @return string The type of Schema.
+    //  */
+    // private function typeMatcher2000(Schema $schema, string $class_name): string
+    // {
+    //     $unhandled_class = static fn ($type, $class_name): \UnhandledMatchError =>
+    //         new \UnhandledMatchError(
+    //             sprintf(
+    //                 'Unhandled type "%s" for schema "%s"',
+    //                 $type,
+    //                 $class_name
+    //             )
+    //         );
+
+    //     $adv_types = ['allOf', 'anyOf', 'oneOf'];
+    //     $advanced = static function (Schema $schema) use ($unhandled_class, $class_name, $adv_types): string {
+
+    //         //  Could you have a schema with multiple of these?
+    //         $kind = Collection::fromIterable($adv_types)
+    //             ->reject(static fn ($v) => is_null($schema->{$v}))
+    //             ->first('');
+    //         if (empty($kind)) {
+    //             // Out of schema types to match, time to throw an exception.
+    //             throw $unhandled_class('unknown', $class_name);
+    //         }
+    //         return $kind;
+    //     };
+
+    //     $schemaType = (static fn ($schema): string =>
+    //         match ($schema->type) {
+    //             /* @see https://swagger.io/specification/#data-types */
+    //             'string' => 'string',
+    //             'integer' => 'int',
+    //             'boolean' => 'bool',
+    //             'float', 'double' => 'float',
+    //             'object' => 'object',
+    //             'array' => 'array',
+    //             'date', 'dateTime' => \DateTimeInterface::class,
+    //             default => $advanced($schema),
+    //         })($schema);
+
+    //     return $schemaType;
+    // }
 }
