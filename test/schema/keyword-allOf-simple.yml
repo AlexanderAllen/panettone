@@ -19,6 +19,24 @@ paths:
           $ref: '#/components/responses/Me'
 components:
   schemas:
+    PanettoneAllOf:
+      type: object
+      properties:
+        type:
+          description: Type of activity (track).
+          type: string
+          nullable: true
+          readOnly: true
+        created_at:
+          description: Created timestamp.
+          type: string
+        origin:
+          description: Origin.
+          type: object
+          allOf:
+            - $ref: '#/components/schemas/Error'
+            - $ref: '#/components/schemas/Me'
+
     Error:
       type: object
       properties:

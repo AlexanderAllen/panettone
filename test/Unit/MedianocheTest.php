@@ -94,6 +94,27 @@ class MedianocheTest extends TestCase
     }
 
     #[Test]
+    #[TestDox('Assert type intersection for keyword allOf')]
+    public function schemaAllOfIntersect(): void
+    {
+        $settings = PanDeAgua::getSettings('test/schema/settings.ini');
+        $classes = (new MediaNoche())->sourceSchema($settings, 'test/schema/keyword-allOf-simple.yml');
+
+        $this->assertArrayHasKey('PanettoneAllOf', $classes, 'Test subject is present');
+        $subject = $classes['PanettoneAllOf'];
+        $this->assertTrue($subject->hasProperty('origin'), 'Test member is present');
+        $member = $subject->getProperty('origin');
+
+        // See https://doc.nette.org/en/utils/type.
+        $type = UtilsType::fromString($member->getType());
+        $names = $type->getNames();
+
+        $this->assertContains('Me', $names, 'Assert member property references allOf type.');
+        $this->assertContains('Error', $names, 'Assert member property references allOf type.');
+        $this->assertTrue($type->isIntersection(), 'Assert member property if of type intersection');
+    }
+
+    #[Test]
     #[Depends('schemaTypeAllOf')]
     #[TestDox('Assert unsupported use case for keyword anyOf')]
     public function invalidSchemaTypeAnyOf(): void
@@ -112,7 +133,7 @@ class MedianocheTest extends TestCase
 
     #[Test]
     #[Depends('invalidSchemaTypeAnyOf')]
-    #[TestDox('Assert union use case for keyword anyOf')]
+    #[TestDox('Assert type union for keyword anyOf')]
     public function schemaTypeAnyOf(): void
     {
         $settings = PanDeAgua::getSettings('test/schema/settings.ini');
@@ -129,7 +150,7 @@ class MedianocheTest extends TestCase
 
         $this->assertContains('Me', $names, 'Assert member property references anyOf type.');
         $this->assertContains('User', $names, 'Assert member property references anyOf type.');
-        $this->assertTrue($type->isUnion(), 'Assert member property type is a union');
+        $this->assertTrue($type->isUnion(), 'Assert member property is of type union');
     }
 
     #[Test]
