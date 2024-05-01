@@ -109,9 +109,9 @@ class MedianocheTest extends TestCase
         $type = UtilsType::fromString($member->getType());
         $names = $type->getNames();
 
-        $this->assertContains('Me', $names, 'Assert member property references anyOf type.');
-        $this->assertContains('Error', $names, 'Assert member property references anyOf type.');
-        // $this->assertTrue($type->isUnion(), 'Assert member property type is a union');
+        $this->assertContains('Me', $names, 'Assert member property references allOf type.');
+        $this->assertContains('Error', $names, 'Assert member property references allOf type.');
+        $this->assertTrue($type->isIntersection(), 'Assert member property if of type intersection');
     }
 
     #[Test]
@@ -150,7 +150,7 @@ class MedianocheTest extends TestCase
 
         $this->assertContains('Me', $names, 'Assert member property references anyOf type.');
         $this->assertContains('User', $names, 'Assert member property references anyOf type.');
-        $this->assertTrue($type->isUnion(), 'Assert member property type is a union');
+        $this->assertTrue($type->isUnion(), 'Assert member property is of type union');
     }
 
     #[Test]
