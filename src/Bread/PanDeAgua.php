@@ -49,8 +49,6 @@ final class PanDeAgua
         $path = sprintf('%s/%s.php', $output_path, $class->getName());
 
         $content = $printer->printFile($file);
-        // $this->logger->debug($content);
-
         file_put_contents($path, $content);
     }
 
