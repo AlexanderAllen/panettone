@@ -11,7 +11,7 @@ use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestDox;
 use Symfony\Component\Console\Output\ConsoleOutput;
-use Consolidation\Log\Logger;
+use Psr\Log\{LoggerAwareTrait, LoggerInterface, NullLogger};
 
 /**
  * Class for understanding PHP Generators.
@@ -51,8 +51,7 @@ class FocacciaTest extends TestCase
     public function first(): void
     {
         $class = new Focaccia();
-        $output = new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG);
-        $class->setLogger(new Logger($output));
+        $class->setLogger(new NullLogger());
 
         foreach ($class->generate() as $key => $value) {
             // echo $key, ' => ', $value, "\n";
