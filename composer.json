@@ -19,6 +19,7 @@
             "email": "14018885+AlexanderAllen@users.noreply.github.com"
         }
     ],
+    "bin": ["bin/panettone"],
     "autoload": {
         "psr-4": {
             "AlexanderAllen\\Panettone\\": "src/"

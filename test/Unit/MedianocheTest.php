@@ -111,7 +111,7 @@ class MedianocheTest extends TestCase
 
         $this->assertContains('Me', $names, 'Assert member property references allOf type.');
         $this->assertContains('Error', $names, 'Assert member property references allOf type.');
-        $this->assertTrue($type->isIntersection(), 'Assert member property if of type intersection');
+        $this->assertTrue($type->isIntersection(), 'Assert member property is of type intersection');
     }
 
     #[Test]
