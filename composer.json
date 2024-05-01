@@ -37,8 +37,7 @@
         "loophp/collection": "^7.5",
         "nikic/iter": "^2.4",
         "cebe/php-openapi": "^1.7",
-        "nette/php-generator":"^4.1",
-        "composer-runtime-api": "^2.2"
+        "nette/php-generator":"^4.1"
     },
     "require-dev": {
         "myclabs/php-enum": "^1.8",
