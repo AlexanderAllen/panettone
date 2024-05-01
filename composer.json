@@ -19,6 +19,8 @@
             "email": "14018885+AlexanderAllen@users.noreply.github.com"
         }
     ],
+    "composer-runtime-api": "^2.2",
+    "bin": ["bin/panettone"],
     "autoload": {
         "psr-4": {
             "AlexanderAllen\\Panettone\\": "src/"
