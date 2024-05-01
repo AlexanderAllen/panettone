@@ -12,5 +12,4 @@ test \
 --coverage-text \
 --coverage-cobertura $PWD/coverage.cobertura.xml \
 --exclude-group ignore \
---group $1 \
 --coverage-filter src

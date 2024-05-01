@@ -66,7 +66,7 @@
       },
     },
     {
-      "label": "Local: phpunit",
+      "label": "Local: PHPUnit",
       "type": "shell",
       "command": ". tools/phpunit/test ${input:group}",
       "detail": "Executes PHPUnit on the local system",
@@ -91,6 +91,32 @@
         "clear": true
       }
     },
+    {
+        "label": "[ALL] PHPUnit",
+        "type": "shell",
+        "command": ". tools/phpunit/test-all",
+        "detail": "Running PHPUnit for ALL groups except ignore",
+        "options": {
+          "env": {
+            "XDEBUG_CONFIG": "idekey=VSCODE",
+            "XDEBUG_SESSION": "1"
+          },
+        },
+        "group": {
+          "kind": "test",
+          "isDefault": true
+        },
+        "isBackground": false,
+        "icon": {"id": "beaker", "color": "terminal.ansiYellow"},
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared",
+          "showReuseMessage": true,
+          "clear": true
+        }
+      },
     {
       "label": "Local: panettone",
       "detail": "Run type generator locally without Docker",
