@@ -9,13 +9,10 @@ use AlexanderAllen\Panettone\Bread\PanDeAgua;
 use AlexanderAllen\Panettone\UnsupportedSchema;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\{CoversClass, Group, Test, TestDox, Depends, UsesClass};
-use cebe\openapi\spec\Schema;
 use Nette\PhpGenerator\ClassType;
-use loophp\collection\Collection;
 use Nette\Utils\Type as UtilsType;
 use AlexanderAllen\Panettone\Setup as ParentSetup;
 use AlexanderAllen\Panettone\Test\Setup;
-use Symfony\Component\Console\Logger\ConsoleLogger;
 
 /**
  * Test suite for nette generators.
