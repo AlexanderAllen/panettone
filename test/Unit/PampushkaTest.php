@@ -22,7 +22,7 @@ use Symfony\Component\Console\Command\Command;
  * @package AlexanderAllen\Panettone\Test
  * @see https://github.com/AlexanderAllen/panettone/issues/17
  *
- * For a really good CLI test example,
+ * Initial test example inspired by, but replaced by ApplicationTester.
  * @see https://github.com/api-platform/schema-generator/blob/997f6f811faa75006aeff72cec26fe291bb8eaab/tests/Command/GenerateCommandTest.php
  */
 #[CoversClass(PanDeAgua::class)]
@@ -45,17 +45,9 @@ class PampushkaTest extends TestCase
         $main = new Main();
         $app->add($main);
         $app->setDefaultCommand($main->getName(), true);
-
-
         $input = ['input' => 'test/schema/keyword-anyOf-simple.yml'];
-        // $commandTester = new CommandTester(new Main());
-        // $this->assertEquals(0, $commandTester->execute($input, []));
 
         $appTester = new ApplicationTester($app);
-        // $appTester->run($input, []);
-
-        // $appTester->assertCommandIsSuccessful('');
-
         $this->assertEquals(Command::SUCCESS, $appTester->run($input, []));
     }
 
