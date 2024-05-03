@@ -31,6 +31,10 @@ components:
     PanettoneEnum:
       type: object
       properties:
+        # enums cases are super interesting in that they are both a property
+        # of their parent object, but they can also be interpreted as a
+        # object by themselves. However unlike object references, enums lack
+        # their own components/schemas entry.
         enum_pastries:
           description: |
             Delicious Puerto Rican pastries.

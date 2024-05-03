@@ -15,6 +15,7 @@ use loophp\collection\Collection;
 use Nette\InvalidArgumentException;
 use UnhandledMatchError;
 use Generator;
+use Nette\PhpGenerator\ClassLike;
 use Nette\PhpGenerator\EnumType;
 
 use function Symfony\Component\String\u;
@@ -91,9 +92,6 @@ final class MediaNoche
                     // Enum properties are simple, non-composite types that reference other objects.
                     // The type name is capitalized because it references an object.
                     $newProp->setType(ucfirst($_name));
-
-                    // for testing
-                    $foo = self::newNetteEnum($_name, $property->enum);
                 } elseif ($starType == 'allOf') {
                     $newProp->setType(Type::intersection(...$starRefs));
                 } else {
@@ -214,7 +212,7 @@ final class MediaNoche
         $pascalCase = fn ($_name) => ucfirst(u($_name)->camel()->toString());
         $enum = new EnumType($pascalCase($name));
         foreach ($cases as $case) {
-            if ($case !== null) {
+            if ($case != null) {
                 $enum->addCase($pascalCase($case));
             }
         }
@@ -270,7 +268,7 @@ final class MediaNoche
      *
      * @param Schema $schema
      * @param string $class_name
-     * @param array<string, mixed> $settings
+     * @param array<string, Property> $settings
      * @return array<Property>
      * @throws UnhandledMatchError
      * @throws InvalidArgumentException
@@ -302,11 +300,15 @@ final class MediaNoche
          *
          * @param list<Schema|Reference> $array
          *
-         * @return Generator<mixed, Property, null, void>
+         * @return Generator<string, Property|ClassLike, null, void>
          */
         $compositeGenerator = function ($array) use ($class_name, $last, $settings): Generator {
             foreach ($array as $key => $property) {
                 $lastRef = $last($property);
+
+                if (isset($property->enum)) {
+                    yield $lastRef => self::newNetteEnum($key, $property->enum);
+                }
 
                 // Pointer path with string ending is a reference to another schema.
                 if (! is_numeric($lastRef)) {
@@ -384,21 +386,17 @@ final class MediaNoche
         }
 
         foreach ($compositeGenerator($schema->properties) as $name => $prop) {
-            $__props[$name] = $prop;
+            if ($prop instanceof Property) {
+                $__props[$name] = $prop;
+            } else {
+                // Dump non-property values into a sidecar for later processing.
+                self::$sideCar[$name] = $prop;
+            }
         }
 
         return $__props;
     }
+
+    /**  @var array<ClassLike> */
+    private static array $sideCar;
 }
-
-
-
-
-
-
-// enum TestNull: ?int
-// {
-//     case One = 1;
-//     case Two = 2;
-//     case null = null;
-// }
