@@ -332,11 +332,15 @@ final class MediaNoche
         if ($schema->anyOf) {
             $starGuard($schema, 'anyOf');
 
-            /** @var Property $prop */
-            foreach ($compositeGenerator($schema->anyOf) as $name => $prop) {
-                self::$staticLogger->debug(sprintf('[%s/%s] Add class property', $class_name, $name));
-                $__props[$name] = $prop;
-            }
+            // This never kicks in b.c.
+            // 1) propertyGenerator is non-recurse. Meaning it won't drill down to anyOf props.
+            // 2) starGuard won't let top-level schemas marked as anyOf be used.
+            //
+            // /** @var Property $prop */
+            // foreach ($compositeGenerator($schema->anyOf) as $name => $prop) {
+            //     self::$staticLogger->debug(sprintf('[%s/%s] Add class property', $class_name, $name));
+            //     $__props[$name] = $prop;
+            // }
         }
 
         foreach ($compositeGenerator($schema->properties) as $name => $prop) {

@@ -23,7 +23,7 @@ use AlexanderAllen\Panettone\Test\Setup;
 #[CoversClass(PanDeAgua::class)]
 #[UsesClass(MediaNoche::class)]
 #[UsesClass(ParentSetup::class)]
-#[TestDox('Pan de agua')]
+#[TestDox('Pan de agua: Crusty Puerto Rican water bread')]
 class PanDeAguaTest extends TestCase
 {
     use Setup;
