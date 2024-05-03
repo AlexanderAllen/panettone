@@ -37,10 +37,12 @@ components:
             One of `quesito`, `pastelillo`, or `besitos de coco`.
           type: string
           example: pastelillo
+          nullable: true
           enum:
             - quesito
             - pastelillo
             - besitos de coco
+            - null
         type:
           description: Type of activity (track).
           type: string
