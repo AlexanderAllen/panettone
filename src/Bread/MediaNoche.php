@@ -17,6 +17,8 @@ use UnhandledMatchError;
 use Generator;
 use Nette\PhpGenerator\ClassLike;
 use Nette\PhpGenerator\EnumType;
+use Nette\PhpGenerator\InterfaceType;
+use Nette\PhpGenerator\TraitType;
 
 use function Symfony\Component\String\u;
 
@@ -223,7 +225,7 @@ final class MediaNoche
      * Interprets a given Open Api schema into Nette class instances.
      *
      * @param array<string, mixed> $settings
-     * @return array<string, ClassType>
+     * @return array<string, ClassLike|ClassType>
      */
     public function sourceSchema(array $settings, string $source): array
     {
@@ -257,7 +259,7 @@ final class MediaNoche
      *
      * @param array<string, mixed> $settings
      */
-    public static function newNetteClass(Schema $schema, string $class_name, array $settings): ClassType
+    public static function newNetteClass(Schema|ClassLike $schema, string $class_name, array $settings): ClassType
     {
         $class = new ClassType($class_name);
 
@@ -361,34 +363,10 @@ final class MediaNoche
             }
         }
 
-        /**
-         * anyOf schemas:
-         * - Generate every type, regardless if it's reference or inline native/object type.
-         * - For each schema reference, generate only the type reference, not the type itself.
-         * - For schema reference, add type ref to a union of types.
-         * - Inline objects and natives are generated inline.
-         * - Inline objects are also part of a union, which capture every single type
-         *   mentioned in the anyOf.
-         *
-         * So basically a anyOf generator should return a big ol list of types to be added to a Union.
-         * Some of them just references, some of them fully populated objects or native types.
-         *
-         * @TODO The commen above and code needs some sanity check per #15.
-         *
-         * @see https://dev.to/drupalista/dev-log-330-anyof-2jgm
-         */
+        // 1) propertyGenerator is non-recurse. Meaning it won't drill down to anyOf props.
+        // 2) starGuard won't let top-level schemas marked as anyOf be used.
         if ($schema->anyOf) {
             $starGuard($schema, 'anyOf');
-
-            // This never kicks in b.c.
-            // 1) propertyGenerator is non-recurse. Meaning it won't drill down to anyOf props.
-            // 2) starGuard won't let top-level schemas marked as anyOf be used.
-            //
-            // /** @var Property $prop */
-            // foreach ($compositeGenerator($schema->anyOf) as $name => $prop) {
-            //     self::$staticLogger->debug(sprintf('[%s/%s] Add class property', $class_name, $name));
-            //     $__props[$name] = $prop;
-            // }
         }
 
         foreach ($compositeGenerator($schema->properties) as $name => $prop) {
