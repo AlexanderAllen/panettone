@@ -14,8 +14,8 @@ include $_composer_autoload_path ?? __DIR__ . '/../vendor/autoload.php';
 use Symfony\Component\Console\Application;
 use AlexanderAllen\Panettone\Command\Main;
 
-$application = new Application();
+$app = new Application('panettone', '0.1.0');
 $main = new Main();
-$application->add($main);
-$application->setDefaultCommand($main->getName(), true);
-$application->run();
+$app->add($main);
+$app->setDefaultCommand($main->getName(), true);
+$app->run();
