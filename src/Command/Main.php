@@ -14,10 +14,9 @@ use Symfony\Component\Console\Input\{InputInterface, InputArgument};
 use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
-    name: 'panettone:bake',
-    description: 'Generate PHP types.',
+    name: 'panettone',
+    description: 'Generate PHP types from Open API sources.',
     hidden: false,
-    aliases: ['panettone:generate']
 )]
 final class Main extends Command
 {
@@ -27,18 +26,26 @@ final class Main extends Command
     {
         $this
             ->setHelp('Generates PHP types from a Open API source.')
-            ->addArgument('source', InputArgument::REQUIRED, 'Open API YAML source')
-            ->addArgument('config', InputArgument::OPTIONAL, 'Path to .ini configuration file')
-            ->addArgument('debug', InputArgument::OPTIONAL, 'Print verbose output');
+            ->addArgument('input', InputArgument::REQUIRED, 'Path to Open Api source file in YAML format')
+            ->addArgument('output', InputArgument::OPTIONAL, 'Destination for generated files')
+            ->addArgument('config', InputArgument::OPTIONAL, 'Path to .ini configuration file', 'settings.ini');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         try {
-            $config = $input->hasArgument('config') ? $input->getArgument('config') : null;
-            $settings = PanDeAgua::getSettings($config);
+            $settings = PanDeAgua::getSettings($input->getArgument('config'));
 
-            $classes = (new MediaNoche())->sourceSchema($settings, $input->getArgument('source'));
+            // Command line options override configuration file settings.
+            if ($output->getVerbosity() > OutputInterface::VERBOSITY_NORMAL) {
+                $settings['debug'] = true;
+            }
+
+            if ($input->getArgument('output')) {
+                $settings['file']['output_path'] = $input->getArgument('output');
+            }
+
+            $classes = (new MediaNoche())->sourceSchema($settings, $input->getArgument('input'));
 
             foreach ($classes as $class_type) {
                 PanDeAgua::printFile(
@@ -47,7 +54,8 @@ final class Main extends Command
                     $settings,
                 );
             }
-        } catch (\Exception | \TypeError $th) {
+        } catch (\Exception | \TypeError $e) {
+            $output->writeln($output->getFormatter()->getStyle('error')->apply($e->getMessage()));
             return Command::FAILURE;
         }
 
