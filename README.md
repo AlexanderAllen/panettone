@@ -1,4 +1,9 @@
-[![Latest Stable Version](https://poser.pugx.org/alexanderallen/panettone/v)](https://packagist.org/packages/alexanderallen/panettone) [![Latest Unstable Version](https://poser.pugx.org/alexanderallen/panettone/v/unstable)](https://packagist.org/packages/alexanderallen/panettone) [![License](https://poser.pugx.org/alexanderallen/panettone/license)](https://packagist.org/packages/alexanderallen/panettone) ![Coveralls](https://img.shields.io/coverallsCoverage/github/AlexanderAllen/panettone?style=flat&logo=coveralls&link=https%3A%2F%2Fcoveralls.io%2Fgithub%2FAlexanderAllen%2Fpanettone) ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/AlexanderAllen/panettone/php.yml)
+<img src="https://source.unsplash.com/IlbJvIia9aY" alt="Panettone: PHP type generator for Open Api" style="width:100%" />
+
+Image by [@blackieshoot](https://unsplash.com/@blackieshoot) at [Unsplash](https://unsplash.com/)
+
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/AlexanderAllen/panettone/php.yml) ![Coveralls](https://img.shields.io/coverallsCoverage/github/AlexanderAllen/panettone?style=flat&logo=coveralls&link=https%3A%2F%2Fcoveralls.io%2Fgithub%2FAlexanderAllen%2Fpanettone) [![License](https://poser.pugx.org/alexanderallen/panettone/license)](https://packagist.org/packages/alexanderallen/panettone) [![Version](http://poser.pugx.org/alexanderallen/panettone/version)](https://packagist.org/packages/alexanderallen/panettone)
+
 
 # Panettone
 
@@ -7,27 +12,29 @@ Panettone is a CLI tool for extracting PHP types from [Open API](https://swagger
 
 ## Usage
 
-    ❯ php bin/panettone --help
+    php bin/panettone --help
+    
     Description:
-    Generate PHP types.
-
+      Generate PHP types from Open API sources.
+    
     Usage:
-    panettone <source> [<config>]
-
+      panettone <input> [<output> [<config>]]
+    
     Arguments:
-    source                Open API YAML source
-    config                Path to .ini configuration file
-
+      input                 Path to Open Api source file in YAML format
+      output                Destination for generated files
+      config                Path to .ini configuration file [default: "settings.ini"]
+    
     Options:
-    -h, --help            Display help for the given command. When no command is given display help for the panettone:bake command
-    -q, --quiet           Do not output any message
-    -V, --version         Display this application version
-        --ansi|--no-ansi  Force (or disable --no-ansi) ANSI output
-    -n, --no-interaction  Do not ask any interactive question
-    -v|vv|vvv, --verbose  Increase the verbosity of messages: 1 for normal output, 2 for more verbose output and 3 for debug
-
+      -h, --help            Display help for the given command. When no command is given display help for the panettone command
+      -q, --quiet           Do not output any message
+      -V, --version         Display this application version
+          --ansi|--no-ansi  Force (or disable --no-ansi) ANSI output
+      -n, --no-interaction  Do not ask any interactive question
+      -v|vv|vvv, --verbose  Increase the verbosity of messages: 1 for normal output, 2 for more verbose output and 3 for debug
+    
     Help:
-    Generates PHP types from a Open API source.
+      Generates PHP types from a Open API source.
 
 ## Configuration
 
