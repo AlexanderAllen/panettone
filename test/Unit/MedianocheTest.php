@@ -229,8 +229,14 @@ class MedianocheTest extends TestCase
         }
     }
 
-    #[Group('target')]
-    #[TestDox('Test debug setting')]
+    /**
+     * Tests verbose logging is activated via the user configuration file.
+     *
+     * Ojo: This test is a bit mouthy so you might want to add to the ignore group.
+     * Note that supressing this test might reduce coverage by a small percent.
+     */
+    // #[Group('ignore')]
+    #[TestDox('Test "debug" setting in configuration file')]
     public function testDebugSetting(): void
     {
         $settings = parse_ini_file('test/schema/settings-debug.ini', true, INI_SCANNER_TYPED);
