@@ -239,6 +239,16 @@ final class MediaNoche
             $classes[$name] = $class;
             $this->logger->debug($printer->printClass($class));
         }
+
+        // Process sidecar.
+        if (count(self::$sideCar)) {
+            foreach (self::$sideCar as $name => $classLike) {
+                // $class = self::newNetteClass($schema, $name, $settings);
+                // $classes[$name] = $classLike;
+                $this->logger->debug($printer->printClass($classLike));
+            }
+        }
+
         return $classes;
     }
 
@@ -393,6 +403,6 @@ final class MediaNoche
         return $__props;
     }
 
-    /**  @var array<ClassLike> */
-    private static array $sideCar;
+    /**  @var array<ClassLike|ClassType|EnumType|InterfaceType|TraitType> */
+    private static array $sideCar = [];
 }
