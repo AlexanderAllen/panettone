@@ -58,12 +58,8 @@ final class PanDeAgua
      * @param string $path Path to settings INI file.
      * @return array<string, mixed>
      */
-    public static function getSettings(?string $path = null): array
+    public static function getSettings(string $path): array
     {
-        if ($path === null) {
-            $path = 'settings.ini';
-        }
-
         static $settings = null;
         if ($settings === null) {
             $settings = parse_ini_file($path, true, INI_SCANNER_TYPED);
