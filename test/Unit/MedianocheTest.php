@@ -215,12 +215,19 @@ class MedianocheTest extends TestCase
         $this->assertTrue($type->isSimple() && $type->isBuiltin(), 'Assert member property type.');
     }
 
+    /**
+     * Test case for enumerated properties.
+     *
+     * If an enum has been detected, the property will reference an Enum object,
+     * and therefore should follow object naming conventions. Both property and type
+     * names are camel case, but the type is capitalized and the prop name is not.
+     */
     #[Test]
     #[Group('target')]
     #[TestDox('Assert use case for enumerations')]
     public function schemaEnum(): void
     {
-        $settings = PanDeAgua::getSettings('test/schema/settings.ini');
+        $settings = PanDeAgua::getSettings('test/schema/settings-debug.ini');
         $classes = (new MediaNoche())->sourceSchema($settings, 'test/schema/keyword-enum-simple.yml');
 
         $this->assertArrayHasKey('PanettoneEnum', $classes, 'Test subject is present');
@@ -231,7 +238,7 @@ class MedianocheTest extends TestCase
         $type = UtilsType::fromString($member->getType());
 
         $this->assertEquals(
-            'enumPastries',
+            'EnumPastries',
             $type->getSingleName(),
             'Assert member property references another object type.'
         );

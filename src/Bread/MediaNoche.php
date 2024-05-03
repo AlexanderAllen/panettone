@@ -86,7 +86,11 @@ final class MediaNoche
         // If star allOf: intersection, anyOf|oneOf: union.
         if (!empty($starProps)) {
             foreach ($lastRefs as $starType => $starRefs) {
-                if ($starType == 'allOf') {
+                if ($starType == 'enum') {
+                    // Enum properties are simple, non-composite types that reference other objects.
+                    // The type name is capitalized because it references an object.
+                    $newProp->setType(ucfirst($_name));
+                } elseif ($starType == 'allOf') {
                     $newProp->setType(Type::intersection(...$starRefs));
                 } else {
                     $newProp->setType(Type::union(...$starRefs));
@@ -143,7 +147,7 @@ final class MediaNoche
     {
         // Star keywords are represented in both Open API and cebe as arrays.
         $starProps = [];
-        foreach (['allOf', 'anyOf', 'oneOf'] as $star) {
+        foreach (['allOf', 'anyOf', 'oneOf', 'enum'] as $star) {
             if (
                 isset($property->{$star}) &&
                 ! empty($property->{$star})
@@ -174,7 +178,14 @@ final class MediaNoche
 
         foreach ($starProps as $star => $property) {
             foreach ($property as $starRef) {
-                $lastRefs[$star][] = $last($starRef);
+                // Enums are only simple string arrays, not OAS schema references.
+                // However, it's easier for nativeProp() to use this logic.
+                if ($star === 'enum') {
+                    $lastRefs[$star][] = $starRef;
+                // Everybody else gets de-referenced.
+                } else {
+                    $lastRefs[$star][] = $last($starRef);
+                }
             }
         }
 
