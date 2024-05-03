@@ -15,6 +15,7 @@ use loophp\collection\Collection;
 use Nette\InvalidArgumentException;
 use UnhandledMatchError;
 use Generator;
+use Nette\PhpGenerator\EnumType;
 
 use function Symfony\Component\String\u;
 
@@ -90,6 +91,9 @@ final class MediaNoche
                     // Enum properties are simple, non-composite types that reference other objects.
                     // The type name is capitalized because it references an object.
                     $newProp->setType(ucfirst($_name));
+
+                    // for testing
+                    $foo = self::newNetteEnum($_name, $property->enum);
                 } elseif ($starType == 'allOf') {
                     $newProp->setType(Type::intersection(...$starRefs));
                 } else {
@@ -190,6 +194,31 @@ final class MediaNoche
         }
 
         return $lastRefs;
+    }
+
+    /**
+     * Creates a new Nette enumeration object.
+     *
+     * Use PascalCase per the latest PER-CS recommendations.
+     * @see https://www.php-fig.org/per/coding-style/#9-enumerations
+     *
+     * I do not have an answer for null value enums, therefore supressing null cases.
+     * @see https://github.com/AlexanderAllen/panettone/issues/20
+     *
+     * @param string $name
+     * @param array<string> $cases
+     * @return EnumType
+     */
+    private static function newNetteEnum(string $name, array $cases): EnumType
+    {
+        $pascalCase = fn ($_name) => ucfirst(u($_name)->camel()->toString());
+        $enum = new EnumType($pascalCase($name));
+        foreach ($cases as $case) {
+            if ($case !== null) {
+                $enum->addCase($pascalCase($case));
+            }
+        }
+        return $enum;
     }
 
     /**
@@ -361,3 +390,15 @@ final class MediaNoche
         return $__props;
     }
 }
+
+
+
+
+
+
+// enum TestNull: ?int
+// {
+//     case One = 1;
+//     case Two = 2;
+//     case null = null;
+// }
