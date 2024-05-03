@@ -23,7 +23,7 @@ use AlexanderAllen\Panettone\Test\Setup;
 #[CoversClass(UnsupportedSchema::class)]
 #[CoversClass(ParentSetup::class)]
 #[UsesClass(PanDeAgua::class)]
-#[TestDox('Medianoche')]
+#[TestDox('Medianoche: Fwuffy Cuban sandwich bread')]
 #[Group('nette')]
 class MedianocheTest extends TestCase
 {
