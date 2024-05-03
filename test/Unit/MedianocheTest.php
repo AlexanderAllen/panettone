@@ -215,6 +215,33 @@ class MedianocheTest extends TestCase
         $this->assertTrue($type->isSimple() && $type->isBuiltin(), 'Assert member property type.');
     }
 
+    #[Test]
+    #[Group('target')]
+    #[TestDox('Assert use case for enumerations')]
+    public function schemaEnum(): void
+    {
+        $settings = PanDeAgua::getSettings('test/schema/settings.ini');
+        $classes = (new MediaNoche())->sourceSchema($settings, 'test/schema/keyword-enum-simple.yml');
+
+        $this->assertArrayHasKey('PanettoneEnum', $classes, 'Test subject is present');
+        $subject = $classes['PanettoneEnum'];
+        $this->assertTrue($subject->hasProperty('enumPastries'), 'Test property is present');
+        $member = $subject->getProperty('enumPastries');
+
+        $type = UtilsType::fromString($member->getType());
+
+        $this->assertEquals(
+            'enumPastries',
+            $type->getSingleName(),
+            'Assert member property references another object type.'
+        );
+
+        // $this->assertTrue($type->isSimple() && $type->isBuiltin(), 'Assert member property type.');
+
+
+        $test = null;
+    }
+
     #[TestDox('Assert nullable and default settings')]
     public function testNullableDefault(): void
     {

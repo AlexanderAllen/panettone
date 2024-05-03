@@ -1,0 +1,117 @@
+openapi: 3.0.1
+info:
+  title: Panettone enum schema
+  version: 1.0.1
+  description: |
+    Simple use cases for `enum` type.
+
+
+servers:
+  - url: https://localhost
+paths:
+  /me:
+    get:
+      summary: Boilerplate example response.
+      responses:
+        '200':
+          $ref: '#/components/responses/Panettone'
+
+components:
+
+  responses:
+    Panettone:
+      description: Success
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PanettoneEnum'
+
+  schemas:
+
+    PanettoneEnum:
+      type: object
+      properties:
+        enum_pastries:
+          description: |
+            Delicious Puerto Rican pastries.
+            One of `quesito`, `pastelillo`, or `besitos de coco`.
+          type: string
+          example: pastelillo
+          enum:
+            - quesito
+            - pastelillo
+            - besitos de coco
+        type:
+          description: Type of activity (track).
+          type: string
+          nullable: true
+          readOnly: true
+        created_at:
+          description: Created timestamp.
+          type: string
+        origin:
+          description: Origin.
+          type: object
+          anyOf:
+            - $ref: '#/components/schemas/Me'
+            - $ref: '#/components/schemas/User'
+          nullable: true
+          readOnly: true
+
+    Me:
+      type: object
+      description: SoundCloud Me object
+      properties:
+        avatar_url:
+          description: URL to a JPEG image.
+          type: string
+        city:
+          description: city.
+          type: string
+        comments_count:
+          description: comments count. From now on, the field always has a `0` value.
+          type: integer
+          deprecated: true
+
+    Activities:
+      type: object
+      description: User's activities.
+      properties:
+        collection:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                description: Type of activity (track).
+                type: string
+              created_at:
+                description: Created timestamp.
+                type: string
+              origin:
+                description: Origin.
+                type: object
+                anyOf:
+                  - $ref: '#/components/schemas/Me'
+                  - $ref: '#/components/schemas/User'
+        next_href:
+          type: string
+        future_href:
+          type: string
+
+    User:
+      type: object
+      description: SoundCloud User object
+      properties:
+        avatar_url:
+          description: URL to a JPEG image
+          type: string
+        username:
+          description: username
+          type: string
+        website:
+          description: a URL to the website
+          type: string
+        website_title:
+          description: a custom title for the website
+          type: string
