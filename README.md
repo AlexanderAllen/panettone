@@ -12,13 +12,11 @@ Panettone is a CLI tool for extracting PHP types from [Open API](https://swagger
     Generate PHP types.
 
     Usage:
-    panettone:bake <source> [<config> [<debug>]]
-    panettone:generate
+    panettone <source> [<config>]
 
     Arguments:
     source                Open API YAML source
     config                Path to .ini configuration file
-    debug                 Print verbose output
 
     Options:
     -h, --help            Display help for the given command. When no command is given display help for the panettone:bake command

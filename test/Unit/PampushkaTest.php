@@ -9,12 +9,13 @@ use AlexanderAllen\Panettone\Setup as ParentSetup;
 use AlexanderAllen\Panettone\Bread\PanDeAgua;
 use AlexanderAllen\Panettone\Bread\MediaNoche;
 use AlexanderAllen\Panettone\Command\Main;
-use PHPUnit\Framework\Attributes\{CoversClass, Group, TestDox, UsesClass};
+use PHPUnit\Framework\Attributes\{CoversClass, TestDox, UsesClass};
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Tester\ApplicationTester;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * Test for command line application.
@@ -40,7 +41,7 @@ class PampushkaTest extends TestCase
         // Statically cache a valid settings location for the command.
         PanDeAgua::getSettings("test/schema/settings.ini");
 
-        $app = new Application('panettone', '0.1.0');
+        $app = new Application('panettone', '0.0.0');
         $app->setAutoExit(false);
         $main = new Main();
         $app->add($main);
@@ -57,5 +58,32 @@ class PampushkaTest extends TestCase
         $input = ['input' => 'test/schema/bad-source.yml'];
         $commandTester = new CommandTester(new Main());
         $this->assertEquals(1, $commandTester->execute($input, []));
+    }
+
+    /**
+     * Test coverage for application verbosity.
+     *
+     * For internal usage of verbosity, see links below.
+     * @see vendor/symfony/console/Tester/ApplicationTester.php
+     * @see vendor/symfony/console/Tester/TesterTrait.php.
+     */
+    #[TestDox('Test verbose output')]
+    public function testVerbose(): void
+    {
+        PanDeAgua::getSettings("test/schema/settings.ini");
+
+        $app = new Application('panettone', '0.0.0');
+        $app->setAutoExit(false);
+        $main = new Main();
+        $app->add($main);
+        $app->setDefaultCommand($main->getName(), true);
+        $input = ['input' => 'test/schema/keyword-anyOf-simple.yml'];
+
+        // For options available see initOutput() in TesterTrait.php.
+        $options = [];
+        $options['verbosity'] = OutputInterface::VERBOSITY_VERBOSE;
+
+        $appTester = new ApplicationTester($app);
+        $this->assertEquals(Command::SUCCESS, $appTester->run($input, $options));
     }
 }
