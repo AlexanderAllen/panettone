@@ -245,10 +245,6 @@ final class MediaNoche
     /**
      * Virtual class generator accepts a cebe object and returns a nette object.
      *
-     * Does two things: generate the class, populate it with properties.
-     *
-     * @TODO Issues #22, #23, namespaces and config file.
-     *
      * @param array<string, mixed> $settings
      */
     public static function newNetteClass(Schema $schema, string $class_name, array $settings): ClassType
