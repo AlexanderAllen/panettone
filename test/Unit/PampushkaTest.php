@@ -11,7 +11,10 @@ use AlexanderAllen\Panettone\Bread\MediaNoche;
 use AlexanderAllen\Panettone\Command\Main;
 use PHPUnit\Framework\Attributes\{CoversClass, Group, TestDox, UsesClass};
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Tester\ApplicationTester;
 use Symfony\Component\Console\Tester\CommandTester;
+use Symfony\Component\Console\Command\Command;
 
 /**
  * Test for command line application.
@@ -37,15 +40,29 @@ class PampushkaTest extends TestCase
         // Statically cache a valid settings location for the command.
         PanDeAgua::getSettings("test/schema/settings.ini");
 
-        $input = ['source' => 'test/schema/keyword-anyOf-simple.yml'];
-        $commandTester = new CommandTester(new Main());
-        $this->assertEquals(0, $commandTester->execute($input, []));
+        $app = new Application('panettone', '0.1.0');
+        $app->setAutoExit(false);
+        $main = new Main();
+        $app->add($main);
+        $app->setDefaultCommand($main->getName(), true);
+
+
+        $input = ['input' => 'test/schema/keyword-anyOf-simple.yml'];
+        // $commandTester = new CommandTester(new Main());
+        // $this->assertEquals(0, $commandTester->execute($input, []));
+
+        $appTester = new ApplicationTester($app);
+        // $appTester->run($input, []);
+
+        // $appTester->assertCommandIsSuccessful('');
+
+        $this->assertEquals(Command::SUCCESS, $appTester->run($input, []));
     }
 
     #[TestDox('Assert bad source results in command failure')]
     public function testCommandFail(): void
     {
-        $input = ['source' => 'test/schema/bad-source.yml'];
+        $input = ['input' => 'test/schema/bad-source.yml'];
         $commandTester = new CommandTester(new Main());
         $this->assertEquals(1, $commandTester->execute($input, []));
     }
