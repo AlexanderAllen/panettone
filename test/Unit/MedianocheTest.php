@@ -13,6 +13,7 @@ use Nette\PhpGenerator\ClassType;
 use Nette\Utils\Type as UtilsType;
 use AlexanderAllen\Panettone\Setup as ParentSetup;
 use AlexanderAllen\Panettone\Test\Setup;
+use Nette\PhpGenerator\EnumType;
 
 /**
  * Test suite for nette generators.
@@ -30,14 +31,21 @@ class MedianocheTest extends TestCase
     use Setup;
 
     #[Test]
-    #[TestDox('Create nette class object(s)')]
+    #[TestDox('Emit Nette "class like" object(s)')]
     public function cebeToNetteObject(): void
     {
         $settings = PanDeAgua::getSettings('test/schema/settings.ini');
         $classes = (new MediaNoche())->sourceSchema($settings, 'test/schema/medianoche.yml');
 
+        $allowed = [
+            ClassType::class,
+            EnumType::class,
+        ];
         foreach ($classes as $class) {
-            self::assertInstanceOf(ClassType::class, $class, 'Generator yields ClassType object(s)');
+            $this->assertNotFalse(
+                array_search($class::class, $allowed, true),
+                'Medianoche emits instances of the correct Nette objects'
+            );
         }
     }
 
