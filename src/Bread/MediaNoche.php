@@ -225,7 +225,7 @@ final class MediaNoche
      * Interprets a given Open Api schema into Nette class instances.
      *
      * @param array<string, mixed> $settings
-     * @return array<string, ClassLike|ClassType>
+     * @return array<string, ClassType|EnumType>
      */
     public function sourceSchema(array $settings, string $source): array
     {
@@ -245,8 +245,7 @@ final class MediaNoche
         // Process sidecar.
         if (count(self::$sideCar)) {
             foreach (self::$sideCar as $name => $classLike) {
-                // $class = self::newNetteClass($schema, $name, $settings);
-                // $classes[$name] = $classLike;
+                $classes[$name] = $classLike;
                 $this->logger->debug($printer->printClass($classLike));
             }
         }
@@ -308,7 +307,7 @@ final class MediaNoche
          *
          * @param list<Schema|Reference> $array
          *
-         * @return Generator<string, Property|ClassLike, null, void>
+         * @return Generator<string, mixed, null, void>
          */
         $compositeGenerator = function ($array) use ($class_name, $last, $settings): Generator {
             foreach ($array as $key => $property) {
@@ -381,6 +380,6 @@ final class MediaNoche
         return $__props;
     }
 
-    /**  @var array<ClassLike|ClassType|EnumType|InterfaceType|TraitType> */
+    /**  @var array<ClassType|EnumType|InterfaceType|TraitType> */
     private static array $sideCar = [];
 }

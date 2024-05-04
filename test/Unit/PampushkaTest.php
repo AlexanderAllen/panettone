@@ -46,7 +46,7 @@ class PampushkaTest extends TestCase
         $main = new Main();
         $app->add($main);
         $app->setDefaultCommand($main->getName(), true);
-        $input = ['input' => 'test/schema/keyword-anyOf-simple.yml'];
+        $input = ['input' => 'test/schema/keyword-enum-simple.yml'];
 
         $appTester = new ApplicationTester($app);
         $this->assertEquals(Command::SUCCESS, $appTester->run($input, []));
@@ -78,7 +78,7 @@ class PampushkaTest extends TestCase
         $main = new Main();
         $app->add($main);
         $app->setDefaultCommand($main->getName(), true);
-        $input = ['input' => 'test/schema/keyword-anyOf-simple.yml'];
+        $input = ['input' => 'test/schema/keyword-enum-simple.yml'];
 
         // For options available see initOutput() in TesterTrait.php.
         // Panettone recognizes only one verbosity setting, so anything above
@@ -117,7 +117,7 @@ class PampushkaTest extends TestCase
         $app->add($main);
         $app->setDefaultCommand($main->getName(), true);
         $input = [];
-        $input['input'] = 'test/schema/keyword-anyOf-simple.yml';
+        $input['input'] = 'test/schema/keyword-enum-simple.yml';
         $input['output'] = 'tmp';
 
         $appTester = new ApplicationTester($app);
