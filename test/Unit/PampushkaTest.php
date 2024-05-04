@@ -39,7 +39,7 @@ class PampushkaTest extends TestCase
     public function testCommand(): void
     {
         // Statically cache a valid settings location for the command.
-        PanDeAgua::getSettings("test/schema/settings.ini");
+        PanDeAgua::getSettings('test/schema/settings-debug.ini');
 
         $app = new Application('panettone', '0.0.0');
         $app->setAutoExit(false);
