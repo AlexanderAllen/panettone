@@ -81,17 +81,3 @@ are required when using the options listed under them.
     [class]
     nullable = true
     default = null
-
-
-## Testing
-
-Tests are located in the `tests` directory. PHPUnit is installed separately in the `tools/phpunit` directory.
-
-To test, first use Composer to install PHPUnit then run the test script.
-
-    composer -d tools/phpunit install
-    . tools/phpunit/test
-
-## Coverage
-
-Coverage details are gathered during testing in Github and [pushed to Coveralls](https://coveralls.io/github/AlexanderAllen/panettone).
