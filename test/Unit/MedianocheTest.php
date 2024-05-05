@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace AlexanderAllen\Panettone\Test\Unit;
 
 use AlexanderAllen\Panettone\Bread\MediaNoche;
+use AlexanderAllen\Panettone\Bread\NetteContainer;
 use AlexanderAllen\Panettone\Bread\PanDeAgua;
 use AlexanderAllen\Panettone\UnsupportedSchema;
 use PHPUnit\Framework\TestCase;
@@ -14,6 +15,7 @@ use Nette\Utils\Type as UtilsType;
 use AlexanderAllen\Panettone\Setup as ParentSetup;
 use AlexanderAllen\Panettone\Test\Setup;
 use Nette\PhpGenerator\EnumType;
+use Nette\PhpGenerator\Property;
 
 /**
  * Test suite for nette generators.
@@ -23,6 +25,7 @@ use Nette\PhpGenerator\EnumType;
 #[CoversClass(MediaNoche::class)]
 #[CoversClass(UnsupportedSchema::class)]
 #[CoversClass(ParentSetup::class)]
+#[CoversClass(NetteContainer::class)]
 #[UsesClass(PanDeAgua::class)]
 #[TestDox('Medianoche: Fwuffy Cuban sandwich bread')]
 #[Group('nette')]
@@ -59,26 +62,16 @@ class MedianocheTest extends TestCase
         [$spec, $printer] = $this->realSetup('test/schema/medianoche-1.yml');
         $settings = PanDeAgua::getSettings("test/schema/settings.ini");
 
-        $classes = [];
-        $expected_count = count($spec->components->schemas);
         foreach ($spec->components->schemas as $name => $schema) {
-            $class = MediaNoche::newNetteClass($schema, $name, $settings);
-            self::assertInstanceOf(ClassType::class, $class, 'Generator yields ClassType object(s)');
-            $classes[] = $class;
-            $this->logger->debug($printer->printClass($class));
+            $container = MediaNoche::newNetteClass($schema, $name, $settings);
+            $this->assertInstanceOf(NetteContainer::class, $container);
+            $this->assertContainsOnlyInstancesOf(Property::class, $container->props);
+            $this->assertInstanceOf(ClassType::class, $container->class, 'Generator yields ClassType object(s)');
         }
-
-        self::assertCount(
-            $expected_count,
-            $classes,
-            'The given and yielded object amount is an exact match'
-        );
     }
 
     /**
      * Test case for allOf.
-     *
-     * @TODO Update assertions, see issue #19.
      */
     #[Test]
     #[Depends('proceduralish')]
