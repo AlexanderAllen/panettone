@@ -221,6 +221,12 @@ final class MediaNoche
         return $enum;
     }
 
+    public function __construct()
+    {
+        // Reset static sidecar on instantiation.
+        self::$sideCar = [];
+    }
+
     /**
      * Interprets a given Open Api schema into Nette class instances.
      *
@@ -273,6 +279,8 @@ final class MediaNoche
     /**
      * Converts all the properties from a cebe Schema into nette Properties.
      *
+     * Modifies `self::sideCart` as a side-effect.
+     *
      * @param Schema $schema
      * @param string $class_name
      * @param array<string, Property> $settings
@@ -298,7 +306,7 @@ final class MediaNoche
         if ($schema->type === 'array') {
             // Don't flatten or inline the reference, instead reference the schema as a type.
             self::$staticLogger->debug(sprintf('[%s/%s] Add array class property', $class_name, 'items'));
-            $prop = MediaNoche::nativeProp($settings, $schema, 'items', $last($schema), $class_name);
+            $prop = self::nativeProp($settings, $schema, 'items', $last($schema), $class_name);
             $__props[] = $prop;
         }
 
@@ -319,7 +327,7 @@ final class MediaNoche
 
                 // Pointer path with string ending is a reference to another schema.
                 if (! is_numeric($lastRef)) {
-                    yield $lastRef => MediaNoche::nativeProp($settings, $property, strtolower($lastRef), $lastRef, $class_name);
+                    yield $lastRef => self::nativeProp($settings, $property, strtolower($lastRef), $lastRef, $class_name);
                 }
 
                 // Pointer path with numerical ending is an internal property.
@@ -332,7 +340,7 @@ final class MediaNoche
                     // The generator steps through all the object properties, causing them to become "inline", or part
                     // of the generated type.
                     foreach ($property->properties as $key => $value) {
-                        yield $key => MediaNoche::nativeProp($settings, $value, $key);
+                        yield $key => self::nativeProp($settings, $value, $key);
                     }
                 }
             }
