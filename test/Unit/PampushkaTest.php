@@ -8,6 +8,7 @@ use AlexanderAllen\Panettone\Test\Setup;
 use AlexanderAllen\Panettone\Setup as ParentSetup;
 use AlexanderAllen\Panettone\Bread\PanDeAgua;
 use AlexanderAllen\Panettone\Bread\MediaNoche;
+use AlexanderAllen\Panettone\Bread\NetteContainer;
 use AlexanderAllen\Panettone\Command\Main;
 use PHPUnit\Framework\Attributes\{CoversClass, Group, TestDox, UsesClass};
 use PHPUnit\Framework\TestCase;
@@ -29,6 +30,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 #[CoversClass(PanDeAgua::class)]
 #[UsesClass(MediaNoche::class)]
 #[UsesClass(ParentSetup::class)]
+#[UsesClass(NetteContainer::class)]
 #[CoversClass(Main::class)]
 #[TestDox('Pampushka: Ukranian garlic bread')]
 class PampushkaTest extends TestCase

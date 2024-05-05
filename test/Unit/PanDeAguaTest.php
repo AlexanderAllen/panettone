@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace AlexanderAllen\Panettone\Test\Unit;
 
 use AlexanderAllen\Panettone\Bread\MediaNoche;
+use AlexanderAllen\Panettone\Bread\NetteContainer;
 use AlexanderAllen\Panettone\Bread\PanDeAgua;
 use PHPUnit\Framework\Attributes\{CoversClass, Group, TestDox, UsesClass};
 use Nette\PhpGenerator\PhpFile;
@@ -23,6 +24,7 @@ use AlexanderAllen\Panettone\Test\Setup;
 #[CoversClass(PanDeAgua::class)]
 #[UsesClass(MediaNoche::class)]
 #[UsesClass(ParentSetup::class)]
+#[UsesClass(NetteContainer::class)]
 #[TestDox('Pan de agua: Crusty Puerto Rican water bread')]
 class PanDeAguaTest extends TestCase
 {
@@ -37,10 +39,10 @@ class PanDeAguaTest extends TestCase
 
         $classes = [];
         foreach ($spec->components->schemas as $name => $schema) {
-            $class = MediaNoche::newNetteClass($schema, $name, $settings);
-            $classes[$name] = $class;
+            $container = MediaNoche::newNetteClass($schema, $name, $settings);
+            $classes[$name] = $container->class;
 
-            $this->logger->debug($printer->printClass($class));
+            $this->logger->debug($printer->printClass($container->class));
         }
 
         foreach ($classes as $name => $class_type) {
@@ -72,9 +74,8 @@ class PanDeAguaTest extends TestCase
 
         $classes = [];
         foreach ($spec->components->schemas as $name => $schema) {
-            $class = MediaNoche::newNetteClass($schema, $name, $settings);
-            $classes[$name] = $class;
-            // $this->logger->debug($printer->printClass($class));
+            $container = MediaNoche::newNetteClass($schema, $name, $settings);
+            $classes[$name] = $container->class;
         }
 
         foreach ($classes as $name => $class_type) {

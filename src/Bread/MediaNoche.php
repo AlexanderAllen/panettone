@@ -23,6 +23,7 @@ use Nette\PhpGenerator\TraitType;
 use function Symfony\Component\String\u;
 
 /**
+ * Stateless class for interpreting OAS (cebe) sources into Nette objects.
  *
  * @package AlexanderAllen\Panettone\Bread
  */
@@ -221,12 +222,6 @@ final class MediaNoche
         return $enum;
     }
 
-    public function __construct()
-    {
-        // Reset static sidecar on instantiation.
-        self::$sideCar = [];
-    }
-
     /**
      * Interprets a given Open Api schema into Nette class instances.
      *
@@ -243,16 +238,16 @@ final class MediaNoche
 
         $classes = [];
         foreach ($spec->components->schemas as $name => $schema) {
-            $class = self::newNetteClass($schema, $name, $settings);
-            $classes[$name] = $class;
-            $this->logger->debug($printer->printClass($class));
-        }
+            $container = self::newNetteClass($schema, $name, $settings);
+            $classes[$name] = $container->class;
+            $this->logger->debug($printer->printClass($container->class));
 
-        // Process sidecar.
-        if (count(self::$sideCar)) {
-            foreach (self::$sideCar as $name => $classLike) {
-                $classes[$name] = $classLike;
-                $this->logger->debug($printer->printClass($classLike));
+            // Process sidecar.
+            if (count($container->sideCar)) {
+                foreach ($container->sideCar as $name => $classLike) {
+                    $classes[$name] = $classLike;
+                    $this->logger->debug($printer->printClass($classLike));
+                }
             }
         }
 
@@ -264,16 +259,16 @@ final class MediaNoche
      *
      * @param array<string, mixed> $settings
      */
-    public static function newNetteClass(Schema|ClassLike $schema, string $class_name, array $settings): ClassType
+    public static function newNetteClass(Schema|ClassLike $schema, string $class_name, array $settings): NetteContainer
     {
         $class = new ClassType($class_name);
 
-        $props = self::propertyGenerator($schema, $class_name, $settings);
-        foreach ($props as $prop) {
+        $c = self::propertyGenerator($schema, $class_name, $settings);
+        foreach ($c->props as $prop) {
             $class->addMember($prop);
         }
 
-        return $class;
+        return new NetteContainer($c->props, $c->sideCar, $class);
     }
 
     /**
@@ -284,11 +279,11 @@ final class MediaNoche
      * @param Schema $schema
      * @param string $class_name
      * @param array<string, Property> $settings
-     * @return array<Property>
+     * @return NetteContainer
      * @throws UnhandledMatchError
      * @throws InvalidArgumentException
      */
-    private static function propertyGenerator(Schema $schema, string $class_name, array $settings): array
+    private static function propertyGenerator(Schema $schema, string $class_name, array $settings): NetteContainer
     {
         $__props = [];
 
@@ -376,18 +371,38 @@ final class MediaNoche
             $starGuard($schema, 'anyOf');
         }
 
+        $sideCar = [];
         foreach ($compositeGenerator($schema->properties) as $name => $prop) {
             if ($prop instanceof Property) {
                 $__props[$name] = $prop;
             } else {
                 // Dump non-property values into a sidecar for later processing.
-                self::$sideCar[$name] = $prop;
+                $sideCar[$name] = $prop;
             }
         }
 
-        return $__props;
+        return new NetteContainer($__props, $sideCar);
     }
+}
 
-    /**  @var array<ClassType|EnumType|InterfaceType|TraitType> */
-    private static array $sideCar = [];
+/**
+ * Container for nette data.
+ * @package AlexanderAllen\Panettone\Bread
+ */
+final class NetteContainer
+{
+    /**
+     * @param array<string, Property> $props
+     *   The Nette properties used to build a `ClassType` instance.
+     * @param array<string, ClassType|EnumType|InterfaceType|TraitType> $sideCar
+     *   Additional, related objects parsed during OAS schema interpretation.
+     * @param ?ClassType $class
+     *   The final Nette class representation, probably built using `$props`.
+     */
+    public function __construct(
+        public readonly array $props = [],
+        public readonly array $sideCar = [],
+        public readonly ?ClassType $class = null,
+    ) {
+    }
 }
