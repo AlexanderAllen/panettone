@@ -216,7 +216,7 @@ final class MediaNoche
         $enum = new EnumType($pascalCase($name));
         foreach ($cases as $case) {
             if ($case != null) {
-                $enum->addCase($pascalCase($case));
+                $enum->addCase($pascalCase($case), $case);
             }
         }
         return $enum;
