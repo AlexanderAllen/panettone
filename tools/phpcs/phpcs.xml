@@ -13,7 +13,10 @@
   <!-- See https://github.com/slevomat/coding-standard -->
   <config name="installed_paths" value="tools/phpcs/vendor/slevomat/coding-standard"/>
 
-  <rule ref="PSR12" />
+  <rule ref="PSR12">
+    <!-- Allow embedded enums in class files -->
+    <exclude name="PSR1.Classes.ClassDeclaration.MultipleClasses" />
+  </rule>
 
   <rule ref="Generic.Metrics.CyclomaticComplexity">
       <properties>

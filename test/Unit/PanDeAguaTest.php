@@ -28,7 +28,7 @@ class PanDeAguaTest extends TestCase
 {
     use Setup;
 
-    // #[Group('target')]
+    #[Group('target')]
     #[TestDox('File printer test')]
     public function testFilePrinter(): void
     {

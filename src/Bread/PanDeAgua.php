@@ -7,6 +7,7 @@ namespace AlexanderAllen\Panettone\Bread;
 use Nette\InvalidArgumentException;
 use Nette\InvalidStateException;
 use Nette\PhpGenerator\ClassType;
+use Nette\PhpGenerator\EnumType;
 use Nette\PhpGenerator\Printer;
 use Nette\PhpGenerator\PhpFile;
 use Nette\PhpGenerator\PhpNamespace;
@@ -23,19 +24,19 @@ final class PanDeAgua
     /**
      *
      * @param Printer $printer
-     * @param ClassType $class
+     * @param EnumType|ClassType $classLike
      * @param array<string, mixed> $settings
      * @throws InvalidArgumentException
      * @throws InvalidStateException
      */
-    public static function printFile(Printer $printer, ClassType $class, array $settings): void
+    public static function printFile(Printer $printer, ClassType|EnumType $classLike, array $settings): void
     {
         $output_path = $settings['file']['output_path'];
         $namespace = $settings['file']['namespace'];
         $comment = $settings['file']['comment'];
 
         $namespace = new PhpNamespace($namespace);
-        $namespace->add($class);
+        $namespace->add($classLike);
 
         $file = new PhpFile();
         $file->setStrictTypes();
@@ -46,7 +47,7 @@ final class PanDeAgua
         // @see https://doc.nette.org/en/php-generator#toc-class-names-resolving
         $printer->setTypeResolving(false);
 
-        $path = sprintf('%s/%s.php', $output_path, $class->getName());
+        $path = sprintf('%s/%s.php', $output_path, $classLike->getName());
 
         $content = $printer->printFile($file);
         file_put_contents($path, $content);

@@ -13,6 +13,7 @@ use Nette\PhpGenerator\ClassType;
 use Nette\Utils\Type as UtilsType;
 use AlexanderAllen\Panettone\Setup as ParentSetup;
 use AlexanderAllen\Panettone\Test\Setup;
+use Nette\PhpGenerator\EnumType;
 
 /**
  * Test suite for nette generators.
@@ -30,14 +31,21 @@ class MedianocheTest extends TestCase
     use Setup;
 
     #[Test]
-    #[TestDox('Create nette class object(s)')]
+    #[TestDox('Emit Nette "class like" object(s)')]
     public function cebeToNetteObject(): void
     {
         $settings = PanDeAgua::getSettings('test/schema/settings.ini');
         $classes = (new MediaNoche())->sourceSchema($settings, 'test/schema/medianoche.yml');
 
+        $allowed = [
+            ClassType::class,
+            EnumType::class,
+        ];
         foreach ($classes as $class) {
-            self::assertInstanceOf(ClassType::class, $class, 'Generator yields ClassType object(s)');
+            $this->assertNotFalse(
+                array_search($class::class, $allowed, true),
+                'Medianoche emits instances of the correct Nette objects'
+            );
         }
     }
 
@@ -215,6 +223,35 @@ class MedianocheTest extends TestCase
         $this->assertTrue($type->isSimple() && $type->isBuiltin(), 'Assert member property type.');
     }
 
+    /**
+     * Test case for enumerated properties.
+     *
+     * If an enum has been detected, the property will reference an Enum object,
+     * and therefore should follow object naming conventions. Both property and type
+     * names are camel case, but the type is capitalized and the prop name is not.
+     */
+    #[Test]
+    #[Group('target')]
+    #[TestDox('Assert use case for enumerations')]
+    public function schemaEnum(): void
+    {
+        $settings = PanDeAgua::getSettings('test/schema/settings-debug.ini');
+        $classes = (new MediaNoche())->sourceSchema($settings, 'test/schema/keyword-enum-simple.yml');
+
+        $this->assertArrayHasKey('PanettoneEnum', $classes, 'Test subject is present');
+        $subject = $classes['PanettoneEnum'];
+        $this->assertTrue($subject->hasProperty('enumPastries'), 'Test property is present');
+        $member = $subject->getProperty('enumPastries');
+
+        $type = UtilsType::fromString($member->getType());
+
+        $this->assertEquals(
+            'EnumPastries',
+            $type->getSingleName(),
+            'Assert member property references another object type.'
+        );
+    }
+
     #[TestDox('Assert nullable and default settings')]
     public function testNullableDefault(): void
     {
@@ -222,9 +259,11 @@ class MedianocheTest extends TestCase
         $classes = (new MediaNoche())->sourceSchema($settings, 'test/schema/keyword-allOf-simple.yml');
 
         foreach ($classes as $class) {
-            foreach ($class->getProperties() as $prop) {
-                $this->assertTrue($prop->isInitialized(), 'Property has default value assinged');
-                $this->assertTrue($prop->isNullable(), 'Property is set as nullable');
+            if ($class instanceof ClassType) {
+                foreach ($class->getProperties() as $prop) {
+                    $this->assertTrue($prop->isInitialized(), 'Property has default value assinged');
+                    $this->assertTrue($prop->isNullable(), 'Property is set as nullable');
+                }
             }
         }
     }

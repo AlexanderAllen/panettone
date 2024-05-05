@@ -15,6 +15,10 @@ use loophp\collection\Collection;
 use Nette\InvalidArgumentException;
 use UnhandledMatchError;
 use Generator;
+use Nette\PhpGenerator\ClassLike;
+use Nette\PhpGenerator\EnumType;
+use Nette\PhpGenerator\InterfaceType;
+use Nette\PhpGenerator\TraitType;
 
 use function Symfony\Component\String\u;
 
@@ -86,7 +90,11 @@ final class MediaNoche
         // If star allOf: intersection, anyOf|oneOf: union.
         if (!empty($starProps)) {
             foreach ($lastRefs as $starType => $starRefs) {
-                if ($starType == 'allOf') {
+                if ($starType == 'enum') {
+                    // Enum properties are simple, non-composite types that reference other objects.
+                    // The type name is capitalized because it references an object.
+                    $newProp->setType(ucfirst($_name));
+                } elseif ($starType == 'allOf') {
                     $newProp->setType(Type::intersection(...$starRefs));
                 } else {
                     $newProp->setType(Type::union(...$starRefs));
@@ -143,7 +151,7 @@ final class MediaNoche
     {
         // Star keywords are represented in both Open API and cebe as arrays.
         $starProps = [];
-        foreach (['allOf', 'anyOf', 'oneOf'] as $star) {
+        foreach (['allOf', 'anyOf', 'oneOf', 'enum'] as $star) {
             if (
                 isset($property->{$star}) &&
                 ! empty($property->{$star})
@@ -174,7 +182,14 @@ final class MediaNoche
 
         foreach ($starProps as $star => $property) {
             foreach ($property as $starRef) {
-                $lastRefs[$star][] = $last($starRef);
+                // Enums are only simple string arrays, not OAS schema references.
+                // However, it's easier for nativeProp() to use this logic.
+                if ($star === 'enum') {
+                    $lastRefs[$star][] = $starRef;
+                // Everybody else gets de-referenced.
+                } else {
+                    $lastRefs[$star][] = $last($starRef);
+                }
             }
         }
 
@@ -182,10 +197,41 @@ final class MediaNoche
     }
 
     /**
+     * Creates a new Nette enumeration object.
+     *
+     * Use PascalCase per the latest PER-CS recommendations.
+     * @see https://www.php-fig.org/per/coding-style/#9-enumerations
+     *
+     * I do not have an answer for null value enums, therefore supressing null cases.
+     * @see https://github.com/AlexanderAllen/panettone/issues/20
+     *
+     * @param string $name
+     * @param array<string> $cases
+     * @return EnumType
+     */
+    private static function newNetteEnum(string $name, array $cases): EnumType
+    {
+        $pascalCase = fn ($_name) => ucfirst(u($_name)->camel()->toString());
+        $enum = new EnumType($pascalCase($name));
+        foreach ($cases as $case) {
+            if ($case != null) {
+                $enum->addCase($pascalCase($case));
+            }
+        }
+        return $enum;
+    }
+
+    public function __construct()
+    {
+        // Reset static sidecar on instantiation.
+        self::$sideCar = [];
+    }
+
+    /**
      * Interprets a given Open Api schema into Nette class instances.
      *
      * @param array<string, mixed> $settings
-     * @return array<string, ClassType>
+     * @return array<string, ClassType|EnumType>
      */
     public function sourceSchema(array $settings, string $source): array
     {
@@ -201,19 +247,24 @@ final class MediaNoche
             $classes[$name] = $class;
             $this->logger->debug($printer->printClass($class));
         }
+
+        // Process sidecar.
+        if (count(self::$sideCar)) {
+            foreach (self::$sideCar as $name => $classLike) {
+                $classes[$name] = $classLike;
+                $this->logger->debug($printer->printClass($classLike));
+            }
+        }
+
         return $classes;
     }
 
     /**
      * Virtual class generator accepts a cebe object and returns a nette object.
      *
-     * Does two things: generate the class, populate it with properties.
-     *
-     * @TODO Issues #22, #23, namespaces and config file.
-     *
      * @param array<string, mixed> $settings
      */
-    public static function newNetteClass(Schema $schema, string $class_name, array $settings): ClassType
+    public static function newNetteClass(Schema|ClassLike $schema, string $class_name, array $settings): ClassType
     {
         $class = new ClassType($class_name);
 
@@ -228,9 +279,11 @@ final class MediaNoche
     /**
      * Converts all the properties from a cebe Schema into nette Properties.
      *
+     * Modifies `self::sideCart` as a side-effect.
+     *
      * @param Schema $schema
      * @param string $class_name
-     * @param array<string, mixed> $settings
+     * @param array<string, Property> $settings
      * @return array<Property>
      * @throws UnhandledMatchError
      * @throws InvalidArgumentException
@@ -253,7 +306,7 @@ final class MediaNoche
         if ($schema->type === 'array') {
             // Don't flatten or inline the reference, instead reference the schema as a type.
             self::$staticLogger->debug(sprintf('[%s/%s] Add array class property', $class_name, 'items'));
-            $prop = MediaNoche::nativeProp($settings, $schema, 'items', $last($schema), $class_name);
+            $prop = self::nativeProp($settings, $schema, 'items', $last($schema), $class_name);
             $__props[] = $prop;
         }
 
@@ -262,15 +315,19 @@ final class MediaNoche
          *
          * @param list<Schema|Reference> $array
          *
-         * @return Generator<mixed, Property, null, void>
+         * @return Generator<string, mixed, null, void>
          */
         $compositeGenerator = function ($array) use ($class_name, $last, $settings): Generator {
             foreach ($array as $key => $property) {
                 $lastRef = $last($property);
 
+                if (isset($property->enum)) {
+                    yield $lastRef => self::newNetteEnum($key, $property->enum);
+                }
+
                 // Pointer path with string ending is a reference to another schema.
                 if (! is_numeric($lastRef)) {
-                    yield $lastRef => MediaNoche::nativeProp($settings, $property, strtolower($lastRef), $lastRef, $class_name);
+                    yield $lastRef => self::nativeProp($settings, $property, strtolower($lastRef), $lastRef, $class_name);
                 }
 
                 // Pointer path with numerical ending is an internal property.
@@ -283,7 +340,7 @@ final class MediaNoche
                     // The generator steps through all the object properties, causing them to become "inline", or part
                     // of the generated type.
                     foreach ($property->properties as $key => $value) {
-                        yield $key => MediaNoche::nativeProp($settings, $value, $key);
+                        yield $key => self::nativeProp($settings, $value, $key);
                     }
                 }
             }
@@ -313,40 +370,24 @@ final class MediaNoche
             }
         }
 
-        /**
-         * anyOf schemas:
-         * - Generate every type, regardless if it's reference or inline native/object type.
-         * - For each schema reference, generate only the type reference, not the type itself.
-         * - For schema reference, add type ref to a union of types.
-         * - Inline objects and natives are generated inline.
-         * - Inline objects are also part of a union, which capture every single type
-         *   mentioned in the anyOf.
-         *
-         * So basically a anyOf generator should return a big ol list of types to be added to a Union.
-         * Some of them just references, some of them fully populated objects or native types.
-         *
-         * @TODO The commen above and code needs some sanity check per #15.
-         *
-         * @see https://dev.to/drupalista/dev-log-330-anyof-2jgm
-         */
+        // 1) propertyGenerator is non-recurse. Meaning it won't drill down to anyOf props.
+        // 2) starGuard won't let top-level schemas marked as anyOf be used.
         if ($schema->anyOf) {
             $starGuard($schema, 'anyOf');
-
-            // This never kicks in b.c.
-            // 1) propertyGenerator is non-recurse. Meaning it won't drill down to anyOf props.
-            // 2) starGuard won't let top-level schemas marked as anyOf be used.
-            //
-            // /** @var Property $prop */
-            // foreach ($compositeGenerator($schema->anyOf) as $name => $prop) {
-            //     self::$staticLogger->debug(sprintf('[%s/%s] Add class property', $class_name, $name));
-            //     $__props[$name] = $prop;
-            // }
         }
 
         foreach ($compositeGenerator($schema->properties) as $name => $prop) {
-            $__props[$name] = $prop;
+            if ($prop instanceof Property) {
+                $__props[$name] = $prop;
+            } else {
+                // Dump non-property values into a sidecar for later processing.
+                self::$sideCar[$name] = $prop;
+            }
         }
 
         return $__props;
     }
+
+    /**  @var array<ClassType|EnumType|InterfaceType|TraitType> */
+    private static array $sideCar = [];
 }
