@@ -250,11 +250,6 @@ class MedianocheTest extends TestCase
             $type->getSingleName(),
             'Assert member property references another object type.'
         );
-
-        // $this->assertTrue($type->isSimple() && $type->isBuiltin(), 'Assert member property type.');
-
-
-        $test = null;
     }
 
     #[TestDox('Assert nullable and default settings')]
@@ -264,9 +259,11 @@ class MedianocheTest extends TestCase
         $classes = (new MediaNoche())->sourceSchema($settings, 'test/schema/keyword-allOf-simple.yml');
 
         foreach ($classes as $class) {
-            foreach ($class->getProperties() as $prop) {
-                $this->assertTrue($prop->isInitialized(), 'Property has default value assinged');
-                $this->assertTrue($prop->isNullable(), 'Property is set as nullable');
+            if ($class instanceof ClassType) {
+                foreach ($class->getProperties() as $prop) {
+                    $this->assertTrue($prop->isInitialized(), 'Property has default value assinged');
+                    $this->assertTrue($prop->isNullable(), 'Property is set as nullable');
+                }
             }
         }
     }
