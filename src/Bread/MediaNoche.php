@@ -19,6 +19,7 @@ use Nette\PhpGenerator\ClassLike;
 use Nette\PhpGenerator\EnumType;
 use Nette\PhpGenerator\InterfaceType;
 use Nette\PhpGenerator\TraitType;
+use Symfony\Component\String\AbstractString;
 
 use function Symfony\Component\String\u;
 
@@ -30,6 +31,26 @@ use function Symfony\Component\String\u;
 final class MediaNoche
 {
     use Setup;
+
+    /**
+     * Change the case of a given member depending on settings.
+     *
+     * @todo Move settings to a composable getter function.
+     * @todo Please at some point move to yaml for better type support.
+     */
+    public static function case(AbstractString $member, string $kind, array $settings): AbstractString
+    {
+        if (array_key_exists($kind, $settings['class'])) {
+            return match ($settings['class'][$kind]) {
+                'camel' => $member->camel(),
+                'snake' => $member->snake(),
+                'upper' => $member->upper(),
+                'lower' => $member->lower(),
+                default => $member->camel(),
+            };
+        }
+        return $member;
+    }
 
     /**
      * Converts a property from a cebe to a nette object.
@@ -50,7 +71,7 @@ final class MediaNoche
     ): Property {
 
         // The ascii and camel case combo takes care of the illegal characters for PHP symbols.
-        $_name = (string) u($propName)->ascii()->camel();
+        $_name = (string) self::case(u($propName)->ascii(), 'property', $settings);
 
         $newProp = (new Property($_name))->setComment($property->description);
 
