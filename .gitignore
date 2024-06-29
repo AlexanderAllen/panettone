@@ -9,3 +9,4 @@ junit.xml
 # File output testing.
 /tmp
 /settings.ini
+oas.yaml

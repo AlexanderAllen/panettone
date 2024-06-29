@@ -53,5 +53,24 @@
                 "Prop generator fails to evalulate references": "patches/2024-3-16-propgen-ref.patch"
             }
         }
+    },
+    "scripts": {
+        "post-install-cmd": [
+          "@tooling"
+        ],
+        "tooling": [
+          "@composer --working-dir tools/phpunit install",
+          "@composer --working-dir tools/phpstan install",
+          "@composer --working-dir tools/phpcs install"
+        ],
+        "lock": [
+          "rm -rf vendor composer.lock",
+          "@composer install",
+          "@composer validate --strict",
+          "@cleanup"
+        ],
+        "gen": [
+          "@composer exec panettone oas.yaml schema test/schema/settings-nullable.ini"
+        ]
     }
 }
