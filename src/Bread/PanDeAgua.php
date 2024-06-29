@@ -50,6 +50,11 @@ final class PanDeAgua
         $path = sprintf('%s/%s.php', $output_path, $classLike->getName());
 
         $content = $printer->printFile($file);
+
+        if (!is_dir($output_path)) {
+            mkdir($output_path);
+        }
+
         file_put_contents($path, $content);
     }
 
