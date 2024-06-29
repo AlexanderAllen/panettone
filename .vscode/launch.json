@@ -3,9 +3,13 @@
   // Hover to view descriptions of existing attributes.
   // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
+
+  // Before executing command make sure to set env variables.
+  // export XDEBUG_MODE="debug" && export XDEBUG_CONFIG="idekey=VSCODE"
+  // composer gen
   "configurations": [
     {
-        "name": "Local: debug",
+        "name": "[WSL] Debug",
         "type": "php",
         "request": "launch",
         "port": 9003,
@@ -13,11 +17,10 @@
         "xdebugSettings": {
           "show_hidden": 1,
         },
-        "stopOnEntry": false
+        "stopOnEntry": false,
     },
     {
-      "name": "Lando: debug",
-
+      "name": "[Lando] Debug",
       "type": "php",
       "request": "launch",
       "port": 9003,
