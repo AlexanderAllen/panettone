@@ -1,7 +1,5 @@
 #!/bin/sh
 
-echo "Running tests for group '${1}'"
-
 rm -rf tmp
 mkdir -p tmp
 php tools/phpunit/vendor/bin/phpunit --no-progress \

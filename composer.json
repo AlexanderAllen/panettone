@@ -69,6 +69,12 @@
           "@composer validate --strict",
           "@cleanup"
         ],
+        "test": [
+            ". tools/phpunit/test ${1}"
+        ],
+        "test-all": [
+            ". tools/phpunit/test-all"
+        ],
         "gen": [
           "@composer exec panettone oas.yaml schema test/schema/settings-nullable.ini"
         ]
