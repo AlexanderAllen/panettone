@@ -205,8 +205,8 @@ class MedianocheTest extends TestCase
 
         $this->assertArrayHasKey('TestSubject', $classes, 'Test subject is present');
         $subject = $classes['TestSubject'];
-        $this->assertTrue($subject->hasProperty('propertyScalar'), 'Test property is present');
-        $member = $subject->getProperty('propertyScalar');
+        $this->assertTrue($subject->hasProperty('property_scalar'), 'Test property is present');
+        $member = $subject->getProperty('property_scalar');
 
         // See https://doc.nette.org/en/utils/type.
         $type = UtilsType::fromString($member->getType());
@@ -224,6 +224,7 @@ class MedianocheTest extends TestCase
      * names are camel case, but the type is capitalized and the prop name is not.
      */
     #[Test]
+    #[Group('target')]
     #[TestDox('Assert use case for enumerations')]
     public function schemaEnum(): void
     {
@@ -232,19 +233,18 @@ class MedianocheTest extends TestCase
 
         $this->assertArrayHasKey('PanettoneEnum', $classes, 'Test subject is present');
         $subject = $classes['PanettoneEnum'];
-        $this->assertTrue($subject->hasProperty('enumPastries'), 'Test property is present');
-        $member = $subject->getProperty('enumPastries');
+        $this->assertTrue($subject->hasProperty('enum_pastries'), 'Test property is present');
+        $member = $subject->getProperty('enum_pastries');
 
         $type = UtilsType::fromString($member->getType());
 
         $this->assertEquals(
-            'EnumPastries',
+            'Enum_pastries',
             $type->getSingleName(),
             'Assert member property references another object type.'
         );
     }
 
-    #[Group('target')]
     public function testPropertyTypeArray(): void
     {
         $settings = PanDeAgua::getSettings('test/schema/settings-debug.ini');
