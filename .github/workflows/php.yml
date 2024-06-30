@@ -37,10 +37,9 @@ jobs:
     - name: Install dependencies
       run: |
         composer install --prefer-dist --no-progress
-        composer install --prefer-dist --no-progress -d tools/phpunit
-
-    # Add a test script to composer.json, for instance: "test": "vendor/bin/phpunit"
-    # Docs: https://getcomposer.org/doc/articles/scripts.md
+        composer --working-dir tools/phpunit install
+        composer --working-dir tools/phpcs install
+        composer --working-dir tools/phpstan install
 
     - name: Run PHPUnit tests
       run: |
@@ -64,3 +63,13 @@ jobs:
         tools/phpunit/vendor/bin/php-coveralls -v \
         --coverage_clover=$PWD/build/clover.xml \
         --json_path=tools/coveralls-upload.json
+
+    - name: Lint job for PHP code
+      run: |
+        php tools/phpstan/vendor/bin/phpstan analyse \
+        -c tools/phpstan/phpstan.neon \
+        --no-interaction \
+        --error-format=github
+
+    - name: Lint job for PHP style
+      run: tools/phpcs/vendor/bin/phpcs --standard=tools/phpcs/phpcs.xml --report=full src
