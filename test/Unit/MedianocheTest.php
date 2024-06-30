@@ -224,12 +224,31 @@ class MedianocheTest extends TestCase
      * names are camel case, but the type is capitalized and the prop name is not.
      */
     #[Test]
-    #[Group('target')]
     #[TestDox('Assert use case for enumerations')]
     public function schemaEnum(): void
     {
         $settings = PanDeAgua::getSettings('test/schema/settings-debug.ini');
         $classes = (new MediaNoche())->sourceSchema($settings, 'test/schema/keyword-enum-simple.yml');
+
+        $this->assertArrayHasKey('PanettoneEnum', $classes, 'Test subject is present');
+        $subject = $classes['PanettoneEnum'];
+        $this->assertTrue($subject->hasProperty('enumPastries'), 'Test property is present');
+        $member = $subject->getProperty('enumPastries');
+
+        $type = UtilsType::fromString($member->getType());
+
+        $this->assertEquals(
+            'EnumPastries',
+            $type->getSingleName(),
+            'Assert member property references another object type.'
+        );
+    }
+
+    #[Group('target')]
+    public function testPropertyTypeArray(): void
+    {
+        $settings = PanDeAgua::getSettings('test/schema/settings-debug.ini');
+        $classes = (new MediaNoche())->sourceSchema($settings, 'test/schema/property-array.yml');
 
         $this->assertArrayHasKey('PanettoneEnum', $classes, 'Test subject is present');
         $subject = $classes['PanettoneEnum'];

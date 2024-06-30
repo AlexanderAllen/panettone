@@ -35,12 +35,18 @@ final class MediaNoche
     /**
      * Change the case of a given member depending on settings.
      *
-     * @todo Move settings to a composable getter function.
+     * @param array<mixed> $settings
+     *   Settings.
+     *
+     * @todo Move settings to a composable getter function (input string, output Setting type)
      * @todo Please at some point move to yaml for better type support.
      */
     public static function case(AbstractString $member, string $kind, array $settings): AbstractString
     {
-        if (array_key_exists($kind, $settings['class'])) {
+        if (
+            array_key_exists('class', $settings) &&
+            array_key_exists($kind, $settings['class'])
+        ) {
             return match ($settings['class'][$kind]) {
                 'camel' => $member->camel(),
                 'snake' => $member->snake(),
