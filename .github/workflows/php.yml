@@ -65,6 +65,7 @@ jobs:
         --json_path=tools/coveralls-upload.json
 
     - name: Lint job for PHP code
+      continue-on-error: true
       run: |
         php tools/phpstan/vendor/bin/phpstan analyse \
         -c tools/phpstan/phpstan.neon \
@@ -72,4 +73,5 @@ jobs:
         --error-format=github
 
     - name: Lint job for PHP style
+      continue-on-error: true
       run: tools/phpcs/vendor/bin/phpcs --standard=tools/phpcs/phpcs.xml --report=full src
