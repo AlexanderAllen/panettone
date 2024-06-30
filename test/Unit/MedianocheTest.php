@@ -250,17 +250,16 @@ class MedianocheTest extends TestCase
         $settings = PanDeAgua::getSettings('test/schema/settings-debug.ini');
         $classes = (new MediaNoche())->sourceSchema($settings, 'test/schema/property-array.yml');
 
-        $this->assertArrayHasKey('PanettoneEnum', $classes, 'Test subject is present');
-        $subject = $classes['PanettoneEnum'];
-        $this->assertTrue($subject->hasProperty('enumPastries'), 'Test property is present');
-        $member = $subject->getProperty('enumPastries');
+        $this->assertArrayHasKey('TestCase', $classes, 'Test subject is present');
+        $subject = $classes['TestCase'];
+        $this->assertTrue($subject->hasProperty('collection'), 'Test property is present');
+        $member = $subject->getProperty('collection');
 
         $type = UtilsType::fromString($member->getType());
-
         $this->assertEquals(
-            'EnumPastries',
-            $type->getSingleName(),
-            'Assert member property references another object type.'
+            'array',
+            $member->getType(),
+            'Assert member property type.'
         );
     }
 

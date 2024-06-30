@@ -61,6 +61,8 @@ final class MediaNoche
     /**
      * Converts a property from a cebe to a nette object.
      *
+     * @todo Reduce complexity, rework method, see #53
+     *
      * @param array<string, mixed> $settings
      * @param Schema $property
      * @param string $propName
@@ -144,6 +146,20 @@ final class MediaNoche
         return $newProp;
     }
 
+    /**
+     * Maps Open Api property types to PHP types.
+     *
+     * @param string $type
+     *   The Open Api property type.
+     * @param string $propName
+     *   The name of the property.
+     * @param string|null $typeName
+     *   Optional, the type used for object properties.
+     * @return string
+     *   The native PHP type, or custom type for objects.
+     *
+     * @throws RuntimeException
+     */
     private static function nativeTypeMatch(string $type, string $propName, string $typeName = null): string
     {
         /**
@@ -163,7 +179,11 @@ final class MediaNoche
             'integer' => 'int',
             'boolean' => 'bool',
             'float', 'double' => 'float',
-            'object', 'array' => $normalizer($typeName ?? $propName),
+            /**
+             * @todo Support interpresting array inner values. See issue #52.
+             */
+            'array' => 'array',
+            'object' => $normalizer($typeName ?? $propName),
             'date', 'dateTime' => \DateTimeInterface::class,
             default => throw new RuntimeException("Unsupported schema property type {$type}")
         };
