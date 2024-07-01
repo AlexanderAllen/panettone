@@ -38,20 +38,9 @@
         "cebe/php-openapi": "^1.7",
         "nette/php-generator":"^4.1"
     },
-    "require-dev": {
-        "cweagans/composer-patches": "^1.7"
-    },
     "config": {
         "allow-plugins": {
-            "dealerdirect/phpcodesniffer-composer-installer": true,
-            "cweagans/composer-patches": true
-        }
-    },
-    "extra": {
-        "patches": {
-            "api-platform/schema-generator": {
-                "Prop generator fails to evalulate references": "patches/2024-3-16-propgen-ref.patch"
-            }
+            "dealerdirect/phpcodesniffer-composer-installer": true
         }
     },
     "scripts": {
