@@ -36,7 +36,9 @@
         "symfony/console": "^6.0",
         "loophp/collection": "^7.5",
         "cebe/php-openapi": "^1.7",
-        "nette/php-generator":"^4.1"
+        "nette/php-generator":"^4.1",
+        "widmogrod/php-functional": "^6.0",
+        "functional-php/fantasy-land": "dev-master as 1.0.x-dev"
     },
     "config": {
         "allow-plugins": {
@@ -59,10 +61,14 @@
           "@cleanup"
         ],
         "test": [
-            ". tools/phpunit/test ${1}"
+            ". tools/phpunit/test target"
         ],
         "test-all": [
             ". tools/phpunit/test-all"
+        ],
+        "debug": [
+            "Composer\\Config::disableProcessTimeout",
+            "export XDEBUG_MODE=develop,debug,coverage && export XDEBUG_TRIGGER=1 && . tools/phpunit/test target "
         ],
         "gen": [
           "@composer exec panettone oas.yaml schema test/schema/settings-nullable.ini"
