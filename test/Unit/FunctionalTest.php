@@ -7,7 +7,7 @@ namespace AlexanderAllen\Panettone\Test\Unit;
 use FunctionalPHP\FantasyLand\Apply;
 use FunctionalPHP\FantasyLand\Functor;
 use PHPUnit\Framework\TestCase;
-use PHPUnit\Framework\Attributes\{CoversClass, Group, Test, TestDox, Depends, UsesClass};
+use PHPUnit\Framework\Attributes\{CoversClass, CoversNothing, Group, Test, TestDox, Depends, UsesClass};
 use Widmogrod\Monad\State as s;
 use Widmogrod\Monad\State;
 
@@ -77,11 +77,9 @@ class StateMonad extends State
     /**
      * Override the trait dox.
      *
-     * @template b
+     * @param a $value
      *
-     * @param b $value
-     *
-     * @return StateMonad<b>
+     * @return StateMonad<a>
      */
     public static function of($value)
     {
@@ -96,6 +94,7 @@ class StateMonad extends State
  * @package AlexanderAllen\Panettone\Test
  */
 #[TestDox('Functional tests')]
+#[CoversNothing]
 class FunctionalTest extends TestCase
 {
     #[Test]
@@ -123,8 +122,7 @@ class FunctionalTest extends TestCase
             });
         $randomInt = $mstate($sf);
         $result = $randomInt->get()(12345);
-
-
+        $this->assertIsInt($result[0]);
 
         // strtoupper()
         // $final = $state->runState('Richard');

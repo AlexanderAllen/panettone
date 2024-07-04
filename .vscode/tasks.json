@@ -68,7 +68,7 @@
     {
       "label": "Local: PHPUnit",
       "type": "shell",
-      "command": ". tools/phpunit/test ${input:group}",
+      "command": "composer debug",
       "detail": "Executes PHPUnit on the local system",
       "options": {
         "env": {

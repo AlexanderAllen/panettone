@@ -224,7 +224,6 @@ class MedianocheTest extends TestCase
      * names are camel case, but the type is capitalized and the prop name is not.
      */
     #[Test]
-    #[Group('target')]
     #[TestDox('Assert use case for enumerations')]
     public function schemaEnum(): void
     {
@@ -261,6 +260,25 @@ class MedianocheTest extends TestCase
             $member->getType(),
             'Assert member property type.'
         );
+    }
+
+    #[Group('target')]
+    public function testFunctional(): void
+    {
+        $settings = PanDeAgua::getSettings('test/schema/settings-debug.ini');
+        $classes = (new MediaNoche())->sourceSchema($settings, 'test/schema/collection-simple.yml');
+
+        $this->assertArrayHasKey('TestCase', $classes, 'Test subject is present');
+        $subject = $classes['TestCase'];
+        $this->assertTrue($subject->hasProperty('collection'), 'Test property is present');
+        $member = $subject->getProperty('collection');
+
+        // $type = UtilsType::fromString($member->getType());
+        // $this->assertEquals(
+        //     'array',
+        //     $member->getType(),
+        //     'Assert member property type.'
+        // );
     }
 
     #[TestDox('Assert nullable and default settings')]
