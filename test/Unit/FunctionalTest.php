@@ -8,6 +8,7 @@ use FunctionalPHP\FantasyLand\Apply;
 use FunctionalPHP\FantasyLand\Functor;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\{CoversClass, CoversNothing, Group, Test, TestDox, Depends, UsesClass};
+use Widmogrod\Common\PointedTrait;
 use Widmogrod\Monad\State as s;
 use Widmogrod\Monad\State;
 
@@ -22,22 +23,7 @@ use function Widmogrod\Monad\State\state;
  */
 class Applicative implements Apply
 {
-    /**
-     *
-     * @var a
-     */
-    public mixed $value;
-
-    /**
-     * Stub.
-     *
-     * @param mixed $value
-     * @return void
-     */
-    public function __construct($value)
-    {
-        $this->value = $value;
-    }
+    use PointedTrait;
 
     /**
      *
@@ -67,7 +53,7 @@ class StateMonad extends State
     /**
      * Stub.
      *
-     * @return a Something.
+     * @return a
      */
     public function get(): mixed
     {
@@ -98,9 +84,9 @@ class StateMonad extends State
 class FunctionalTest extends TestCase
 {
     #[Test]
-    #[TestDox('test')]
+    #[TestDox('Use literal book example')]
     #[Group('target')]
-    public function testSomething(): void
+    public function testBasics(): void
     {
         $sf = function ($state) {
             mt_srand($state);
@@ -123,8 +109,58 @@ class FunctionalTest extends TestCase
         $randomInt = $mstate($sf);
         $result = $randomInt->get()(12345);
         $this->assertIsInt($result[0]);
+    }
 
-        // strtoupper()
+    #[Group('target')]
+    #[TestDox('Change to string state')]
+    public function testGiant(): void
+    {
+        $giantOp = function (string $state1 = '') {
+            $new = strtoupper($state1);
+            return [$state1, $new];
+        };
+        // The monad stores the operation, but the state function stores the value (state).
+        $mstate = fn (callable $stateFunction): StateMonad =>
+            StateMonad::of(function ($state3) use ($stateFunction) {
+                return $stateFunction($state3);
+            });
+        $giantStr = $mstate($giantOp);
+        $result = $giantStr->get()('Hello Ritchie');
+        $this->assertEquals('HELLO RITCHIE', $result[1]);
+        // $final = $state->runState('Richard');
+        // $t = evalState($state, 'Richard');
+    }
+
+    #[Group('target')]
+    public function testApplicatives(): void
+    {
+        $giantOp = function (string $state1 = '') {
+            $new = strtoupper($state1);
+            // state, value
+            return [$state1, $new];
+        };
+
+        $randomOp = function (string $state2 = '') {
+            $new = str_shuffle($state2);
+            return [$state2, $new];
+        };
+
+        // The monad stores the operation, but the state function stores the value (state).
+        $mstate = fn (callable $stateFunction): StateMonad =>
+            StateMonad::of(function ($state3) use ($stateFunction) {
+                return $stateFunction($state3);
+            });
+        $giantStr = $mstate($giantOp);
+        $result = $giantStr->get()('Hello Ritchie');
+        $this->assertEquals('HELLO RITCHIE', $result[1]);
+
+        $randomStr = $mstate($giantOp);
+        $app = $randomStr->ap($giantStr);
+        $r1 = $app->get();
+        $r1(fn ($foo = '') => 'bar');
+
+        $test = null;
+
         // $final = $state->runState('Richard');
         // $t = evalState($state, 'Richard');
     }
