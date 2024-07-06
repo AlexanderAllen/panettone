@@ -6,7 +6,6 @@ namespace AlexanderAllen\Panettone\Test\Unit;
 
 use Closure;
 use FunctionalPHP\FantasyLand\Functor as FantasyFunctor;
-use PhpParser\Node\Expr\Instanceof_;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\{CoversNothing, Group, Test, TestDox};
 use Widmogrod\Common\PointedTrait;
@@ -16,13 +15,18 @@ use Widmogrod\Monad\Maybe as m;
 use function FunctionalPHP\FantasyLand\compose;
 use function Widmogrod\Functional\curry;
 
+interface PointedInterface
+{
+    public function __construct(mixed $value);
+}
+
 /**
  * Functors allow mapping a function to one or more values in a container.
  *
  * @template a
  * @implements FantasyFunctor<a>
  */
-class Functor implements FantasyFunctor, ValueOfInterface
+class Functor implements FantasyFunctor, ValueOfInterface, PointedInterface
 {
     use PointedTrait;
 
@@ -39,7 +43,8 @@ class Functor implements FantasyFunctor, ValueOfInterface
         return $this->value;
     }
 
-    public function get(): mixed {
+    public function get(): mixed
+    {
         return $this->extract();
     }
 
@@ -59,10 +64,22 @@ class IdentityFunctor extends Functor
 {
     public function map(callable $f): FantasyFunctor
     {
-        return new self($f($this->value));
+
+        return new static($f($this->value));
     }
 }
 
+/**
+ * @template a
+ * @extends IdentityFunctor<a>
+ */
+class IdentityFunctorExtended extends IdentityFunctor
+{
+    public function apply(IdentityFunctorExtended $f): FantasyFunctor
+    {
+        return $f->map($this->get());
+    }
+}
 
 /**
  * Assert functor laws using native and custom constructs.
@@ -174,5 +191,22 @@ class LawsForFunctorsTest extends TestCase
         // compose(map(f), map(g)) == map(compose(f,g))
         [$f, $g] = [fn ($a) => $a * 10, fn ($a) => $a + 2];
         $this->assertTrue($functor->map($f)->map($g) == $functor->map(fn ($a) => $g($f($a))));
+    }
+
+    public function testApplicatives(): void
+    {
+        $add = curry(fn ($a, $b) => $a + $b);
+        $applicative = (new IdentityFunctorExtended(5))->map($add);
+        $ten = new IdentityFunctorExtended(10);
+        $this->assertTrue($applicative->apply($ten)->get() === 15);
+
+        // $a = new IdentityFunctorExtended(5);
+        // $b = $a->map($add);
+        // $b->apply(new IdentityFunctorExtended(10));
+
+        [$x, $y] = [new IdentityFunctorExtended(5), new IdentityFunctorExtended(10)];
+        $applicative2 = new IdentityFunctorExtended($add);
+        $this->assertTrue($applicative2->apply($x)->apply($y)->get() === 15);
+
     }
 }
