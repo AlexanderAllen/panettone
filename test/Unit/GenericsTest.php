@@ -40,7 +40,7 @@ use Widmogrod\Common\PointedTrait;
  *
  * @package AlexanderAllen\Panettone\Test
  */
-#[TestDox('Assert PHPStan generic patterns')]
+#[TestDox('PHPStan generic patterns')]
 #[CoversNothing]
 #[Group('target')]
 class GenericsTest extends TestCase
@@ -49,6 +49,7 @@ class GenericsTest extends TestCase
     #[TestDox('Native constructs')]
     public function testFoo(): void
     {
+        $this->assertTrue('foo' === 'foo');
     }
 }
 
@@ -70,7 +71,7 @@ interface TheInterface
  * @implements ApplyInterface<a>
  * @implements Chain<b>
  */
-class Applicative implements ApplyInterface, Chain
+class ApplicativeTest implements ApplyInterface, Chain
 {
     use PointedTrait;
 
@@ -114,11 +115,11 @@ class Applicative implements ApplyInterface, Chain
     }
 
     /**
-     * @template TReturnValue3 of Applicative
+     * @template TReturnValue3 of ApplicativeTest
      * @param callable(a): TReturnValue3 $f
      * @return TReturnValue3 Returns a new instance of itself.
      */
-    public function map3(callable $f): Applicative
+    public function map3(callable $f): ApplicativeTest
     {
         $s = new self($f($this->value));
         return $s;
@@ -204,5 +205,26 @@ class TestFunctor
     public function foo(callable $callable): mixed
     {
         return $callable();
+    }
+}
+
+/**
+ * @template IdentityValue
+ * @extends TestFunctor<IdentityValue>
+ */
+class FunctorB extends TestFunctor
+{
+    use PointedTrait;
+
+    /**
+     * Is it saying both accept and return the Identity type?
+     *
+     * @template TReturnValue of TestFunctor
+     * @param callable(IdentityValue): TReturnValue $f
+     * @return TReturnValue Returns a new instance of itself.
+     */
+    public function map4(callable $f): TestFunctor
+    {
+        return static::of($f($this->value));
     }
 }
