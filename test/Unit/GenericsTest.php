@@ -68,14 +68,14 @@ abstract class Applicative implements Apply
 
 
  /**
- * @template T
+ * @template IdentityValue The identity contained inside the functor.
  */
 class TestFunctor
 {
     public mixed $value;
 
     /**
-     * @param T $value
+     * @param IdentityValue $value
      */
     public function __construct($value)
     {
@@ -106,7 +106,6 @@ class TestFunctor
      * Is it saying both accept and return the Identity type?
      *
      * @template TReturnValue3 of TestFunctor
-     * @template IdentityValue The identity contained inside the functor.
      * @param callable(IdentityValue): TReturnValue3 $f
      * @return TReturnValue3 Returns a new instance of itself.
      */
