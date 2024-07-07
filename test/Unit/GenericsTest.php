@@ -40,7 +40,6 @@ interface TheInterface
 
 /**
  * // $s = new static($f($this->value));
- * // $f($this->value)); - start with this
  *
  * template V
  */
@@ -90,6 +89,13 @@ function foo(callable $callable): mixed
  */
 class Identity
 {
+    public mixed $value;
+
+    public function __construct($value)
+    {
+        $this->value = $value;
+    }
+
    /**
      * @template U
      * @template C as callable(T): U
@@ -109,6 +115,26 @@ class Identity
     }
 
     /**
+     * Works fine wihtout any typing.
+     */
+    public function map(callable $f): callable
+    {
+        return $f($this->value);
+    }
+
+    /**
+     * @template TReturnValue2 of Identity
+     * @param callable(): TReturnValue2 $f
+     * @return TReturnValue2
+     */
+    public function map2(callable $f): self
+    {
+        return new self($f());
+    }
+
+    /**
+     * Switch out mixed return type and use Apply instead.
+     *
      * @template TReturnValue of Apply
      * @param callable(): TReturnValue $callable
      * @return TReturnValue
