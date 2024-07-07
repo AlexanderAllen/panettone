@@ -52,21 +52,10 @@ class Applicative implements ApplyInterface
 {
     use PointedTrait;
 
-   /**
-     * @template U
-     * @template C as callable(T): U
-     *
-     * @param ApplyInterface<C> $applicative
-     * @return ApplyInterface<U>
-     */
-    public function ap(ApplyInterface $applicative): ApplyInterface
+
+    public function ap(ApplyInterface $b): ApplyInterface
     {
-        if (! $applicative instanceof self) {
-            throw new \LogicException(sprintf('Applicative must be an instance of %s', self::class));
-        }
-        return $applicative->bind(function (callable $f) {
-            return self::of($f($this->value));
-        });
+        return $b();
     }
 
     /**
