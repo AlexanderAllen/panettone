@@ -7,7 +7,6 @@ namespace AlexanderAllen\Panettone\Test\Unit;
 use FunctionalPHP\FantasyLand\Apply as ApplyInterface;
 use FunctionalPHP\FantasyLand\Chain;
 use FunctionalPHP\FantasyLand\Functor as FantasyFunctor;
-use LogicException;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\{CoversNothing, Group, Test, TestDox};
 use Widmogrod\Common\PointedTrait;
@@ -49,20 +48,9 @@ class GenericsTest extends TestCase
     #[TestDox('Native constructs')]
     public function testFoo(): void
     {
-        $this->assertTrue('foo' === 'foo');
+        $c = fn (callable $f) => null;
+        $this->assertTrue(is_callable($c));
     }
-}
-
-/**
- * @template V The contained value
- */
-interface TheInterface
-{
-    /**
-     * @param V $value
-     * @return TheInterface<V>
-     */
-    public function __construct(mixed $value);
 }
 
 /**
@@ -75,26 +63,6 @@ class ApplicativeTest implements ApplyInterface, Chain
 {
     use PointedTrait;
 
-//    /**
-//      * @template U
-//      * @template C as callable(T): U
-//      *
-//      * @param Applicative<C> $applicative
-//      * @return Applicative<U>
-//      */
-
-    /**
-    //  * @template TReturnValue of Chain
-    //  * @param TReturnValue $b
-    //  * @return TReturnValue Returns a new instance of itself.
-    //  * @throws LogicException
-    //  */
-
-    /**
-     * @param ApplyInterface<a> $applicable
-     * @return Chain<b> Returns a new instance of itself.
-     * @todo Apply compliles, but is it correct?
-     */
     public function ap(ApplyInterface $applicable): ApplyInterface
     {
         if (! $applicable instanceof self) {
@@ -105,10 +73,6 @@ class ApplicativeTest implements ApplyInterface, Chain
         });
     }
 
-    /**
-     * @inheritdoc
-     * @see vendor/widmogrod/php-functional/src/Monad/Identity.php
-     */
     public function bind(callable $transformation)
     {
         return $transformation($this->value);
@@ -136,9 +100,13 @@ class ApplicativeTest implements ApplyInterface, Chain
   * Explores basic generic concepts then applies them to functor patterns.
   *
   * @template IdentityValue The identity contained inside the functor.
+  * @template a The generic from the FantasyFunctor interface
+  * @implements FantasyFunctor<a>
   */
-class TestFunctor
+class TestFunctor implements FantasyFunctor
 {
+    use PointedTrait;
+
     public mixed $value;
 
     /**
@@ -152,9 +120,19 @@ class TestFunctor
     /**
      * Works fine wihtout any typing.
      */
-    public function map(callable $f): callable
+    public function simpleMap(callable $f): callable
     {
         return $f($this->value);
+    }
+
+    /**
+     * @template TReturnValue of FantasyFunctor
+     * @param callable(IdentityValue): TReturnValue $f
+     * @return TReturnValue Returns a new instance of itself.
+     */
+    public function map(callable $f): FantasyFunctor
+    {
+        return static::of($f($this->value));
     }
 
     /**
@@ -208,22 +186,30 @@ class TestFunctor
     }
 }
 
-/**
- * @template IdentityValue
- * @extends TestFunctor<IdentityValue>
- */
-class FunctorB extends TestFunctor
+ /**
+  * Explores basic generic concepts then applies them to functor patterns.
+  *
+  * @template IdentityValue The identity contained inside the functor.
+  * @template a
+  * @extends TestFunctor<a, IdentityValue>
+  *
+  * @see https://stackoverflow.com/a/75537312
+  */
+class TestFunctorB extends TestFunctor
 {
     use PointedTrait;
 
     /**
-     * Is it saying both accept and return the Identity type?
-     *
-     * @template TReturnValue of TestFunctor
-     * @param callable(IdentityValue): TReturnValue $f
-     * @return TReturnValue Returns a new instance of itself.
+     * @var a $value
      */
-    public function map4(callable $f): TestFunctor
+    public mixed $value;
+
+    /**
+     * @template TReturnValue of FantasyFunctor<a>
+     * @param callable(IdentityValue): TReturnValue $f
+     * @return TReturnValue<a> Returns a new instance of itself.
+     */
+    public function map(callable $f): FantasyFunctor
     {
         return static::of($f($this->value));
     }
