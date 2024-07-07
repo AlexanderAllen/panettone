@@ -70,12 +70,19 @@ class IdentityFunctor extends Functor
 }
 
 /**
- * @template a
- * @extends IdentityFunctor<a>
+ * @template T
+ * @extends IdentityFunctor<T>
  */
 class IdentityFunctorExtended extends IdentityFunctor
 {
-    public function apply(IdentityFunctorExtended $f): FantasyFunctor
+    /**
+     * @template U
+     * @template C as callable(T): U
+     *
+     * @param IdentityFunctorExtended<C> $applicative
+     * @return IdentityFunctorExtended<U>
+     */
+    public function apply(IdentityFunctorExtended $f): IdentityFunctorExtended
     {
         return $f->map($this->get());
     }
@@ -207,6 +214,5 @@ class LawsForFunctorsTest extends TestCase
         [$x, $y] = [new IdentityFunctorExtended(5), new IdentityFunctorExtended(10)];
         $applicative2 = new IdentityFunctorExtended($add);
         $this->assertTrue($applicative2->apply($x)->apply($y)->get() === 15);
-
     }
 }
