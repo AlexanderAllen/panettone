@@ -8,13 +8,19 @@ use FunctionalPHP\FantasyLand\Apply;
 use FunctionalPHP\FantasyLand\Functor as FantasyFunctor;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\{CoversNothing, Group, Test, TestDox};
+use Widmogrod\Common\PointedTrait;
 
 /**
- * Assert functor laws using native and custom constructs.
+ * Apply PHPStan generic patterns to functional patterns.
  *
  * @package AlexanderAllen\Panettone\Test
+ *
+ * @see https://phpstan.org/blog/generics-in-php-using-phpdocs
+ * @see https://phpstan.org/blog/generics-by-examples
+ * @see https://phpstan.org/blog/whats-up-with-template-covariant
+ * @see https://github.com/functional-php/fantasy-land/issues/16
  */
-#[TestDox('Assert functor laws for:')]
+#[TestDox('Assert PHPStan generic patterns')]
 #[CoversNothing]
 #[Group('target')]
 class GenericsTest extends TestCase
@@ -38,63 +44,9 @@ interface TheInterface
     public function __construct(mixed $value);
 }
 
-/**
- * // $s = new static($f($this->value));
- *
- * template V
- */
-abstract class A
+abstract class Applicative implements Apply
 {
-   /**
-     * template U
-     * @template C as callable(V) doc
-     *
-     * @return C(V)
-     */
-    abstract public function map(callable $f): callable;
-
-    // public function map(callable $function): Functor;
-}
-
-/**
- *      * @template U
-     * @template C as callable(T): U
- */
-
-/**
- * REFERENCES
- *
- * Inspiration https://github.com/functional-php/fantasy-land/issues/16
- *
- * @see
- */
-
-
-/**
- * @template TReturnValue of mixed
- * @param callable(): TReturnValue $callable
- * @return TReturnValue
- *
- * @see https://github.com/phpstan/phpstan/issues/10618
- * @see https://phpstan.org/r/6f180252-1951-442b-a566-6346b9a7750a
- */
-function foo(callable $callable): mixed
-{
-    return $callable();
-}
-
-
- /**
- * @template T
- */
-class Identity
-{
-    public mixed $value;
-
-    public function __construct($value)
-    {
-        $this->value = $value;
-    }
+    use PointedTrait;
 
    /**
      * @template U
@@ -103,15 +55,31 @@ class Identity
      * @param Apply<C> $applicative
      * @return Apply<U>
      */
-    public function ap2(Apply $applicative): Apply
+    public function ap(Apply $applicative): Apply
     {
         if (! $applicative instanceof self) {
             throw new \LogicException(sprintf('Applicative must be an instance of %s', self::class));
         }
-
         return $applicative->bind(function (callable $f) {
             return self::of($f($this->value));
         });
+    }
+}
+
+
+ /**
+ * @template T
+ */
+class TestFunctor
+{
+    public mixed $value;
+
+    /**
+     * @param T $value
+     */
+    public function __construct($value)
+    {
+        $this->value = $value;
     }
 
     /**
@@ -123,13 +91,29 @@ class Identity
     }
 
     /**
-     * @template TReturnValue2 of Identity
+     * @todo Assert it accepts and return the TestFunctor type?
+     *
+     * @template TReturnValue2 of TestFunctor
      * @param callable(): TReturnValue2 $f
      * @return TReturnValue2
      */
     public function map2(callable $f): self
     {
         return new self($f());
+    }
+
+    /**
+     * Is it saying both accept and return the Identity type?
+     *
+     * @template TReturnValue3 of TestFunctor
+     * @template IdentityValue The identity contained inside the functor.
+     * @param callable(IdentityValue): TReturnValue3 $f
+     * @return TReturnValue3 Returns a new instance of itself.
+     */
+    public function map3(callable $f): TestFunctor
+    {
+        $s = new self($f($this->value));
+        return $s;
     }
 
     /**
@@ -148,6 +132,9 @@ class Identity
      * @template TReturnValue of mixed
      * @param callable(): TReturnValue $callable
      * @return TReturnValue
+     *
+     * @see https://github.com/phpstan/phpstan/issues/10618
+     * @see https://phpstan.org/r/6f180252-1951-442b-a566-6346b9a7750a
      */
     public function foo(callable $callable): mixed
     {
