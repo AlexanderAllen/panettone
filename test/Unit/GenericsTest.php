@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace AlexanderAllen\Panettone\Test\Unit;
 
-use FunctionalPHP\FantasyLand\Apply;
+use FunctionalPHP\FantasyLand\Apply as ApplyInterface;
 use FunctionalPHP\FantasyLand\Functor as FantasyFunctor;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\{CoversNothing, Group, Test, TestDox};
@@ -44,7 +44,11 @@ interface TheInterface
     public function __construct(mixed $value);
 }
 
-abstract class Applicative implements Apply
+/**
+ * @template a The value inherited from the Apply interface.
+ * @implements ApplyInterface<a>
+ */
+class Applicative implements ApplyInterface
 {
     use PointedTrait;
 
@@ -52,10 +56,10 @@ abstract class Applicative implements Apply
      * @template U
      * @template C as callable(T): U
      *
-     * @param Apply<C> $applicative
-     * @return Apply<U>
+     * @param ApplyInterface<C> $applicative
+     * @return ApplyInterface<U>
      */
-    public function ap(Apply $applicative): Apply
+    public function ap(ApplyInterface $applicative): ApplyInterface
     {
         if (! $applicative instanceof self) {
             throw new \LogicException(sprintf('Applicative must be an instance of %s', self::class));
@@ -63,6 +67,22 @@ abstract class Applicative implements Apply
         return $applicative->bind(function (callable $f) {
             return self::of($f($this->value));
         });
+    }
+
+    /**
+     * @template TReturnValue3 of Applicative
+     * @param callable(a): TReturnValue3 $f
+     * @return TReturnValue3 Returns a new instance of itself.
+     */
+    public function map3(callable $f): Applicative
+    {
+        $s = new self($f($this->value));
+        return $s;
+    }
+
+    public function map(callable $function): FantasyFunctor
+    {
+        return $function();
     }
 }
 
