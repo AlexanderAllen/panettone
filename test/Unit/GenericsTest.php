@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace AlexanderAllen\Panettone\Test\Unit;
 
 use FunctionalPHP\FantasyLand\Apply as ApplyInterface;
+use FunctionalPHP\FantasyLand\Chain;
 use FunctionalPHP\FantasyLand\Functor as FantasyFunctor;
+use LogicException;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\{CoversNothing, Group, Test, TestDox};
 use Widmogrod\Common\PointedTrait;
@@ -13,12 +15,30 @@ use Widmogrod\Common\PointedTrait;
 /**
  * Apply PHPStan generic patterns to functional patterns.
  *
- * @package AlexanderAllen\Panettone\Test
+ * PHPStan generics are an integral part of using Valinor, so understanding them
+ * is integral to fully harnessing Valinor's potential in Panettone.
+ *
+ * Applying functional concepts is the next evolution in Panettone, and while
+ * using generics is not required for category theory patterns, generics greatly
+ * improve the developer experience by providing accurate type information thus
+ * making functional PHP code more accessible to end users (developers).
+ *
+ * This test suite does not aim to assert the laws of category theory, but rather
+ * explore how to adopt PHPStan generics when using functional patterns.
+ *
+ * The original (circa 2015) and current (stable) widmogrod package does not use
+ * generics at all, but dev-master does to some extent. The type information
+ * in fantasy-land however may not be compatible with newer PHPStan versions.
+ *
+ * @todo Consider giving widmo and fantasy some love back if anything formal
+ * comes out these tests.
  *
  * @see https://phpstan.org/blog/generics-in-php-using-phpdocs
  * @see https://phpstan.org/blog/generics-by-examples
  * @see https://phpstan.org/blog/whats-up-with-template-covariant
  * @see https://github.com/functional-php/fantasy-land/issues/16
+ *
+ * @package AlexanderAllen\Panettone\Test
  */
 #[TestDox('Assert PHPStan generic patterns')]
 #[CoversNothing]
@@ -46,16 +66,51 @@ interface TheInterface
 
 /**
  * @template a The value inherited from the Apply interface.
+ * @template b The value from the Chain interface.
  * @implements ApplyInterface<a>
+ * @implements Chain<b>
  */
-class Applicative implements ApplyInterface
+class Applicative implements ApplyInterface, Chain
 {
     use PointedTrait;
 
+//    /**
+//      * @template U
+//      * @template C as callable(T): U
+//      *
+//      * @param Applicative<C> $applicative
+//      * @return Applicative<U>
+//      */
 
-    public function ap(ApplyInterface $b): ApplyInterface
+    /**
+    //  * @template TReturnValue of Chain
+    //  * @param TReturnValue $b
+    //  * @return TReturnValue Returns a new instance of itself.
+    //  * @throws LogicException
+    //  */
+
+    /**
+     * @param ApplyInterface<a> $applicable
+     * @return Chain<b> Returns a new instance of itself.
+     * @todo Apply compliles, but is it correct?
+     */
+    public function ap(ApplyInterface $applicable): ApplyInterface
     {
-        return $b();
+        if (! $applicable instanceof self) {
+            throw new \LogicException(sprintf('Applicative must be an instance of %s', self::class));
+        }
+        return $applicable->bind(function (callable $f) {
+            return self::of($f($this->value));
+        });
+    }
+
+    /**
+     * @inheritdoc
+     * @see vendor/widmogrod/php-functional/src/Monad/Identity.php
+     */
+    public function bind(callable $transformation)
+    {
+        return $transformation($this->value);
     }
 
     /**
@@ -77,8 +132,10 @@ class Applicative implements ApplyInterface
 
 
  /**
- * @template IdentityValue The identity contained inside the functor.
- */
+  * Explores basic generic concepts then applies them to functor patterns.
+  *
+  * @template IdentityValue The identity contained inside the functor.
+  */
 class TestFunctor
 {
     public mixed $value;
@@ -125,13 +182,13 @@ class TestFunctor
     }
 
     /**
-     * Switch out mixed return type and use Apply instead.
+     * Switch out mixed return type and use ApplyInterface instead.
      *
-     * @template TReturnValue of Apply
+     * @template TReturnValue of ApplyInterface
      * @param callable(): TReturnValue $callable
      * @return TReturnValue
      */
-    public function bar(callable $callable): Apply
+    public function bar(callable $callable): ApplyInterface
     {
         return $callable();
     }
