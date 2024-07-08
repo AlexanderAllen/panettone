@@ -18,12 +18,22 @@ use Widmogrod\Common\ValueOfTrait;
  * This dead simple example demonstrates that the type information is not lost
  * when using generics through traits.
  *
+ * I also mention how to use PHPStan\dumpType, but that requires phpstan installed via composer,
+ * which I'm not doing in the composer manifest for the package root. If adding PHPStan via composer, then the following
+ * needs to be included:
+ *
+ * `use function PHPStan\dumpType;`
+ *
  * @package AlexanderAllen\Panettone\Test
+ *
+ * @link https://phpstan.org/r/a5d29122-fd07-4f3e-bce6-04ed40ad63a3 How to use dumpType
+ * @link https://github.com/phpstan/phpstan/issues/4069 How to use dumpType
+ * @link https://phpstan.org/user-guide/troubleshooting-types mentions dumpType()
  */
 #[TestDox('Using traits with PHPStan generics')]
 #[CoversNothing]
 #[Group('target')]
-class GenericTraits extends TestCase
+class GenericTraitsTest extends TestCase
 {
     #[Test]
     public function testGenericContainers(): void
@@ -34,10 +44,10 @@ class GenericTraits extends TestCase
         $this->assertTrue($a->extract() === 5);
 
         // The main thing you're looking at here is that the hint returns "@var int $c".
+        // You can confirm with dumpType(), however be aware that you SHOULD NOT run the code with dumpType() uncommented.
+        // dumpType($c);
         $b = new TraitConsumer(3);
-        /** @phpstan-assert string $c */
         $c = $b->extract();
-        $dump = \PHPStan\dumpType($c);
         $this->assertTrue($c === 3);
     }
 }
