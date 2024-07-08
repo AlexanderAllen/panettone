@@ -95,7 +95,9 @@ trait GenericPointedTrait2
  * But for more locked down inheritance models there's also solutions for that (such as final constructors).
  *
  * @link https://github.com/phpstan/phpstan/discussions/11302 My final response to this issue.
- * @link https://phpstan.org/r/7a4a4edb-a2f1-467a-bcef-4037ce45f6c9 Last working snippet, no downsides!
+ * @link https://phpstan.org/r/7a4a4edb-a2f1-467a-bcef-4037ce45f6c9 The cnstructor tag supports child overloading!
+ * @link https://drupal.slack.com/archives/C033S2JUMLJ/p1720436243502369
+ *   Drupal.org chit-chat about the interface edge case losing generic typing with @AndyF, @AlexanderAllen
  *
  * @phpstan-consistent-constructor
  */
