@@ -30,11 +30,29 @@ class GenericTraits2Test extends TestCase
 
         // $e hints string, as it should.
         $e = new TraitConsumer('Hello');
+        $x = $e->extract(); // hinted as string, correctly.
 
         // However, using static of() hints mixed.
         $d = TraitConsumerOf::of('Hello');
+        $f = $d->extract(); // mixed here too, that's unnaceptable.
     }
 }
+
+/**
+ * Enforces constructor signature through both PHP and PHPStan.
+ *
+ * @see https://phpstan.org/blog/solving-phpstan-error-unsafe-usage-of-new-static
+ *
+ * @template ConstructorValue
+ */
+interface ConsistentConstructorOf
+{
+    /**
+     * @param ConstructorValue $value
+     */
+    public function __construct($value);
+}
+
 
 /**
  * @template IdentityValue The identity contained inside the functor.
@@ -64,6 +82,16 @@ trait GenericPointedTraitOf
         return $this->value;
     }
 
+    // /**
+    //  * @template TStaticReturn of static
+    //  * @param IdentityValue $value
+    //  * @return TStaticReturn
+    //  *
+    //  * @template TReturnValue of self
+    //  * @param callable(IdentityValue): TReturnValue $f
+    //  * @return TReturnValue
+    //  */
+
     /**
      * @param IdentityValue $value
      * @return static<IdentityValue>
@@ -78,7 +106,7 @@ trait GenericPointedTraitOf
  * How to consume a trait that contains PHPStan generics.
  *
  * @template IdentityValue
- * @implements ConsistentConstructorOf<IdentityValue>
+ * @template-implements ConsistentConstructorOf<IdentityValue>
  */
 class TraitConsumerOf implements ConsistentConstructorOf
 {
@@ -89,19 +117,4 @@ class TraitConsumerOf implements ConsistentConstructorOf
     {
         return $this->extract();
     }
-}
-
-/**
- * Enforces constructor signature through both PHP and PHPStan.
- *
- * @see https://phpstan.org/blog/solving-phpstan-error-unsafe-usage-of-new-static
- *
- * @template IdentityValue
- */
-interface ConsistentConstructorOf
-{
-    /**
-     * @param IdentityValue $value
-     */
-    public function __construct($value);
 }
