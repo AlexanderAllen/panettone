@@ -1,4 +1,4 @@
-<img src="https://source.unsplash.com/IlbJvIia9aY" alt="Panettone: PHP type generator for Open Api" style="width:100%" />
+<img src="panettone.jpg" alt="blackieshoot-IlbJvIia9aY-unsplash" style="width:100%" />
 
 Image by [@blackieshoot](https://unsplash.com/@blackieshoot) at [Unsplash](https://unsplash.com/)
 
@@ -29,7 +29,8 @@ and you can catch me on the Slack [#drupal](drupal.org/slack) channel if you wan
 supported by the [JavaScript FantasyLand](https://github.com/fantasyland/fantasy-land) spec.
 - I'd be nice to have native PHP attributes or custom PHPStan types (stubs?)
 that can prove the laws for a Functor anywhere it is implemented, maybe even
-outside of Panettone (a fantasy!).
+outside of Panettone (a fantasy!). This would be a separate Composer package that
+you can enlist help from anytime you get inspired to implement functional patterns in any project.
 - And, whatever else is outstanding on the lonely issue queue (stop using .ini for configs, I'm looking at you).
 
 ## Installation
