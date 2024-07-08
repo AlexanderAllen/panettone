@@ -48,6 +48,8 @@ class GenericTraitsTest extends TestCase
         $b = new TraitConsumer(3);
         $c = $b->extract();
         $this->assertTrue($c === 3);
+
+        $d = TraitConsumer2::of(1);
     }
 }
 
@@ -136,41 +138,44 @@ class TraitConsumer
  * Enforces constructor signature through both PHP and PHPStan.
  *
  * @see https://phpstan.org/blog/solving-phpstan-error-unsafe-usage-of-new-static
+ *
+ * @template a
  */
 interface ConsistentConstructor
 {
-    public function __construct(mixed $value);
+    /**
+     * @param a $value
+     */
+    public function __construct($value);
 }
 
 /**
  * Point trait with generic support.
  *
  * @template IdentityValue2
- *
- * @see https://phpstan.org/blog/solving-phpstan-error-unsafe-usage-of-new-static
  */
 trait MyPointedTrait
 {
     /**
      * @var IdentityValue2
      */
-    protected mixed $value;
+    protected $value;
 
     /**
      * Ensure everything on start.
      *
      * @param IdentityValue2 $value
      */
-    public function __construct(mixed $value)
+    public function __construct($value)
     {
         $this->value = $value;
     }
 
     /**
      * @param IdentityValue2 $value
-     * @return static A new instance of itself or child.
+     * @return ConsistentConstructor<IdentityValue2>
      */
-    public static function of(mixed $value): static
+    public static function of($value): ConsistentConstructor
     {
         return new static($value);
     }
@@ -180,6 +185,7 @@ trait MyPointedTrait
  * Use a trait closer to reality.
  *
  * @template IdentityValue2
+ * @implements ConsistentConstructor<IdentityValue2>
  */
 class TraitConsumer2 implements ConsistentConstructor
 {
@@ -187,4 +193,4 @@ class TraitConsumer2 implements ConsistentConstructor
     use MyPointedTrait;
 }
 
-$c = TraitConsumer2::of('Hello');
+$d = TraitConsumer2::of(1);
