@@ -84,7 +84,7 @@
       "icon": {"id": "beaker", "color": "terminal.ansiYellow"},
       "presentation": {
         "echo": true,
-        "reveal": "always",
+        "reveal": "silent",
         "focus": false,
         "panel": "shared",
         "showReuseMessage": true,
@@ -104,7 +104,7 @@
         },
         "group": {
           "kind": "test",
-          "isDefault": true
+          "isDefault": false
         },
         "isBackground": false,
         "icon": {"id": "beaker", "color": "terminal.ansiYellow"},
