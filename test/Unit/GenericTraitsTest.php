@@ -131,3 +131,45 @@ class TraitConsumer
         return $this->extract();
     }
 }
+
+/**
+ * Point trait with generic support.
+ *
+ * @template IdentityValue2
+ */
+trait MyPointedTrait
+{
+    /**
+     * @var mixed
+     */
+    protected $value;
+
+    /**
+     * Ensure everything on start.
+     *
+     * @param mixed $value
+     */
+    public function __construct($value)
+    {
+        $this->value = $value;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function of($value)
+    {
+        return new static($value);
+    }
+}
+
+/**
+ * Use a trait closer to reality.
+ *
+ * @template IdentityValue2
+ */
+class TraitConsumer2
+{
+    /** @use MyPointedTrait<IdentityValue2> */
+    use MyPointedTrait;
+}
