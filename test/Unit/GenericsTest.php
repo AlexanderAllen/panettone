@@ -61,49 +61,6 @@ class GenericsTest extends TestCase
     }
 }
 
-/**
- * @template a The value inherited from the Apply interface.
- * @template b The value from the Chain interface.
- * @implements ApplyInterface<a>
- * @implements Chain<b>
- */
-class ApplicativeTest implements ApplyInterface, Chain
-{
-    use PointedTrait;
-
-    public function ap(ApplyInterface $applicable): ApplyInterface
-    {
-        if (! $applicable instanceof self) {
-            throw new \LogicException(sprintf('Applicative must be an instance of %s', self::class));
-        }
-        return $applicable->bind(function (callable $f) {
-            return self::of($f($this->value));
-        });
-    }
-
-    public function bind(callable $transformation)
-    {
-        return $transformation($this->value);
-    }
-
-    /**
-     * @template TReturnValue3 of ApplicativeTest
-     * @param callable(a): TReturnValue3 $f
-     * @return TReturnValue3 Returns a new instance of itself.
-     */
-    public function map3(callable $f): ApplicativeTest
-    {
-        $s = new self($f($this->value));
-        return $s;
-    }
-
-    public function map(callable $function): FantasyFunctor
-    {
-        return $function();
-    }
-}
-
-
  /**
   * Explores basic generic concepts then applies them to functor patterns.
   *
@@ -115,8 +72,6 @@ class TestFunctor implements FantasyFunctor
 {
     use PointedTrait;
     use ValueOfTrait;
-
-    // public mixed $value;
 
     /**
      * @param IdentityValue $value
