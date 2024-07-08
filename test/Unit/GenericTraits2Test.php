@@ -32,14 +32,14 @@ class GenericTraits2Test extends TestCase
         $e = new TraitConsumer('Hello');
 
         // However, using static of() hints mixed.
-        $d = TraitConsumer::of('Hello');
+        $d = TraitConsumerOf::of('Hello');
     }
 }
 
 /**
  * @template IdentityValue The identity contained inside the functor.
  */
-trait GenericPointedTrait
+trait GenericPointedTraitOf
 {
     /**
      * @var IdentityValue
@@ -78,12 +78,12 @@ trait GenericPointedTrait
  * How to consume a trait that contains PHPStan generics.
  *
  * @template IdentityValue
- * @implements ConsistentConstructor<IdentityValue>
+ * @implements ConsistentConstructorOf<IdentityValue>
  */
-class TraitConsumer implements ConsistentConstructor
+class TraitConsumerOf implements ConsistentConstructorOf
 {
-    /** @use GenericPointedTrait<IdentityValue> */
-    use GenericPointedTrait;
+    /** @use GenericPointedTraitOf<IdentityValue> */
+    use GenericPointedTraitOf;
 
     public function foo(): mixed
     {
@@ -98,7 +98,7 @@ class TraitConsumer implements ConsistentConstructor
  *
  * @template IdentityValue
  */
-interface ConsistentConstructor
+interface ConsistentConstructorOf
 {
     /**
      * @param IdentityValue $value
