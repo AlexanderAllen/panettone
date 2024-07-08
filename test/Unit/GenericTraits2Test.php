@@ -80,16 +80,26 @@ trait GenericPointedTrait2
 
 /**
  * @template IdentityValue
- * @implements ConsistentConstructorOf<IdentityValue>
  *
  * When implementing the interface:
  * dumpType() gives the correct hints for TraitConsumerOf<int> or TraitConsumerOf<string>
  * However, PHPStan on the IDE reports TraitConsumerOf<mixed>  :'(
  *
  * Removing the ConsistentConstructorOf interface restores the correct generic functionality
- * to the hints. What gives !?!
+ * to the hints, but then I get hit with "Unsafe usage of new static()"
+ *
+ * SOLVED: Using the other alternatives mentioned by PHPStan docs does solve the generic
+ * loss, with plenty of approaches supported for different scenarios.
+ *
+ * I'm sticking with the `consistent-constructor` tag because it supports the more open ended inheritance case.
+ * But for more locked down inheritance models there's also solutions for that (such as final constructors).
+ *
+ * @link https://github.com/phpstan/phpstan/discussions/11302 My final response to this issue.
+ * @link https://phpstan.org/r/7a4a4edb-a2f1-467a-bcef-4037ce45f6c9 Last working snippet, no downsides!
+ *
+ * @phpstan-consistent-constructor
  */
-class TraitConsumerOf implements ConsistentConstructorOf
+class TraitConsumerOf
 {
     /** @use GenericPointedTrait2<IdentityValue> */
     use GenericPointedTrait2;
