@@ -4,14 +4,8 @@ declare(strict_types=1);
 
 namespace AlexanderAllen\Panettone\Test\Unit;
 
-use FunctionalPHP\FantasyLand\Apply as ApplyInterface;
-use FunctionalPHP\FantasyLand\Chain;
-use FunctionalPHP\FantasyLand\Functor as FantasyFunctor;
-use PhpParser\Builder\Trait_;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\{CoversNothing, Group, Test, TestDox};
-use Widmogrod\Common\PointedTrait;
-use Widmogrod\Common\ValueOfTrait;
 
 /**
  * How to deploy PHPStan generics when using traits.
@@ -24,17 +18,16 @@ class GenericTraits2Test extends TestCase
     #[Test]
     public function testGenericContainers(): void
     {
-        $b = new TraitConsumer(3);
+        $b = new TraitConsumerOf(3);
         $c = $b->extract();
         $this->assertTrue($c === 3);
 
-        // $e hints string, as it should.
-        $e = new TraitConsumer('Hello');
+        $e = new TraitConsumerOf('Hello');
         $x = $e->extract(); // hinted as string, correctly.
 
         // However, using static of() hints mixed.
-        $d = TraitConsumerOf::of('Hello');
-        $f = $d->extract(); // mixed here too, that's unnaceptable.
+        // $d = TraitConsumerOf::of('Hello');
+        // $f = $d->extract(); // mixed here too, that's unnaceptable.
     }
 }
 
@@ -57,7 +50,7 @@ interface ConsistentConstructorOf
 /**
  * @template IdentityValue The identity contained inside the functor.
  */
-trait GenericPointedTraitOf
+trait GenericPointedTrait2
 {
     /**
      * @var IdentityValue
@@ -81,40 +74,30 @@ trait GenericPointedTraitOf
     {
         return $this->value;
     }
-
-    // /**
-    //  * @template TStaticReturn of static
-    //  * @param IdentityValue $value
-    //  * @return TStaticReturn
-    //  *
-    //  * @template TReturnValue of self
-    //  * @param callable(IdentityValue): TReturnValue $f
-    //  * @return TReturnValue
-    //  */
-
-    /**
-     * @param IdentityValue $value
-     * @return static<IdentityValue>
-     */
-    public static function of($value)
-    {
-        return new static($value);
-    }
 }
 
 /**
- * How to consume a trait that contains PHPStan generics.
- *
  * @template IdentityValue
- * @template-implements ConsistentConstructorOf<IdentityValue>
  */
-class TraitConsumerOf implements ConsistentConstructorOf
+class TraitConsumerOf
 {
-    /** @use GenericPointedTraitOf<IdentityValue> */
-    use GenericPointedTraitOf;
+    /** @use GenericPointedTrait2<IdentityValue> */
+    use GenericPointedTrait2;
 
     public function foo(): mixed
     {
         return $this->extract();
     }
 }
+
+// $b = new TraitConsumer(3);
+// $c = $b->extract();
+// assert($c === 3);
+
+// // $e hints string, as it should.
+// $e = new TraitConsumer('Hello');
+// $x = $e->extract(); // hinted as string, correctly.
+
+// // However, using static of() hints mixed.
+// $d = TraitConsumerOf::of('Hello');
+// $f = $d->extract(); // mixed here too, that's unnaceptable.
