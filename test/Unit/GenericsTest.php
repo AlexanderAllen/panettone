@@ -205,16 +205,12 @@ class TestFunctor implements FantasyFunctor
 class TestFunctorB extends TestFunctor
 {
     /**
-     * This compiles locally.
+     * If using self (not static) in the generic, this approach both compiles
+     * and hints correctly.
      *
-     * Templating the interface compiles locally, but the instance does not
-     * have access to the subclass methods.
-     *
-     * Templating the subclass gives the instance access the local methods,
-     * but does not compile locally.
-     *
-     * @param callable(IdentityValue): static $f
-     * @return static A new instance of itself or child.
+     * @template TReturnValue of self
+     * @param callable(IdentityValue): TReturnValue $f
+     * @return TReturnValue
      */
     public function map(callable $f): FantasyFunctor
     {
@@ -235,6 +231,11 @@ class TestFunctorB extends TestFunctor
 
     /**
      * Compiles, and returns correct type with IDE hinting (using static).
+     *
+     * If using static for return type on either generic or signature, this is
+     * the way. It still covers callable, argument, and return type.
+     *
+     * @todo test in separate class
      *
      * @param callable(IdentityValue): static $f
      * @return static A new instance of itself or child.
