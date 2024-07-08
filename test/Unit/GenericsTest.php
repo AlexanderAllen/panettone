@@ -228,7 +228,7 @@ class TestFunctorB extends TestFunctor
      * @param callable(IdentityValue): TReturnValue2 $f
      * @return TReturnValue2
      */
-    public function mapSubclass(callable $f): TestFunctor
+    public function mapSubclass(callable $f): FantasyFunctor
     {
         return static::of($f($this->value));
     }
