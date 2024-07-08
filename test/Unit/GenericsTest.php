@@ -52,9 +52,11 @@ class GenericsTest extends TestCase
         $add2 = fn ($a) => $a + 2;
         $a = TestFunctorB::of(5);
         $b = $a->map($add2);
+        $this->assertTrue($b instanceof TestFunctorB);
         $this->assertTrue($b->extract() == 7);
 
-        $c = TestFunctorB::of(5)->mapStatic($add2);
+        $c = TestStaticFunctor::of(5)->mapStatic($add2);
+        $this->assertTrue($c instanceof TestStaticFunctor);
         $this->assertTrue($c->extract() == 7);
     }
 }
@@ -143,8 +145,6 @@ class TestFunctor implements FantasyFunctor
     }
 
     /**
-     * @todo Assert it accepts and return the TestFunctor type?
-     *
      * @template TReturnValue2 of TestFunctor
      * @param callable(): TReturnValue2 $f
      * @return TReturnValue2
@@ -216,26 +216,22 @@ class TestFunctorB extends TestFunctor
     {
         return static::of($f($this->value));
     }
+}
 
-    /**
-     * @todo Assert it accepts and return the TestFunctor type?
-     *
-     * @template TReturnValue2 of self
-     * @param callable(IdentityValue): TReturnValue2 $f
-     * @return TReturnValue2
-     */
-    public function mapSubclass(callable $f): FantasyFunctor
-    {
-        return static::of($f($this->value));
-    }
-
+/**
+ * Implementing PHPStan on extended functors.
+*
+* @template IdentityValue The identity contained inside the functor.
+* @template a
+* @extends TestFunctor<a, IdentityValue>
+*/
+class TestStaticFunctor extends TestFunctor
+{
     /**
      * Compiles, and returns correct type with IDE hinting (using static).
      *
      * If using static for return type on either generic or signature, this is
      * the way. It still covers callable, argument, and return type.
-     *
-     * @todo test in separate class
      *
      * @param callable(IdentityValue): static $f
      * @return static A new instance of itself or child.
