@@ -53,6 +53,9 @@ class GenericsTest extends TestCase
         $a = TestFunctorB::of(5);
         $b = $a->map($add2);
         $this->assertTrue($b->extract() == 7);
+
+        $c = TestFunctorB::of(5)->mapStatic($add2);
+        $this->assertTrue($c->extract() == 7);
     }
 }
 
@@ -210,9 +213,8 @@ class TestFunctorB extends TestFunctor
      * Templating the subclass gives the instance access the local methods,
      * but does not compile locally.
      *
-     * @template TReturnValue of FantasyFunctor
-     * @param callable(IdentityValue): TReturnValue $f
-     * @return TReturnValue Returns a new instance of itself.
+     * @param callable(IdentityValue): static $f
+     * @return static A new instance of itself or child.
      */
     public function map(callable $f): FantasyFunctor
     {
@@ -220,13 +222,24 @@ class TestFunctorB extends TestFunctor
     }
 
     /**
-     * This compiles fine because it's not an overloaded method.
+     * @todo Assert it accepts and return the TestFunctor type?
      *
-     * @template TReturnValue of TestFunctorB
-     * @param callable(IdentityValue): TReturnValue $f
-     * @return TReturnValue Returns a new instance of itself.
+     * @template TReturnValue2 of self
+     * @param callable(IdentityValue): TReturnValue2 $f
+     * @return TReturnValue2
      */
-    public function mapSubclass(callable $f): FantasyFunctor
+    public function mapSubclass(callable $f): TestFunctor
+    {
+        return static::of($f($this->value));
+    }
+
+    /**
+     * Compiles, and returns correct type with IDE hinting (using static).
+     *
+     * @param callable(IdentityValue): static $f
+     * @return static A new instance of itself or child.
+     */
+    public function mapStatic(callable $f): static
     {
         return static::of($f($this->value));
     }
