@@ -7,6 +7,8 @@ namespace AlexanderAllen\Panettone\Test\Unit;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\{CoversNothing, Group, Test, TestDox};
 
+use function PHPStan\dumpType;
+
 /**
  * How to deploy PHPStan generics when using traits.
  */
@@ -78,8 +80,16 @@ trait GenericPointedTrait2
 
 /**
  * @template IdentityValue
+ * @implements ConsistentConstructorOf<IdentityValue>
+ *
+ * When implementing the interface:
+ * dumpType() gives the correct hints for TraitConsumerOf<int> or TraitConsumerOf<string>
+ * However, PHPStan on the IDE reports TraitConsumerOf<mixed>  :'(
+ *
+ * Removing the ConsistentConstructorOf interface restores the correct generic functionality
+ * to the hints. What gives !?!
  */
-class TraitConsumerOf
+class TraitConsumerOf implements ConsistentConstructorOf
 {
     /** @use GenericPointedTrait2<IdentityValue> */
     use GenericPointedTrait2;
@@ -90,14 +100,17 @@ class TraitConsumerOf
     }
 }
 
-// $b = new TraitConsumer(3);
+
+// // IDE reports @var TraitConsumerOf<mixed> $b
+// // Dumped reports TraitConsumerOf<int>
+// $b = new TraitConsumerOf(3);
+// dumpType($b);
+
 // $c = $b->extract();
 // assert($c === 3);
 
-// // $e hints string, as it should.
-// $e = new TraitConsumer('Hello');
-// $x = $e->extract(); // hinted as string, correctly.
-
-// // However, using static of() hints mixed.
-// $d = TraitConsumerOf::of('Hello');
-// $f = $d->extract(); // mixed here too, that's unnaceptable.
+// // IDE reports TraitConsumerOf<mixed> $e, after implementing interface.
+// // Dump reports TraitConsumerOf<string>
+// $e = new TraitConsumerOf('Hello');
+// $x = $e->extract();
+// dumpType($e);
