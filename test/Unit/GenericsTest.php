@@ -10,6 +10,7 @@ use FunctionalPHP\FantasyLand\Functor as FantasyFunctor;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\{CoversNothing, Group, Test, TestDox};
 use Widmogrod\Common\PointedTrait;
+use Widmogrod\Common\ValueOfTrait;
 
 /**
  * Apply PHPStan generic patterns to functional patterns.
@@ -48,8 +49,10 @@ class GenericsTest extends TestCase
     #[TestDox('Native constructs')]
     public function testFoo(): void
     {
-        $c = fn (callable $f) => null;
-        $this->assertTrue(is_callable($c));
+        $add2 = fn ($a) => $a + 2;
+        $a = TestFunctorB::of(5);
+        $b = $a->map($add2);
+        $this->assertTrue($b->extract() == 7);
     }
 }
 
@@ -106,8 +109,9 @@ class ApplicativeTest implements ApplyInterface, Chain
 class TestFunctor implements FantasyFunctor
 {
     use PointedTrait;
+    use ValueOfTrait;
 
-    public mixed $value;
+    // public mixed $value;
 
     /**
      * @param IdentityValue $value
@@ -187,7 +191,7 @@ class TestFunctor implements FantasyFunctor
 }
 
  /**
-  * Explores basic generic concepts then applies them to functor patterns.
+  * Implementing PHPStan on extended functors.
   *
   * @template IdentityValue The identity contained inside the functor.
   * @template a
@@ -197,19 +201,32 @@ class TestFunctor implements FantasyFunctor
   */
 class TestFunctorB extends TestFunctor
 {
-    use PointedTrait;
-
     /**
-     * @var a $value
-     */
-    public mixed $value;
-
-    /**
-     * @template TReturnValue of FantasyFunctor<a>
+     * This compiles locally.
+     *
+     * Templating the interface compiles locally, but the instance does not
+     * have access to the subclass methods.
+     *
+     * Templating the subclass gives the instance access the local methods,
+     * but does not compile locally.
+     *
+     * @template TReturnValue of FantasyFunctor
      * @param callable(IdentityValue): TReturnValue $f
-     * @return TReturnValue<a> Returns a new instance of itself.
+     * @return TReturnValue Returns a new instance of itself.
      */
     public function map(callable $f): FantasyFunctor
+    {
+        return static::of($f($this->value));
+    }
+
+    /**
+     * This compiles fine because it's not an overloaded method.
+     *
+     * @template TReturnValue of TestFunctorB
+     * @param callable(IdentityValue): TReturnValue $f
+     * @return TReturnValue Returns a new instance of itself.
+     */
+    public function mapSubclass(callable $f): FantasyFunctor
     {
         return static::of($f($this->value));
     }
