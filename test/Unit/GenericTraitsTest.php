@@ -136,28 +136,31 @@ class TraitConsumer
  * Point trait with generic support.
  *
  * @template IdentityValue2
+ *
+ * @see https://phpstan.org/blog/solving-phpstan-error-unsafe-usage-of-new-static
  */
 trait MyPointedTrait
 {
     /**
-     * @var mixed
+     * @var IdentityValue2
      */
-    protected $value;
+    protected mixed $value;
 
     /**
      * Ensure everything on start.
      *
-     * @param mixed $value
+     * @param IdentityValue2 $value
      */
-    public function __construct($value)
+    final public function __construct(mixed $value)
     {
         $this->value = $value;
     }
 
     /**
-     * @inheritdoc
+     * @param IdentityValue2 $value
+     * @return static A new instance of itself or child.
      */
-    public static function of($value)
+    public static function of(mixed $value): static
     {
         return new static($value);
     }
@@ -173,3 +176,5 @@ class TraitConsumer2
     /** @use MyPointedTrait<IdentityValue2> */
     use MyPointedTrait;
 }
+
+$c = TraitConsumer2::of('Hello');
