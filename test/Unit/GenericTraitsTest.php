@@ -133,6 +133,16 @@ class TraitConsumer
 }
 
 /**
+ * Enforces constructor signature through both PHP and PHPStan.
+ *
+ * @see https://phpstan.org/blog/solving-phpstan-error-unsafe-usage-of-new-static
+ */
+interface ConsistentConstructor
+{
+    public function __construct(mixed $value);
+}
+
+/**
  * Point trait with generic support.
  *
  * @template IdentityValue2
@@ -151,7 +161,7 @@ trait MyPointedTrait
      *
      * @param IdentityValue2 $value
      */
-    final public function __construct(mixed $value)
+    public function __construct(mixed $value)
     {
         $this->value = $value;
     }
@@ -171,7 +181,7 @@ trait MyPointedTrait
  *
  * @template IdentityValue2
  */
-class TraitConsumer2
+class TraitConsumer2 implements ConsistentConstructor
 {
     /** @use MyPointedTrait<IdentityValue2> */
     use MyPointedTrait;
