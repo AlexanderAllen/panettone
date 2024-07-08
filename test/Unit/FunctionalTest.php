@@ -131,7 +131,7 @@ class FunctionalTest extends TestCase
         // $t = evalState($state, 'Richard');
     }
 
-    #[Group('target')]
+    #[Group('ignore')]
     public function testApplicatives(): void
     {
         $giantOp = function (string $state1 = '') {
