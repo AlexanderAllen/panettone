@@ -34,7 +34,7 @@ use Widmogrod\Common\ValueOfTrait;
  */
 #[TestDox('Using traits with PHPStan generics')]
 #[CoversNothing]
-#[Group('target')]
+#[Group('ignore')]
 class GenericTraitsTest extends TestCase
 {
     #[Test]
@@ -49,7 +49,8 @@ class GenericTraitsTest extends TestCase
         $c = $b->extract();
         $this->assertTrue($c === 3);
 
-        $d = TraitConsumer2::of(1);
+        $d = TraitConsumer::of('string');
+        $this->assertIsString($d);
     }
 }
 
@@ -109,6 +110,15 @@ trait GenericPointedTrait
     {
         return $this->value;
     }
+
+    /**
+     * @param IdentityValue $value
+     * @return static
+     */
+    public static function of($value): static
+    {
+        return new static($value);
+    }
 }
 
 /**
@@ -120,77 +130,14 @@ trait GenericPointedTrait
  * @link https://phpstan.org/r/077a11ae-e527-4dc1-8f91-975267d73643 Rabbit's deader: Types WITH generics.
  * @link https://phpstan.org/writing-php-code/phpdoc-types#offset-access
  *   The only reference for @use and traits I could find.
+ * @link https://www.drupal.org/docs/develop/development-tools/phpstan/handling-unsafe-usage-of-new-static
+ *   Updated dox on DO for this edge case.
  *
+ * @phpstan-consistent-constructor
  * @template IdentityValue
  */
 class TraitConsumer
 {
     /** @use GenericPointedTrait<IdentityValue> */
     use GenericPointedTrait;
-
-    public function foo(): mixed
-    {
-        return $this->extract();
-    }
 }
-
-/**
- * Enforces constructor signature through both PHP and PHPStan.
- *
- * @see https://phpstan.org/blog/solving-phpstan-error-unsafe-usage-of-new-static
- *
- * @template a
- */
-interface ConsistentConstructor
-{
-    /**
-     * @param a $value
-     */
-    public function __construct($value);
-}
-
-/**
- * Point trait with generic support.
- *
- * @template IdentityValue2
- */
-trait MyPointedTrait
-{
-    /**
-     * @var IdentityValue2
-     */
-    protected $value;
-
-    /**
-     * Ensure everything on start.
-     *
-     * @param IdentityValue2 $value
-     */
-    public function __construct($value)
-    {
-        $this->value = $value;
-    }
-
-    /**
-     * @param IdentityValue2 $value
-     * @return ConsistentConstructor<IdentityValue2>
-     */
-    public static function of($value): ConsistentConstructor
-    {
-        return new static($value);
-    }
-}
-
-/**
- * Use a trait closer to reality.
- *
- * @template IdentityValue2
- * @implements ConsistentConstructor<IdentityValue2>
- */
-class TraitConsumer2 implements ConsistentConstructor
-{
-    /** @use MyPointedTrait<IdentityValue2> */
-    use MyPointedTrait;
-}
-
-$d = TraitConsumer2::of(1);

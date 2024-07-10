@@ -42,7 +42,7 @@ use Widmogrod\Common\ValueOfTrait;
  */
 #[TestDox('PHPStan generic patterns')]
 #[CoversNothing]
-#[Group('target')]
+#[Group('ignore')]
 class GenericsTest extends TestCase
 {
     #[Test]

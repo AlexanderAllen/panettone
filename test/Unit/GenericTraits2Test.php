@@ -12,13 +12,13 @@ use function PHPStan\dumpType;
 /**
  * How to deploy PHPStan generics when using traits.
  */
-#[TestDox('Using traits with PHPStan generics')]
+#[TestDox('Isolate generic return type')]
 #[CoversNothing]
 #[Group('target')]
 class GenericTraits2Test extends TestCase
 {
     #[Test]
-    public function testGenericContainers(): void
+    public function testGenericContainers2(): void
     {
         $b = new TraitConsumerOf(3);
         $c = $b->extract();
@@ -27,10 +27,13 @@ class GenericTraits2Test extends TestCase
         // Instantiation using new dumps correct hints.
         $e = new TraitConsumerOf('Hello');
         $x = $e->extract();
+        $this->assertTrue($x === 'Hello');
 
         // Using self is still giving mixed, but now without errors.
         $d = TraitConsumerOf::of('Hello');
         $f = $d->extract(); // mixed here too, that's unnaceptable.
+        // dumpType($f); // dumped type is mixed
+        $this->assertTrue($f === 'Hello');
     }
 }
 
@@ -117,11 +120,6 @@ class TraitConsumerOf
 {
     /** @use GenericPointedTrait2<IdentityValue> */
     use GenericPointedTrait2;
-
-    public function foo(): mixed
-    {
-        return $this->extract();
-    }
 }
 
 
