@@ -33,17 +33,59 @@ class GenericTraits2Test extends TestCase
     #[Test]
     public function testGenericsUsingStatic(): void
     {
-        // Using self is still giving mixed, but now without errors.
+        // Method-level (local) generics retain type, even through inheritance.
         $a = TraitConsumerOf::of(1);
-        $b = $a->extract(); // mixed here too, that's unnaceptable.
-        // dumpType($f); // dumped type is mixed
+        $b = $a->extract();
         $this->assertTrue($b === 1);
 
+        // Types are lost when using class-level generics, regardless of inheritance.
         $c = TraitConsumerOf::nonLocalGeneric(2);
         $this->assertTrue($c->extract() == 2);
 
         $d = TraitConsumerOf::nonLocalGeneric2(3);
         $this->assertTrue($d->extract() == 3);
+    }
+}
+
+
+/**
+ * @template IdentityValue
+ */
+trait GenericTrait
+{
+    /**
+     * @var IdentityValue
+     */
+    protected $value;
+
+    /**
+     * Ensure everything on start.
+     *
+     * @param IdentityValue $value
+     */
+    public function __construct($value)
+    {
+        $this->value = $value;
+    }
+
+    /**
+     * @return IdentityValue
+     */
+    public function extract()
+    {
+        return $this->value;
+    }
+
+    /**
+     * Local generic is retained through static constructor.
+     *
+     * @template T
+     * @param T $value
+     * @return static<T>
+     */
+    public static function of(mixed $value)
+    {
+        return new static($value);
     }
 }
 
@@ -74,40 +116,8 @@ class GenericTraits2Test extends TestCase
  */
 class TraitConsumerOf
 {
-    /**
-     * @var IdentityValue
-     */
-    protected $value;
-
-    /**
-     * Ensure everything on start.
-     *
-     * @param IdentityValue $value
-     */
-    public function __construct($value)
-    {
-        $this->value = $value;
-    }
-
-    /**
-     * @return IdentityValue
-     */
-    public function extract()
-    {
-        return $this->value;
-    }
-
-    /**
-     * Generic is retained through static constructor.
-     *
-     * @template T
-     * @param T $value
-     * @return static<T>
-     */
-    public static function of(mixed $value)
-    {
-        return new static($value);
-    }
+    /** @use GenericTrait<IdentityValue> */
+    use GenericTrait;
 
     /**
      * Generic type is lost using a non-local (class) generic, reverts to mixed.
