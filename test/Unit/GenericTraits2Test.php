@@ -24,12 +24,13 @@ class GenericTraits2Test extends TestCase
         $c = $b->extract();
         $this->assertTrue($c === 3);
 
+        // Instantiation using new dumps correct hints.
         $e = new TraitConsumerOf('Hello');
-        $x = $e->extract(); // hinted as string, correctly.
+        $x = $e->extract();
 
-        // However, using static of() hints mixed.
-        // $d = TraitConsumerOf::of('Hello');
-        // $f = $d->extract(); // mixed here too, that's unnaceptable.
+        // Using self is still giving mixed, but now without errors.
+        $d = TraitConsumerOf::of('Hello');
+        $f = $d->extract(); // mixed here too, that's unnaceptable.
     }
 }
 
@@ -76,6 +77,15 @@ trait GenericPointedTrait2
     {
         return $this->value;
     }
+
+    /**
+     * @param IdentityValue $value
+     * @return static
+     */
+    public static function of($value): static
+    {
+        return new static($value);
+    }
 }
 
 /**
@@ -98,6 +108,8 @@ trait GenericPointedTrait2
  * @link https://phpstan.org/r/7a4a4edb-a2f1-467a-bcef-4037ce45f6c9 The cnstructor tag supports child overloading!
  * @link https://drupal.slack.com/archives/C033S2JUMLJ/p1720436243502369
  *   Drupal.org chit-chat about the interface edge case losing generic typing with @AndyF, @AlexanderAllen
+ * @link https://www.drupal.org/docs/develop/development-tools/phpstan/handling-unsafe-usage-of-new-static
+ *   Updated dox on DO for this edge case.
  *
  * @phpstan-consistent-constructor
  */
