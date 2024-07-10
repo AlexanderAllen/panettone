@@ -39,10 +39,9 @@ class GenericTraits2Test extends TestCase
         // dumpType($f); // dumped type is mixed
         $this->assertTrue($b === 1);
 
-        $c = TraitConsumerOf::staticOf(2);
+        $c = TraitConsumerOf::nonLocalGeneric(2);
         $this->assertTrue($c->extract() == 2);
-
-
+    }
 }
 
 /**
@@ -96,21 +95,24 @@ class TraitConsumerOf
     }
 
     /**
-     * @template T
-     * @param T $value
-     * @return TraitConsumerOf<T>
-     */
-    public static function of(mixed $value)
-    {
-        return new TraitConsumerOf($value);
-    }
-
-    /**
+     * Generic is retained through static constructor.
+     *
      * @template T
      * @param T $value
      * @return static<T>
      */
-    public static function staticOf(mixed $value)
+    public static function of(mixed $value)
+    {
+        return new static($value);
+    }
+
+    /**
+     * Generic type is lost using a non-local (class) generic, reverts to mixed.
+     *
+     * @param IdentityValue $value
+     * @return static<IdentityValue>
+     */
+    public static function nonLocalGeneric(mixed $value)
     {
         return new static($value);
     }
