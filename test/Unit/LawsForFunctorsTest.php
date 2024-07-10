@@ -15,18 +15,14 @@ use Widmogrod\Monad\Maybe as m;
 use function FunctionalPHP\FantasyLand\compose;
 use function Widmogrod\Functional\curry;
 
-interface PointedInterface
-{
-    public function __construct(mixed $value);
-}
-
 /**
  * Functors allow mapping a function to one or more values in a container.
  *
  * @template a
  * @implements FantasyFunctor<a>
+ * @phpstan-consistent-constructor
  */
-class Functor implements FantasyFunctor, ValueOfInterface, PointedInterface
+class Functor implements FantasyFunctor, ValueOfInterface
 {
     use PointedTrait;
 
@@ -35,7 +31,7 @@ class Functor implements FantasyFunctor, ValueOfInterface, PointedInterface
      */
     public function map(callable $function): FantasyFunctor
     {
-        return new self(array_map($function, $this->value));
+        return new static(array_map($function, $this->value));
     }
 
     public function extract()
@@ -64,27 +60,7 @@ class IdentityFunctor extends Functor
 {
     public function map(callable $f): FantasyFunctor
     {
-
         return new static($f($this->value));
-    }
-}
-
-/**
- * @template T
- * @extends IdentityFunctor<T>
- */
-class IdentityFunctorExtended extends IdentityFunctor
-{
-    /**
-     * @template U
-     * @template C as callable(T): U
-     *
-     * @param IdentityFunctorExtended<C> $applicative
-     * @return IdentityFunctorExtended<U>
-     */
-    public function apply(IdentityFunctorExtended $f): IdentityFunctorExtended
-    {
-        return $f->map($this->get());
     }
 }
 
@@ -198,21 +174,5 @@ class LawsForFunctorsTest extends TestCase
         // compose(map(f), map(g)) == map(compose(f,g))
         [$f, $g] = [fn ($a) => $a * 10, fn ($a) => $a + 2];
         $this->assertTrue($functor->map($f)->map($g) == $functor->map(fn ($a) => $g($f($a))));
-    }
-
-    public function testApplicatives(): void
-    {
-        $add = curry(fn ($a, $b) => $a + $b);
-        $applicative = (new IdentityFunctorExtended(5))->map($add);
-        $ten = new IdentityFunctorExtended(10);
-        $this->assertTrue($applicative->apply($ten)->get() === 15);
-
-        // $a = new IdentityFunctorExtended(5);
-        // $b = $a->map($add);
-        // $b->apply(new IdentityFunctorExtended(10));
-
-        [$x, $y] = [new IdentityFunctorExtended(5), new IdentityFunctorExtended(10)];
-        $applicative2 = new IdentityFunctorExtended($add);
-        $this->assertTrue($applicative2->apply($x)->apply($y)->get() === 15);
     }
 }

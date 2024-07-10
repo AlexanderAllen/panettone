@@ -43,7 +43,7 @@ use Widmogrod\Common\ValueOfTrait;
 #[TestDox('PHPStan generic patterns')]
 #[CoversNothing]
 #[Group('target')]
-class GenericsFunctorsTest extends TestCase
+class GenericFunctorsTest extends TestCase
 {
     #[Test]
     #[TestDox('Native constructs')]
