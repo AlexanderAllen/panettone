@@ -4,69 +4,63 @@ declare(strict_types=1);
 
 namespace AlexanderAllen\Panettone\Test\Unit;
 
-use FunctionalPHP\FantasyLand\Apply as ApplyInterface;
-use FunctionalPHP\FantasyLand\Chain;
-use FunctionalPHP\FantasyLand\Functor as FantasyFunctor;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\{CoversNothing, Group, Test, TestDox};
-use Widmogrod\Common\PointedTrait;
-use Widmogrod\Common\ValueOfTrait;
+
+use function PHPStan\dumpType;
 
 /**
  * How to deploy PHPStan generics when using traits.
- *
- * This dead simple example demonstrates that the type information is not lost
- * when using generics through traits.
- *
- * You can asert with PHPStan\dumpType, but that requires phpstan installed via composer, which I'm not doing.
- * If adding PHPStan via composer, include the following:
- *
- * ```
- * use function PHPStan\dumpType;
- * dumpType($c);
- * ```
- *
- * @package AlexanderAllen\Panettone\Test
- *
- * @link https://phpstan.org/r/a5d29122-fd07-4f3e-bce6-04ed40ad63a3 How to use dumpType
- * @link https://github.com/phpstan/phpstan/issues/4069 How to use dumpType
- * @link https://phpstan.org/user-guide/troubleshooting-types mentions dumpType()
  */
-#[TestDox('Using traits with PHPStan generics')]
+#[TestDox('Isolate generic return type')]
 #[CoversNothing]
-#[Group('ignore')]
+#[Group('target')]
 class GenericTraitsTest extends TestCase
 {
     #[Test]
-    public function testGenericContainers(): void
+    public function testGenericHintUsingConstructor(): void
     {
-        // Generic variable is properly hinted at!
-        // GenericValueContainer<int>
-        $a = new GenericValueContainer(5);
-        $this->assertTrue($a->extract() === 5);
-
-        $b = new TraitConsumer(3);
+        $b = new TraitConsumerOf(3);
         $c = $b->extract();
         $this->assertTrue($c === 3);
 
-        $d = TraitConsumer::of('string');
-        $this->assertIsString($d);
+        // Instantiation using new dumps correct hints.
+        $e = new TraitConsumerOf('Hello');
+        $x = $e->extract();
+        $this->assertTrue($x === 'Hello');
+    }
+
+    #[Test]
+    public function testGenericsUsingStatic(): void
+    {
+        // Method-level (local) generics retain type, even through inheritance.
+        $a = TraitConsumerOf::of(1);
+        $b = $a->extract();
+        $this->assertTrue($b === 1);
+
+        // Types are lost when using class-level generics, regardless of inheritance.
+        $c = TraitConsumerOf::nonLocalGeneric(2);
+        $this->assertTrue($c->extract() == 2);
+
+        $d = TraitConsumerOf::nonLocalGeneric2(3);
+        $this->assertTrue($d->extract() == 3);
     }
 }
 
- /**
-  * Can you get PHPStan to hint at the contained value during extraction?
-  *
-  * @template IdentityValue The identity contained inside the functor.
-  */
-class GenericValueContainer
+
+/**
+ * @template IdentityValue
+ */
+trait GenericTrait
 {
     /**
      * @var IdentityValue
      */
-    public mixed $value;
+    protected $value;
 
     /**
+     * Ensure everything on start.
+     *
      * @param IdentityValue $value
      */
     public function __construct($value)
@@ -81,63 +75,70 @@ class GenericValueContainer
     {
         return $this->value;
     }
-}
-
-/**
- * @template IdentityValue The identity contained inside the functor.
- */
-trait GenericPointedTrait
-{
-    /**
-     * @var IdentityValue
-     */
-    protected mixed $value;
 
     /**
-     * Ensure everything on start.
+     * Local generic is retained through static constructor.
      *
-     * @param IdentityValue $value
+     * @template T
+     * @param T $value
+     * @return static<T>
      */
-    public function __construct(mixed $value)
-    {
-        $this->value = $value;
-    }
-
-    /**
-     * @return IdentityValue
-     */
-    public function extract()
-    {
-        return $this->value;
-    }
-
-    /**
-     * @param IdentityValue $value
-     * @return static
-     */
-    public static function of($value): static
+    public static function of(mixed $value)
     {
         return new static($value);
     }
 }
 
 /**
- * How to consume a trait that contains PHPStan generics.
+ * When implementing the interface:
+ * dumpType() gives the correct hints for TraitConsumerOf<int> or TraitConsumerOf<string>
+ * However, PHPStan on the IDE reports TraitConsumerOf<mixed>  :'(
  *
- * @link https://github.com/phpstan/phpstan/issues/9630 Begin the rabbit hole.
- * @link https://github.com/phpstan/phpstan/issues/11160 Follow the rabbit hole.
- * @link https://phpstan.org/r/af42e09b-2d4a-4bac-b837-e6c3e34b8ab9 Rabbit's dead: types without generics.
- * @link https://phpstan.org/r/077a11ae-e527-4dc1-8f91-975267d73643 Rabbit's deader: Types WITH generics.
- * @link https://phpstan.org/writing-php-code/phpdoc-types#offset-access
- *   The only reference for @use and traits I could find.
+ * Removing the ConsistentConstructorOf interface restores the correct generic functionality
+ * to the hints, but then I get hit with "Unsafe usage of new static()"
+ *
+ * SOLVED: Using the other alternatives mentioned by PHPStan docs does solve the generic
+ * loss, with plenty of approaches supported for different scenarios.
+ *
+ * I'm sticking with the `consistent-constructor` tag because it supports the more open ended inheritance case.
+ * But for more locked down inheritance models there's also solutions for that (such as final constructors).
+ *
+ * @link @see https://phpstan.org/blog/solving-phpstan-error-unsafe-usage-of-new-static
+ * @link https://github.com/phpstan/phpstan/discussions/11302 My final response to this issue.
+ * @link https://phpstan.org/r/7a4a4edb-a2f1-467a-bcef-4037ce45f6c9 The cnstructor tag supports child overloading!
+ * @link https://drupal.slack.com/archives/C033S2JUMLJ/p1720436243502369
+ *   Drupal.org chit-chat about the interface edge case losing generic typing with @AndyF, @AlexanderAllen
  * @link https://www.drupal.org/docs/develop/development-tools/phpstan/handling-unsafe-usage-of-new-static
  *   Updated dox on DO for this edge case.
  *
  * @phpstan-consistent-constructor
  * @template IdentityValue
  */
-class TraitConsumer
+class TraitConsumerOf
 {
-    /** @use GenericPointedTrait<IdentityValue> */
-    use GenericPointedTrait;
+    /** @use GenericTrait<IdentityValue> */
+    use GenericTrait;
+
+    /**
+     * Generic type is lost using a non-local (class) generic, reverts to mixed.
+     *
+     * @param IdentityValue $value
+     * @return static<IdentityValue>
+     */
+    public static function nonLocalGeneric(mixed $value)
+    {
+        return new static($value);
+    }
+
+    /**
+     * Generic type is lost using local to class alias.
+     *
+     * @template LocalGeneric of IdentityValue
+     * @param LocalGeneric $value
+     * @return static<LocalGeneric>
+     */
+    public static function nonLocalGeneric2(mixed $value)
+    {
+        return new static($value);
+    }
 }
