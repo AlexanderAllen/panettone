@@ -41,6 +41,9 @@ class GenericTraits2Test extends TestCase
 
         $c = TraitConsumerOf::nonLocalGeneric(2);
         $this->assertTrue($c->extract() == 2);
+
+        $d = TraitConsumerOf::nonLocalGeneric2(3);
+        $this->assertTrue($d->extract() == 3);
     }
 }
 
@@ -113,6 +116,18 @@ class TraitConsumerOf
      * @return static<IdentityValue>
      */
     public static function nonLocalGeneric(mixed $value)
+    {
+        return new static($value);
+    }
+
+    /**
+     * Generic type is lost using local to class alias.
+     *
+     * @template LocalGeneric of IdentityValue
+     * @param LocalGeneric $value
+     * @return static<LocalGeneric>
+     */
+    public static function nonLocalGeneric2(mixed $value)
     {
         return new static($value);
     }
