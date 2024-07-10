@@ -34,11 +34,15 @@ class GenericTraits2Test extends TestCase
     public function testGenericsUsingStatic(): void
     {
         // Using self is still giving mixed, but now without errors.
-        $d = TraitConsumerOf::of(1);
-        $f = $d->extract(); // mixed here too, that's unnaceptable.
+        $a = TraitConsumerOf::of(1);
+        $b = $a->extract(); // mixed here too, that's unnaceptable.
         // dumpType($f); // dumped type is mixed
-        $this->assertTrue($f === 1);
-    }
+        $this->assertTrue($b === 1);
+
+        $c = TraitConsumerOf::staticOf(2);
+        $this->assertTrue($c->extract() == 2);
+
+
 }
 
 /**
@@ -99,5 +103,15 @@ class TraitConsumerOf
     public static function of(mixed $value)
     {
         return new TraitConsumerOf($value);
+    }
+
+    /**
+     * @template T
+     * @param T $value
+     * @return TraitConsumerOf<T>
+     */
+    public static function staticOf(mixed $value)
+    {
+        return new static($value);
     }
 }
