@@ -18,7 +18,7 @@ use function PHPStan\dumpType;
 class GenericTraits2Test extends TestCase
 {
     #[Test]
-    public function testGenericContainers2(): void
+    public function testGenericHintUsingConstructor(): void
     {
         $b = new TraitConsumerOf(3);
         $c = $b->extract();
@@ -28,47 +28,20 @@ class GenericTraits2Test extends TestCase
         $e = new TraitConsumerOf('Hello');
         $x = $e->extract();
         $this->assertTrue($x === 'Hello');
+    }
 
+    #[Test]
+    public function testGenericsUsingStatic(): void
+    {
         // Using self is still giving mixed, but now without errors.
-        $d = TraitConsumerOf::of('Hello');
+        $d = TraitConsumerOf::of(1);
         $f = $d->extract(); // mixed here too, that's unnaceptable.
         // dumpType($f); // dumped type is mixed
-        $this->assertTrue($f === 'Hello');
+        $this->assertTrue($f === 1);
     }
 }
 
 /**
- * @template IdentityValue The identity contained inside the functor.
- */
-trait GenericPointedTrait2
-{
-    /**
-     * @var IdentityValue
-     */
-    protected mixed $value;
-
-    /**
-     * Ensure everything on start.
-     *
-     * @param IdentityValue $value
-     */
-    public function __construct(mixed $value)
-    {
-        $this->value = $value;
-    }
-
-    /**
-     * @return IdentityValue
-     */
-    public function extract()
-    {
-        return $this->value;
-    }
-}
-
-/**
- * @template IdentityValue
- *
  * When implementing the interface:
  * dumpType() gives the correct hints for TraitConsumerOf<int> or TraitConsumerOf<string>
  * However, PHPStan on the IDE reports TraitConsumerOf<mixed>  :'(
@@ -91,20 +64,21 @@ trait GenericPointedTrait2
  *   Updated dox on DO for this edge case.
  *
  * @phpstan-consistent-constructor
+ * @template IdentityValue
  */
 class TraitConsumerOf
 {
     /**
      * @var IdentityValue
      */
-    protected mixed $value;
+    protected $value;
 
     /**
      * Ensure everything on start.
      *
      * @param IdentityValue $value
      */
-    public function __construct(mixed $value)
+    public function __construct($value)
     {
         $this->value = $value;
     }
@@ -118,26 +92,12 @@ class TraitConsumerOf
     }
 
     /**
-     * @param IdentityValue $value
-     * @return static
+     * @template T
+     * @param T $value
+     * @return TraitConsumerOf<T>
      */
-    public static function of($value): static
+    public static function of(mixed $value)
     {
-        return new static($value);
+        return new TraitConsumerOf($value);
     }
 }
-
-
-// // IDE reports @var TraitConsumerOf<mixed> $b
-// // Dumped reports TraitConsumerOf<int>
-// $b = new TraitConsumerOf(3);
-// dumpType($b);
-
-// $c = $b->extract();
-// assert($c === 3);
-
-// // IDE reports TraitConsumerOf<mixed> $e, after implementing interface.
-// // Dump reports TraitConsumerOf<string>
-// $e = new TraitConsumerOf('Hello');
-// $x = $e->extract();
-// dumpType($e);
