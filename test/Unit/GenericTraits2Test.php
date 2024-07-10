@@ -108,7 +108,7 @@ class TraitConsumerOf
     /**
      * @template T
      * @param T $value
-     * @return TraitConsumerOf<T>
+     * @return static<T>
      */
     public static function staticOf(mixed $value)
     {
