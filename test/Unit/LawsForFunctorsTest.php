@@ -44,6 +44,11 @@ class Functor implements FantasyFunctor, ValueOfInterface
         return $this->extract();
     }
 
+    /**
+     * @template identity
+     * @param identity $value
+     * @return identity
+     */
     public static function id(mixed $value): mixed
     {
         return $value;
