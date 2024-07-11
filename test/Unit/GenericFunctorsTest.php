@@ -8,8 +8,7 @@ use FunctionalPHP\FantasyLand\Apply as ApplyInterface;
 use FunctionalPHP\FantasyLand\Functor as FantasyFunctor;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\{CoversNothing, Group, Test, TestDox};
-use Widmogrod\Common\PointedTrait;
-use Widmogrod\Common\ValueOfTrait;
+use Widmogrod\Common\ValueOfInterface;
 
 /**
  * Apply PHPStan generic patterns to functional patterns.
@@ -26,10 +25,10 @@ class GenericFunctorsTest extends TestCase
         $a = TestFunctor::of(5);
         $b = $a->map($add2);
         $x = $b->extract();
-        $this->assertTrue($x === 7, 'Returns a functor of type int');
+        $this->assertTrue($x === 7, 'Extracted value retains generic hint');
 
         $c = $a->map2($add2);
-        $this->assertTrue($c === 7, 'Method map2 just returns the callback result.');
+        $this->assertTrue($c === 7, 'Method map2 just returns the callback result');
 
         $d = $a->map3($add2);
         $this->assertTrue($d->extract() === 7, 'Returns a functor of type int');
@@ -37,7 +36,11 @@ class GenericFunctorsTest extends TestCase
 }
 
 /**
+ * Copy of PointedTrait that provides generics.
+ *
  * @template a
+ *
+ * @see \Widmogrod\Common\PointedTrait
  */
 trait GenericPointedTrait2
 {
@@ -74,12 +77,13 @@ trait GenericPointedTrait2
  /**
   * @template IdentityValue The identity contained inside the functor.
   * @phpstan-consistent-constructor
+  *
+  * @see \Widmogrod\Common\ValueOfTrait Adds generic support to extract()
   */
-class TestFunctor
+class TestFunctor implements ValueOfInterface
 {
     /** @use GenericPointedTrait2<IdentityValue> */
     use GenericPointedTrait2;
-    use ValueOfTrait;
 
     /**
      * @param IdentityValue $value
@@ -89,13 +93,15 @@ class TestFunctor
         $this->value = $value;
     }
 
-    // /**
-    //  * @return IdentityValue
-    //  */
-    // public function extract()
-    // {
-    //     return $this->value;
-    // }
+    /**
+     * Putting extract on the trait removes the generic typing.
+     *
+     * @return IdentityValue
+     */
+    public function extract()
+    {
+        return $this->value;
+    }
 
     /**
      * Map with callable accepting and returning class-level generic.
