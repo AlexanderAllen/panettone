@@ -25,32 +25,24 @@ namespace Drupal\Core;
 final class Result {
 
     /**
-     * @var OkT TRUE if the result is OkT or FALSE otherwise.
-     */
-    private $isOk;
-
-    /**
-     * @var IdentityValue
-     */
-    private mixed $value;
-
-    /**
      * Create a new result.
      *
      * @param OkT $isOk
      * @param IdentityValue $value
      *   The value for the result.
      */
-    public function __construct($isOk, $value,
-    ) {
-        $this->isOk = $isOk;
-        $this->value = $value;
-    }
+    private function __construct(
+		/** @var OkT TRUE if the result is OkT or FALSE otherwise. */
+	    private bool $isOk,
+		/** @var IdentityValue The value contained by the Result monad. */
+		private mixed $value,
+    ) {}
 
   /**
    * Create a result that resolved to OkT.
    *
    * @template a
+   *
    * @param a $value
    * @return self<OkT, a>
    */
@@ -78,7 +70,7 @@ final class Result {
    * @return OkT
    *   Whether the result is OkT.
    */
-  public function isOk() {
+  public function isOk(): bool {
     return $this->isOk;
   }
 
@@ -88,8 +80,10 @@ final class Result {
    * @return OkT
    *   Whether the result is ErrorT.
    */
-  public function isError() {
-    return !$this->isOk;
+  public function isError(): bool {
+	/** @var OkT $a */
+    $a = !$this->isOk;
+	return $a;
   }
 
   /**
@@ -106,8 +100,8 @@ final class Result {
 }
 
 // Generic hint int is retained through instance creator.
-$b = new Result(true, 3);
-\PHPStan\dumpType($b);
+// $b = new Result(true, 3);
+// \PHPStan\dumpType($b);
 
 // Generic is not retained through static, we've been here before.
 // Class-level generics are lost through static, have to use local generics instead.
