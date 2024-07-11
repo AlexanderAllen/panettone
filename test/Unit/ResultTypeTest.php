@@ -50,13 +50,13 @@ final class Result {
   /**
    * Create a result that resolved to OkT.
    *
-   * @param OkT $a
-   * @param IdentityValue $b
-   *
+   * @param IdentityValue $value
    * @return self<OkT, IdentityValue>
    */
-  public static function ok($a, $b) {
-    return new self($a, $b);
+  public static function ok($value) {
+    /** @var OkT $ok */
+    $ok = true;
+    return new self($ok, $value);
   }
 
   /**
