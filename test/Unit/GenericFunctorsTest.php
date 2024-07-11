@@ -26,9 +26,8 @@ class GenericFunctorsTest extends TestCase
         $add2 = fn (int $a): int => $a + 2;
         $a = TestFunctor::of(5);
         $b = $a->map($add2);
-
         $c = $a->map2($add2);
-
+        $d = $a->map3($add2);
     }
 }
 
@@ -82,6 +81,14 @@ class TestFunctor
     }
 
     /**
+     * @return IdentityValue
+     */
+    public function extract()
+    {
+        return $this->value;
+    }
+
+    /**
      * @template TReturnValue
      * @param callable(IdentityValue): TReturnValue $f
      * @return TReturnValue Returns a new instance of itself.
@@ -92,10 +99,11 @@ class TestFunctor
     }
 
     /**
+     * Hints correctly without extending class.
+     *
      * @template a
-     * @template b
-     * @param callable(a): b $f
-     * @return b
+     * @param callable(IdentityValue): a $f
+     * @return a
      */
     public function map2(callable $f)
     {
@@ -103,10 +111,20 @@ class TestFunctor
     }
 
     /**
-     * @return IdentityValue
+     * Returns new static directly instead of using static::of method.
+     *
+     * Observed result and hint is exactly the same as using static::of.
+     *
+     * The callable `$f` is executed immediatly, while the result of type `a`
+     * is fed to the new static constructor.
+     *
+     * @template a The callable accepts and returns the generic type a
+     *
+     * @param callable(a): a $f
+     * @return static<a> The functor contains callable a as it's value.
      */
-    public function extract()
+    public function map3(callable $f)
     {
-        return $this->value;
+        return new static($f($this->value));
     }
 }
