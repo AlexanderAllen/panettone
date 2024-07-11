@@ -14,20 +14,25 @@ use Widmogrod\Common\ValueOfTrait;
 /**
  * Apply PHPStan generic patterns to functional patterns.
  */
-#[TestDox('PHPStan generic patterns')]
+#[TestDox('Functors using generics')]
 #[CoversNothing]
 #[Group('target')]
 class GenericFunctorsTest extends TestCase
 {
     #[Test]
-    #[TestDox('Native constructs')]
-    public function testFoo(): void
+    public function testCheckTheDumpedHints(): void
     {
         $add2 = fn (int $a): int => $a + 2;
         $a = TestFunctor::of(5);
         $b = $a->map($add2);
+        $x = $b->extract();
+        $this->assertTrue($x === 7, 'Returns a functor of type int');
+
         $c = $a->map2($add2);
+        $this->assertTrue($c === 7, 'Method map2 just returns the callback result.');
+
         $d = $a->map3($add2);
+        $this->assertTrue($d->extract() === 7, 'Returns a functor of type int');
     }
 }
 
@@ -52,9 +57,13 @@ trait GenericPointedTrait2
     }
 
     /**
-     * @template b
+     * In order for generic information to be retained, a local template must
+     * be used. Using a non-local generic will revert dumped type to mixed.
+     *
+     * @template b The local generic type.
      * @param b $value
      * @return static<b>
+     *   A new static instance of generic type `b`.
      */
     public static function of($value)
     {
@@ -80,18 +89,21 @@ class TestFunctor
         $this->value = $value;
     }
 
-    /**
-     * @return IdentityValue
-     */
-    public function extract()
-    {
-        return $this->value;
-    }
+    // /**
+    //  * @return IdentityValue
+    //  */
+    // public function extract()
+    // {
+    //     return $this->value;
+    // }
 
     /**
-     * @template TReturnValue
-     * @param callable(IdentityValue): TReturnValue $f
-     * @return TReturnValue Returns a new instance of itself.
+     * Map with callable accepting and returning class-level generic.
+     *
+     * @param callable(IdentityValue): IdentityValue $f
+     *   Callable is executed immediatly.
+     *
+     * @return static<IdentityValue>
      */
     public function map(callable $f)
     {
@@ -118,10 +130,10 @@ class TestFunctor
      * The callable `$f` is executed immediatly, while the result of type `a`
      * is fed to the new static constructor.
      *
-     * @template a The callable accepts and returns the generic type a
+     * @template a The callable accepts and returns the (local) generic type a.
      *
      * @param callable(a): a $f
-     * @return static<a> The functor contains callable a as it's value.
+     * @return static<a> The functor contains generic value a.
      */
     public function map3(callable $f)
     {
