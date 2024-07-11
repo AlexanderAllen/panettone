@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace AlexanderAllen\Panettone\Test\Unit;
 
-use FunctionalPHP\FantasyLand\Apply as ApplyInterface;
-use FunctionalPHP\FantasyLand\Functor as FantasyFunctor;
+use FunctionalPHP\FantasyLand\Functor;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\{CoversNothing, Group, Test, TestDox};
 use Widmogrod\Common\ValueOfInterface;
@@ -75,12 +74,18 @@ trait GenericPointedTrait2
 }
 
  /**
+  * Interfaces and Traits from Widmogrod do not implement generics.
+  *
+  * FantasyLand does implement generics (on dev-master), however some of their
+  * types (such as `Functor->map()`) don't even compile.
+  *
   * @template IdentityValue The identity contained inside the functor.
+  * @implements Functor<IdentityValue>
   * @phpstan-consistent-constructor
   *
   * @see \Widmogrod\Common\ValueOfTrait Adds generic support to extract()
   */
-class TestFunctor implements ValueOfInterface
+class TestFunctor implements ValueOfInterface, Functor
 {
     /** @use GenericPointedTrait2<IdentityValue> */
     use GenericPointedTrait2;
@@ -106,12 +111,14 @@ class TestFunctor implements ValueOfInterface
     /**
      * Map with callable accepting and returning class-level generic.
      *
+     * @todo Returning interface compiles, have not tested implementation.
+     *
      * @param callable(IdentityValue): IdentityValue $f
      *   Callable is executed immediatly.
      *
      * @return static<IdentityValue>
      */
-    public function map(callable $f)
+    public function map(callable $f): Functor
     {
         return static::of($f($this->value));
     }
