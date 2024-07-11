@@ -32,20 +32,20 @@ final class Result {
     /**
      * @var IdentityValue
      */
-    private $value;
+    private mixed $value;
 
-  /**
-   * Create a new result.
-   *
-   * @param OkT $isOk
-   * @param IdentityValue $value
-   *   The value for the result.
-   */
-  private function __construct($isOk, $value,
-  ) {
-    $this->isOk = $isOk;
-    $this->value = $value;
-  }
+    /**
+     * Create a new result.
+     *
+     * @param OkT $isOk
+     * @param IdentityValue $value
+     *   The value for the result.
+     */
+    private function __construct($isOk, $value,
+    ) {
+        $this->isOk = $isOk;
+        $this->value = $value;
+    }
 
   /**
    * Create a result that resolved to OkT.
@@ -60,13 +60,22 @@ final class Result {
   }
 
   /**
+   * Create a result that resolved to ErrorT.
+   *
+   * @param IdentityValue $value
+   * @return self<OkT, IdentityValue>
+   */
+  public static function error($value) : self {
+    /** @var OkT $ok */
+    $ok = false;
+    return new self($ok, $value);
+  }
+
+  /**
    * Check whether the result is OkT.
    *
-   * @return bool
+   * @return OkT
    *   Whether the result is OkT.
-   *
-   * @phpstan-assert-if-true OkT $this->getValue()
-   * @phpstan-assert-if-false ErrorT $this->getValue()
    */
   public function isOk() {
     return $this->isOk;
@@ -75,20 +84,21 @@ final class Result {
   /**
    * Check whether the result is ErrorT.
    *
-   * @return bool
+   * @return OkT
    *   Whether the result is ErrorT.
-   *
-   * @phpstan-assert-if-true ErrorT $this->getValue()
-   * @phpstan-assert-if-false OkT $this->getValue()
    */
   public function isError() {
     return !$this->isOk;
   }
 
   /**
+   * Get the value from the result.
+   *
    * @return IdentityValue
+   *   The value for the result, the type depends on whether the result is OkT
+   *   or ErrorT.
    */
-  public function extract() {
+  public function getValue() {
     return $this->value;
   }
 
@@ -97,32 +107,32 @@ final class Result {
 function accepts_int(int $foo) : void {}
 function accepts_string(string $bar) : void {}
 
-// /**
-//  * @param \Drupal\Core\Result<int, string> $result
-//  */
-// function accepts_result(\Drupal\Core\Result $result) : void {
-//   if ($result->isOk()) {
-//     accepts_int($result->getValue());
-//   }
-//   else {
-//     accepts_string($result->getValue());
-//   }
-// }
+/**
+ * @param \Drupal\Core\Result<int, mixed> $result
+ */
+function accepts_result(\Drupal\Core\Result $result) : void {
+  if ($result->isOk()) {
+    accepts_int($result->getValue());
+  }
+  else {
+    accepts_string($result->getValue());
+  }
+}
 
-// /**
-//  * @return \Drupal\Core\Result<int, string>
-//  * @phpstan-impure
-//  */
-// function returns_result() : Result {
-//     return rand(0, 1) === 0
-//         ? \Drupal\Core\Result::ok(1)
-//         : \Drupal\Core\Result::error("foo");
-// }
+/**
+ * @return \Drupal\Core\Result<int, mixed>
+ * @phpstan-impure
+ */
+function returns_result() : Result {
+    return rand(0, 1) === 0
+        ? \Drupal\Core\Result::ok(1)
+        : \Drupal\Core\Result::error("foo");
+}
 
-// accepts_result(returns_result());
-// accepts_result(returns_result());
+accepts_result(returns_result());
+accepts_result(returns_result());
 
-// accepts_int(\Drupal\Core\Result::ok(5)->getValue());
-// accepts_int(\Drupal\Core\Result::error(5)->getValue());
-// accepts_string(\Drupal\Core\Result::ok("five")->getValue());
-// accepts_string(\Drupal\Core\Result::error("five")->getValue());
+accepts_int(\Drupal\Core\Result::ok(5)->getValue());
+accepts_int(\Drupal\Core\Result::error(5)->getValue());
+accepts_string(\Drupal\Core\Result::ok("five")->getValue());
+accepts_string(\Drupal\Core\Result::error("five")->getValue());
