@@ -19,7 +19,7 @@ namespace Drupal\Core;
  * A monad is a structure that combines program fragments (functions) and wraps
  * their return values in a type with additional computation.
  *
- * @template OkT
+ * @template OkT of bool
  * @template IdentityValue
  */
 final class Result {
@@ -27,7 +27,7 @@ final class Result {
     /**
      * @var OkT TRUE if the result is OkT or FALSE otherwise.
      */
-    private $isOk;
+    private bool $isOk;
 
     /**
      * @var IdentityValue
@@ -108,7 +108,7 @@ function accepts_int(int $foo) : void {}
 function accepts_string(string $bar) : void {}
 
 /**
- * @param \Drupal\Core\Result<int, mixed> $result
+ * @param \Drupal\Core\Result<bool, mixed> $result
  */
 function accepts_result(\Drupal\Core\Result $result) : void {
   if ($result->isOk()) {
@@ -120,7 +120,7 @@ function accepts_result(\Drupal\Core\Result $result) : void {
 }
 
 /**
- * @return \Drupal\Core\Result<int, mixed>
+ * @return \Drupal\Core\Result<bool, mixed>
  * @phpstan-impure
  */
 function returns_result() : Result {
