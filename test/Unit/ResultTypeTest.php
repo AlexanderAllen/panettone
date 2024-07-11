@@ -19,7 +19,7 @@ namespace Drupal\Core;
  * A monad is a structure that combines program fragments (functions) and wraps
  * their return values in a type with additional computation.
  *
- * @template OkT of bool
+ * @template OkT of boolean
  * @template IdentityValue
  */
 final class Result {
@@ -27,7 +27,7 @@ final class Result {
     /**
      * @var OkT TRUE if the result is OkT or FALSE otherwise.
      */
-    private bool $isOk;
+    private $isOk;
 
     /**
      * @var IdentityValue
@@ -41,7 +41,7 @@ final class Result {
      * @param IdentityValue $value
      *   The value for the result.
      */
-    private function __construct($isOk, $value,
+    public function __construct($isOk, $value,
     ) {
         $this->isOk = $isOk;
         $this->value = $value;
@@ -50,8 +50,9 @@ final class Result {
   /**
    * Create a result that resolved to OkT.
    *
-   * @param IdentityValue $value
-   * @return self<OkT, IdentityValue>
+   * @template a
+   * @param a $value
+   * @return self<OkT, a>
    */
   public static function ok($value) {
     /** @var OkT $ok */
@@ -104,35 +105,11 @@ final class Result {
 
 }
 
-function accepts_int(int $foo) : void {}
-function accepts_string(string $bar) : void {}
+// Generic hint int is retained through instance creator.
+$b = new Result(true, 3);
+\PHPStan\dumpType($b);
 
-/**
- * @param \Drupal\Core\Result<bool, mixed> $result
- */
-function accepts_result(\Drupal\Core\Result $result) : void {
-  if ($result->isOk()) {
-    accepts_int($result->getValue());
-  }
-  else {
-    accepts_string($result->getValue());
-  }
-}
-
-/**
- * @return \Drupal\Core\Result<bool, mixed>
- * @phpstan-impure
- */
-function returns_result() : Result {
-    return rand(0, 1) === 0
-        ? \Drupal\Core\Result::ok(1)
-        : \Drupal\Core\Result::error("foo");
-}
-
-accepts_result(returns_result());
-accepts_result(returns_result());
-
-accepts_int(\Drupal\Core\Result::ok(5)->getValue());
-accepts_int(\Drupal\Core\Result::error(5)->getValue());
-accepts_string(\Drupal\Core\Result::ok("five")->getValue());
-accepts_string(\Drupal\Core\Result::error("five")->getValue());
+// Generic is not retained through static, we've been here before.
+// Class-level generics are lost through static, have to use local generics instead.
+$a = Result::ok(5);
+\PHPStan\dumpType($a);
