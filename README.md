@@ -21,6 +21,7 @@ I am trying to see if by incorporating [FantasyLand](https://github.com/function
 All the action is happening in the [`test/Unit`](https://github.com/AlexanderAllen/panettone/tree/main/test/Unit) space,
 and you can catch me on the Slack [#drupal](drupal.org/slack) channel if you want to join in on the fun _because it's all for fun, no one is going to get paid to do this sh*t!_
 
+
 ## Roadmap July 2024
 
 - Go all ham on asserting functor laws for most if not all FantasyLand category objects. This creates self documented code which then serves as a template for the rest of Panettone. Think of it as a toolshed from which I can then pick the right tool for the job at hand (parsing complex OAS use cases).
@@ -32,6 +33,11 @@ that can prove the laws for a Functor anywhere it is implemented, maybe even
 outside of Panettone (a fantasy!). This would be a separate Composer package that
 you can enlist help from anytime you get inspired to implement functional patterns in any project.
 - And, whatever else is outstanding on the lonely issue queue (stop using .ini for configs, I'm looking at you).
+
+## More updates:
+
+- 💥 July 11, 2024: Some of the generics in the [fantasy spec](https://github.com/functional-php/fantasy-land) are borked  and [won't compile](https://github.com/functional-php/fantasy-land/issues/22). Instead of overriding their
+  interfaces in my code to fix them, I'll just do it directly at [the sauce](https://github.com/AlexanderAllen/fantasy-land) 🌶️.
 
 ## Installation
 
