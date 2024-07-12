@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace AlexanderAllen\Panettone\Test\Unit;
 
 use Closure;
-use FunctionalPHP\FantasyLand\Functor as FantasyFunctor;
+use FunctionalPHP\FantasyLand\Functor;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\{CoversNothing, Group, Test, TestDox};
 use Widmogrod\Common\PointedTrait;
@@ -67,15 +67,14 @@ interface GenericFunctor
  * @template IdentityValue
  * @phpstan-consistent-constructor
  */
-class Functor implements ValueOfInterface
+class MyFunctor implements ValueOfInterface
 {
     /** @use GenericPointedTrait<IdentityValue> */
     use GenericPointedTrait;
 
     /**
-     * @template T
-     * @param callable(IdentityValue): T $function
-     * @return T Returns a new instance of itself.
+     * @param callable(IdentityValue): IdentityValue $function
+     * @return static<IdentityValue> Returns a new instance of itself.
      */
     public function map(callable $function)
     {
@@ -105,16 +104,15 @@ class Functor implements ValueOfInterface
  * An identity functor does nothing to the value besides holding it.
  *
  * @template IdentityValue
- * @extends Functor<IdentityValue>
+ * @extends MyFunctor<IdentityValue>
  */
-class IdentityFunctor extends Functor
+class IdentityFunctor extends MyFunctor
 {
     /**
-     * @template T
-     * @param callable(T): static $f
+     * @param callable(IdentityValue): static $f
      * @return static<IdentityValue>
      */
-    public function map(callable $f): FantasyFunctor
+    public function map(callable $f)
     {
         return new static($f($this->value));
     }
@@ -161,12 +159,12 @@ class LawsForFunctorsTest extends TestCase
         // map(id) === id
         // identity dumps the correct type.
         $law1r1 = array_map([Functor::class, 'id'], $data);
-        $law1r2 = Functor::id($data);
+        $law1r2 = MyFunctor::id($data);
         $this->assertTrue($law1r1 == $law1r2, 'First law using custom functor and external data');
 
-        $hello = Functor::of($data);
+        $hello = MyFunctor::of($data);
         $law1r3 = array_map([Functor::class, 'id'], $hello->extract());
-        $law1r4 = Functor::id($hello->extract());
+        $law1r4 = MyFunctor::id($hello->extract());
         $this->assertTrue($law1r3 == $law1r4, 'First law using custom functor and internal data');
 
         // Second law, using  native constructs.
@@ -180,7 +178,7 @@ class LawsForFunctorsTest extends TestCase
 
         // Second law, functor class on the left, native constructs on the right.
         // compose(map(f), map(g)) == map(compose(f,g))
-        $map = fn ($a, $op) => Functor::of($a)->map($op)->extract();
+        $map = fn ($a, $op) => MyFunctor::of($a)->map($op)->extract();
         $left2 = compose(
             fn ($a) => $map($a, $f),
             fn ($a) => $map($a, $g)
@@ -191,7 +189,7 @@ class LawsForFunctorsTest extends TestCase
         // The left hand has two map operations.
         // The right hand has only one map operation.
         // compose(map(f), map(g)) == map(compose(f,g))
-        $right2 = Functor::of($data)->map(compose($f, $g))->extract();
+        $right2 = MyFunctor::of($data)->map(compose($f, $g))->extract();
         $this->assertTrue($left2($data) === $right2);
     }
 
