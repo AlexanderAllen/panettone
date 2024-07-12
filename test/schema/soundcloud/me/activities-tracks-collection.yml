@@ -1,0 +1,20 @@
+{
+  "collection": [
+    {
+      "type": "track:repost",
+      "created_at": "2020/10/12 12:02:44 +0000",
+      "origin": {
+        "$ref": "#/components/examples/Track/value"
+      }
+    },
+    {
+      "type": "playlist",
+      "created_at": "2020/10/12 12:02:44 +0000",
+      "origin": {
+        "$ref": "#/components/examples/Playlist/value"
+      }
+    }
+  ],
+  "next_href": "https://api.soundcloud.com/me/activities?limit=10&cursor=00000",
+  "future_href": "https://api.soundcloud.com/me/activities?limit=10&cursor=000001"
+}
