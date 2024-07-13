@@ -105,5 +105,5 @@ final class Result {
 
 // Generic is not retained through static, we've been here before.
 // Class-level generics are lost through static, have to use local generics instead.
-$a = Result::ok(5);
-\PHPStan\dumpType($a);
+// $a = Result::ok(5);
+// \PHPStan\dumpType($a);
