@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a7fb327fc6175c1b3234643f5a053e56",
+    "content-hash": "bea2285c2bac332f3e8428b1d84b9e01",
     "packages": [
         {
             "name": "cebe/php-openapi",
@@ -77,52 +77,21 @@
         },
         {
             "name": "functional-php/fantasy-land",
-            "version": "dev-master",
+            "version": "1.0.1",
             "source": {
                 "type": "git",
-                "url": "https://github.com/functional-php/fantasy-land.git",
-                "reference": "411b1da66e0057ae5601e8446c07ebbfff38f555"
+                "url": "git@github.com:AlexanderAllen/fantasy-land.git",
+                "reference": "master"
             },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/functional-php/fantasy-land/zipball/411b1da66e0057ae5601e8446c07ebbfff38f555",
-                "reference": "411b1da66e0057ae5601e8446c07ebbfff38f555",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=7.1"
-            },
-            "require-dev": {
-                "friendsofphp/php-cs-fixer": "^2",
-                "giorgiosironi/eris": "^0.9",
-                "phpunit/phpunit": "^5"
-            },
-            "default-branch": true,
             "type": "library",
             "autoload": {
-                "files": [
-                    "src/FantasyLand/functions.php"
-                ],
                 "psr-4": {
                     "FunctionalPHP\\": "./src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "BSD-3-Clause"
-            ],
-            "authors": [
-                {
-                    "name": "Gabriel Habryn",
-                    "email": "widmogrod+github@gmail.com"
-                }
-            ],
-            "description": "Specification for interoperability of common algebraic structures in PHP",
-            "support": {
-                "issues": "https://github.com/functional-php/fantasy-land/issues",
-                "source": "https://github.com/functional-php/fantasy-land/tree/master"
-            },
-            "time": "2023-04-16T22:23:13+00:00"
+                },
+                "files": [
+                    "src/FantasyLand/functions.php"
+                ]
+            }
         },
         {
             "name": "justinrainbow/json-schema",
@@ -1312,7 +1281,7 @@
         },
         {
             "name": "widmogrod/php-functional",
-            "version": "6.0.1",
+            "version": "dev-master",
             "source": {
                 "type": "git",
                 "url": "https://github.com/widmogrod/php-functional.git",
@@ -1333,6 +1302,7 @@
                 "giorgiosironi/eris": "^0.9",
                 "phpunit/phpunit": "^6"
             },
+            "default-branch": true,
             "type": "library",
             "autoload": {
                 "files": [
@@ -1382,17 +1352,10 @@
         }
     ],
     "packages-dev": [],
-    "aliases": [
-        {
-            "package": "functional-php/fantasy-land",
-            "version": "9999999-dev",
-            "alias": "1.0.x-dev",
-            "alias_normalized": "1.0.9999999.9999999-dev"
-        }
-    ],
+    "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
-        "functional-php/fantasy-land": 20
+        "widmogrod/php-functional": 20
     },
     "prefer-stable": false,
     "prefer-lowest": false,

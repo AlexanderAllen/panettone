@@ -20,6 +20,28 @@
             "role": "Author"
         }
     ],
+    "repositories": [
+        {
+            "type": "package",
+            "package": {
+                "name": "functional-php/fantasy-land",
+                "version": "1.0.1",
+                "source": {
+                    "url": "git@github.com:AlexanderAllen/fantasy-land.git",
+                    "type": "git",
+                    "reference": "master"
+                },
+                "autoload": {
+                    "psr-4": {
+                      "FunctionalPHP\\": "./src"
+                    },
+                    "files": [
+                      "src/FantasyLand/functions.php"
+                    ]
+                }
+            }
+        }
+    ],
     "bin": ["bin/panettone"],
     "autoload": {
         "psr-4": {
@@ -37,8 +59,7 @@
         "loophp/collection": "^7.5",
         "cebe/php-openapi": "^1.7",
         "nette/php-generator":"^4.1",
-        "widmogrod/php-functional": "^6.0",
-        "functional-php/fantasy-land": "dev-master as 1.0.x-dev"
+        "widmogrod/php-functional": "dev-master"
     },
     "config": {
         "allow-plugins": {
