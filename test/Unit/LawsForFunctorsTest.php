@@ -22,6 +22,9 @@ use function Widmogrod\Functional\curry;
  * @template a
  * @implements ValueOfInterface<a>
  * @phpstan-consistent-constructor
+ *
+ * @see vendor/widmogrod/php-functional/src/Monad/Identity.php
+ *   Has the reference implmentation, but it lacks generics.
  */
 class MyFunctor implements ValueOfInterface
 {
@@ -53,14 +56,14 @@ class MyFunctor implements ValueOfInterface
 /**
  * An identity functor does nothing to the value besides holding it.
  *
- * @template IdentityValue
- * @extends MyFunctor<IdentityValue>
+ * @template a
+ * @extends MyFunctor<a>
  */
 class IdentityFunctor extends MyFunctor
 {
     /**
-     * @param callable(IdentityValue): static $f
-     * @return static<IdentityValue>
+     * @param callable(a): static $f
+     * @return static<a>
      */
     public function map(callable $f)
     {
@@ -93,8 +96,17 @@ class LawsForFunctorsTest extends TestCase
         $b = new MyFunctor(1);
         $c = $a->extract();
         $d = $b->extract();
+        $id = MyFunctor::id($data);
         $this->assertIsString($c);
         $this->assertIsInt($d);
+
+        $data = [1, 2, 3, 4];
+        $f = fn ($a) => $a + 2;
+        $g = fn ($a) => $a * 10;
+        $hello = MyFunctor::of($data);
+        $h = $hello->extract();
+
+        $law1r3 = array_map([MyFunctor::class, 'id'], $h);
     }
 
     #[Test]
@@ -127,12 +139,12 @@ class LawsForFunctorsTest extends TestCase
         // First functor law.
         // map(id) === id
         // identity dumps the correct type.
-        $law1r1 = array_map([Functor::class, 'id'], $data);
+        $law1r1 = array_map([MyFunctor::class, 'id'], $data);
         $law1r2 = MyFunctor::id($data);
         $this->assertTrue($law1r1 == $law1r2, 'First law using custom functor and external data');
 
         $hello = MyFunctor::of($data);
-        $law1r3 = array_map([Functor::class, 'id'], $hello->extract());
+        $law1r3 = array_map([MyFunctor::class, 'id'], $hello->extract());
         $law1r4 = MyFunctor::id($hello->extract());
         $this->assertTrue($law1r3 == $law1r4, 'First law using custom functor and internal data');
 
