@@ -6,75 +6,33 @@ namespace AlexanderAllen\Panettone\Test\Unit;
 
 use Closure;
 use FunctionalPHP\FantasyLand\Functor;
+use FunctionalPHP\FantasyLand\Useful\PointedTrait;
+use FunctionalPHP\FantasyLand\Useful\ValueOfInterface;
+use FunctionalPHP\FantasyLand\Useful\ValueOfTrait;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\{CoversNothing, Group, Test, TestDox};
-use Widmogrod\Common\PointedTrait;
-use Widmogrod\Common\ValueOfInterface;
 use Widmogrod\Monad\Maybe as m;
 
 use function FunctionalPHP\FantasyLand\compose;
 use function Widmogrod\Functional\curry;
 
 /**
- * @template a
- */
-trait GenericPointedTrait
-{
-    /**
-     * @var a
-     */
-    protected $value;
-
-    /**
-     * Ensure everything on start.
-     *
-     * @param a $value
-     */
-    public function __construct($value)
-    {
-        $this->value = $value;
-    }
-
-    /**
-     * @template b
-     * @param b $value
-     * @return static<b>
-     */
-    public static function of($value)
-    {
-        return new static($value);
-    }
-}
-
-/**
- * @template a
- */
-interface GenericFunctor
-{
-    /**
-     * map :: Functor f => (a -> b) -> f b
-     *
-     * @template b
-     * @param callable(a): b $function
-     * @return static
-     */
-    public function map(callable $function): static;
-}
-
-/**
  * Functors allow mapping a function to one or more values in a container.
  *
- * @template IdentityValue
+ * @template a
+ * @implements ValueOfInterface<a>
  * @phpstan-consistent-constructor
  */
 class MyFunctor implements ValueOfInterface
 {
-    /** @use GenericPointedTrait<IdentityValue> */
-    use GenericPointedTrait;
+    /** @use PointedTrait<a> */
+    use PointedTrait;
+    /** @use ValueOfTrait<a> */
+    use ValueOfTrait;
 
     /**
-     * @param callable(IdentityValue): IdentityValue $function
-     * @return static<IdentityValue> Returns a new instance of itself.
+     * @param callable(a): a $function
+     * @return static<a> Returns a new instance of itself.
      */
     public function map(callable $function)
     {
@@ -82,17 +40,9 @@ class MyFunctor implements ValueOfInterface
     }
 
     /**
-     * @return IdentityValue
-     */
-    public function extract()
-    {
-        return $this->value;
-    }
-
-    /**
-     * @template identity
-     * @param identity $value
-     * @return identity
+     * @template b
+     * @param b $value
+     * @return b
      */
     public static function id(mixed $value): mixed
     {
@@ -128,6 +78,25 @@ class IdentityFunctor extends MyFunctor
 #[Group('ignore')]
 class LawsForFunctorsTest extends TestCase
 {
+
+    /**
+     * Do a quick smoke test on the dumped types before asserting laws.
+     *
+     * NOTE: The name of the generic used on the @template tag does determine
+     * whether the correct hint gets picked up by PHPStan.
+     */
+    #[Test]
+    public function testGenericsBeforeLaws(): void
+    {
+        //
+        $a = MyFunctor::of('a');
+        $b = new MyFunctor(1);
+        $c = $a->extract();
+        $d = $b->extract();
+        $this->assertIsString($c);
+        $this->assertIsInt($d);
+    }
+
     #[Test]
     #[TestDox('Native constructs')]
     public function testNative(): void
@@ -214,6 +183,7 @@ class LawsForFunctorsTest extends TestCase
     {
         $add = curry(fn ($a, $b) => $a + $b);
         $functor = new IdentityFunctor(5);
+        // $a = MyFunctor::of(1); // of dumps correctly, constructor does not.
 
         $partial = $functor->map($add);
         $this->assertTrue($partial->extract() instanceof Closure, 'Functor contains partially applied function');
