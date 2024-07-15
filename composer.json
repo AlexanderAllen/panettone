@@ -40,6 +40,51 @@
                     ]
                 }
             }
+        },
+        {
+            "type": "package",
+            "package": {
+                "name": "widmogrod/php-functional",
+                "version": "dev-master",
+                "source": {
+                    "url": "git@github.com:AlexanderAllen/fantasy-cake.git",
+                    "type": "git",
+                    "reference": "master"
+                },
+                "require": {
+                    "php": "^7.1|^8.0",
+                    "functional-php/fantasy-land": "^1"
+                  },
+                "autoload": {
+                    "psr-4": {
+                      "Widmogrod\\": "./src"
+                    },
+                    "files": [
+                      "src/Functional/array.php",
+                      "src/Functional/functions.php",
+                      "src/Functional/miscellaneous.php",
+                      "src/Functional/listt.php",
+                      "src/Functional/zipping.php",
+                      "src/Functional/sublist.php",
+                      "src/Functional/infinit.php",
+                      "src/Functional/predicates.php",
+                      "src/Functional/strings.php",
+                      "src/Functional/monoid.php",
+                      "src/Functional/setoid.php",
+                      "src/Monad/Either/functions.php",
+                      "src/Monad/Maybe/functions.php",
+                      "src/Monad/Free/functions.php",
+                      "src/Monad/IO/functions.php",
+                      "src/Monad/IO/errors.php",
+                      "src/Monad/Reader/functions.php",
+                      "src/Monad/State/functions.php",
+                      "src/Monad/Writer/functions.php",
+                      "src/Monad/Control/Doo/actions.php",
+                      "src/Monad/Control/Doo/interpretation.php",
+                      "src/Useful/match.php"
+                    ]
+                  }
+            }
         }
     ],
     "bin": ["bin/panettone"],
