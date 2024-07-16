@@ -6,12 +6,12 @@ namespace AlexanderAllen\Panettone\Test\Unit;
 
 use Closure;
 use FunctionalPHP\FantasyLand\Functor;
-use FunctionalPHP\FantasyLand\Useful\PointedTrait;
-use FunctionalPHP\FantasyLand\Useful\ValueOfInterface;
-use FunctionalPHP\FantasyLand\Useful\ValueOfTrait;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\{CoversNothing, Group, Test, TestDox};
 use Widmogrod\Monad\Maybe as m;
+use Widmogrod\Common\PointedTrait;
+use Widmogrod\Common\ValueOfTrait;
+use Widmogrod\Common\ValueOfInterface;
 
 use function FunctionalPHP\FantasyLand\compose;
 use function Widmogrod\Functional\curry;
