@@ -81,7 +81,7 @@ class IdentityFunctor extends MyFunctor
      * @template b The result returned by the callable operation.
      *
      * @param callable(a): b $f
-     *   Callable `$f` is invoked immediatly with `a`, returning `b` as a result.
+     *   Callable `$f` is immediatly executed with `a`, returning `b` as a result.
      *
      * @return static<b>
      *   A new `static` instance containing containing `b`.
@@ -102,6 +102,67 @@ class IdentityFunctor extends MyFunctor
 #[Group('target')]
 class LawsForFunctorsTest extends TestCase
 {
+    /**
+     * Applicative functors apply functors to other functors.
+     *
+     * In this case, apply a functor containing a function to another functor
+     * containing an int value.
+     */
+    #[Test]
+    public function testWhatIsAnApplicativeFunctor(): void
+    {
+        $add = curry(fn (int $a, int $b): int => $a + $b);
+        $identityFunctorExtended = new class (5) extends IdentityFunctor {
+            /**
+             * @template a
+             * @param Functor<a> $f
+             */
+            public function apply(Functor $f): static
+            {
+                return $f->map($this->extract());
+            }
+        };
+        $applicative = $identityFunctorExtended->map($add);
+        $ten = new $identityFunctorExtended(10);
+        $result = $applicative->apply($ten)->extract();
+        $this->assertTrue($result === 15, 'This code is wild, man');
+
+        $five = new $identityFunctorExtended(5);
+        $eleven = new $identityFunctorExtended(11);
+        $applicative2 = new $identityFunctorExtended(curry(fn (int $a, int $b): int => $a + $b));
+        $b = $applicative2->apply($five)->apply($eleven)->extract();
+        $this->assertTrue($b === 16, 'And its only getting wilderer...');
+    }
+
+    /**
+     * Calling map on a curried function does return a closure upon extraction.
+     *
+     * According to the generics, the type is whatever we passed to the constructor,
+     * which is an int and not a callable. So the test passes, but the stan hint
+     * is misguided.
+     *
+     * @todo I could express the generics as a partial application (a closure is the return type).
+     */
+    #[Test]
+    public function testApplicativeFunctorReturnsClosure(): void
+    {
+        $add = curry(fn (int $a, int $b): int => $a + $b);
+        $id = IdentityFunctor::of(5);
+
+        // Map partially appplies the identity value of 5 to the curried function add.
+        $partial = $id->map($add);
+        $a = $partial->map(fn (callable $f): int => $f(10));
+        $this->assertTrue($a->extract() === 15);
+    }
+
+    #[Test]
+    public function testApplicativeFunctorHintsCorrectly(): void
+    {
+        $add = curry(fn (int $a, int $b): int => $a + $b);
+        $id = IdentityFunctor::of($add(5));
+        $this->assertTrue($id->extract()(10) === 15, 'Confirm curried fn can be executed');
+    }
+
     #[Test]
     #[TestDox('Native constructs')]
     public function testNative(): void
