@@ -28,6 +28,7 @@ use function Widmogrod\Functional\curry;
  *
  * @template a
  * @implements ValueOfInterface<a>
+ * @implements Functor<a>
  * @phpstan-consistent-constructor
  *
  * @see vendor/widmogrod/php-functional/src/Monad/Identity.php
@@ -35,7 +36,7 @@ use function Widmogrod\Functional\curry;
  * @link https://gilles.crettenand.info/blog/programming/2017/02/28/Writing-a-book
  *   Gilles Crettenand, Functional PHP
  */
-class MyFunctor implements ValueOfInterface
+class MyFunctor implements ValueOfInterface, Functor
 {
     /** @use PointedTrait<a> */
     use PointedTrait;
@@ -43,10 +44,12 @@ class MyFunctor implements ValueOfInterface
     use ValueOfTrait;
 
     /**
+     * Maps a callable that acceps and returns the class-level generic `a`.
+     *
      * @param callable(a): a $function
      * @return static<a> Returns a new instance of itself.
      */
-    public function map(callable $function)
+    public function map(callable $function): Functor
     {
         return new static(array_map($function, $this->value));
     }
@@ -73,7 +76,7 @@ class MyFunctor implements ValueOfInterface
 class IdentityFunctor extends MyFunctor
 {
     /**
-     * Map with callable accepting and returning class-level generic.
+     * Maps a callable that acceps class generic `a` then returns local generic `b`.
      *
      * @template b The result returned by the callable operation.
      *
@@ -81,10 +84,9 @@ class IdentityFunctor extends MyFunctor
      *   Callable `$f` is invoked immediatly with `a`, returning `b` as a result.
      *
      * @return static<b>
-     *   A new instance of static containing the result `b` of the calllable
-     *   operation `$f`.
+     *   A new `static` instance containing containing `b`.
      */
-    public function map(callable $f)
+    public function map(callable $f): Functor
     {
         return static::of($f($this->value));
     }
