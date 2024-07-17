@@ -7,6 +7,7 @@ namespace AlexanderAllen\Panettone\Test\Unit;
 use FunctionalPHP\FantasyLand\Functor;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\{CoversNothing, Group, Test, TestDox};
+use Widmogrod\Common\PointedTrait;
 use Widmogrod\Common\ValueOfInterface;
 
 /**
@@ -34,74 +35,27 @@ class GenericFunctorsTest extends TestCase
     }
 }
 
-/**
- * Copy of PointedTrait that provides generics.
- *
- * @template a
- *
- * @see \Widmogrod\Common\PointedTrait
- */
-trait GenericPointedTrait2
-{
-    /**
-     * @var a
-     */
-    protected $value;
-
-    /**
-     * Ensure everything on start.
-     *
-     * @param a $value
-     */
-    public function __construct($value)
-    {
-        $this->value = $value;
-    }
-
-    /**
-     * In order for generic information to be retained, a local template must
-     * be used. Using a non-local generic will revert dumped type to mixed.
-     *
-     * @template b The local generic type.
-     * @param b $value
-     * @return static<b>
-     *   A new static instance of generic type `b`.
-     */
-    public static function of($value)
-    {
-        return new static($value);
-    }
-}
-
  /**
   * Interfaces and Traits from Widmogrod do not implement generics.
   *
   * FantasyLand does implement generics (on dev-master), however some of their
   * types (such as `Functor->map()`) don't even compile.
   *
-  * @template IdentityValue The identity contained inside the functor.
-  * @implements Functor<IdentityValue>
+  * @template a The identity contained inside the functor.
+  * @implements ValueOfInterface<a>
   * @phpstan-consistent-constructor
   *
   * @see \Widmogrod\Common\ValueOfTrait Adds generic support to extract()
   */
-class TestFunctor implements ValueOfInterface, Functor
+class TestFunctor implements ValueOfInterface
 {
-    /** @use GenericPointedTrait2<IdentityValue> */
-    use GenericPointedTrait2;
-
-    /**
-     * @param IdentityValue $value
-     */
-    public function __construct($value)
-    {
-        $this->value = $value;
-    }
+    /** @use PointedTrait<a> */
+    use PointedTrait;
 
     /**
      * Putting extract on the trait removes the generic typing.
      *
-     * @return IdentityValue
+     * @return a
      */
     public function extract()
     {
@@ -111,24 +65,28 @@ class TestFunctor implements ValueOfInterface, Functor
     /**
      * Map with callable accepting and returning class-level generic.
      *
-     * @todo Returning interface compiles, have not tested implementation.
+     * @todo Not accurate because a -> b, then returned by callable.
      *
-     * @param callable(IdentityValue): IdentityValue $f
-     *   Callable is executed immediatly.
+     * @template b The result returned by the callable operation.
      *
-     * @return static<IdentityValue>
+     * @param callable(a): b $transformation
+     *   Callable `$f` is invoked immediatly with `a`, returning `b` as a result.
+     *
+     * @return static<b>
+     *   A new instance of static containing the result `b` of the calllable
+     *   operation `$f`.
      */
-    public function map(callable $f): Functor
+    public function map(callable $transformation)
     {
-        return static::of($f($this->value));
+        return static::of($transformation($this->value));
     }
 
     /**
      * Hints correctly without extending class.
      *
-     * @template a
-     * @param callable(IdentityValue): a $f
-     * @return a
+     * @template b The result returned by the callable.
+     * @param callable(a): b $f
+     * @return b
      */
     public function map2(callable $f)
     {
@@ -140,13 +98,13 @@ class TestFunctor implements ValueOfInterface, Functor
      *
      * Observed result and hint is exactly the same as using static::of.
      *
-     * The callable `$f` is executed immediatly, while the result of type `a`
-     * is fed to the new static constructor.
+     * The callable `$f` is executed immediatly because it is invoked with
+     * the parenthesis.
      *
-     * @template a The callable accepts and returns the (local) generic type a.
+     * @template b The callable accepts and returns the (local) generic type b.
      *
-     * @param callable(a): a $f
-     * @return static<a> The functor contains generic value a.
+     * @param callable(a): b $f
+     * @return static<b> The functor contains generic value a.
      */
     public function map3(callable $f)
     {

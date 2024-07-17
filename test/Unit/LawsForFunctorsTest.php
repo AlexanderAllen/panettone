@@ -14,10 +14,17 @@ use Widmogrod\Common\ValueOfTrait;
 use Widmogrod\Common\ValueOfInterface;
 
 use function FunctionalPHP\FantasyLand\compose;
+use function Widmogrod\Functional\compose as FunctionalCompose;
 use function Widmogrod\Functional\curry;
 
 /**
  * Functors allow mapping a function to one or more values in a container.
+ *
+ * Any function or class that allows you to map a given function to one or more
+ * values held in a context can be considered a functor.
+ *
+ * NOTE: The name of the generic used on the @template tag does determine
+ * whether the correct hint gets picked up by PHPStan.
  *
  * @template a
  * @implements ValueOfInterface<a>
@@ -25,6 +32,8 @@ use function Widmogrod\Functional\curry;
  *
  * @see vendor/widmogrod/php-functional/src/Monad/Identity.php
  *   Has the reference implmentation, but it lacks generics.
+ * @link https://gilles.crettenand.info/blog/programming/2017/02/28/Writing-a-book
+ *   Gilles Crettenand, Functional PHP
  */
 class MyFunctor implements ValueOfInterface
 {
@@ -56,18 +65,28 @@ class MyFunctor implements ValueOfInterface
 /**
  * An identity functor does nothing to the value besides holding it.
  *
+ * Use when you store in a container a value without modifying it.
+ *
  * @template a
  * @extends MyFunctor<a>
  */
 class IdentityFunctor extends MyFunctor
 {
     /**
-     * @param callable(a): static $f
-     * @return static<a>
+     * Map with callable accepting and returning class-level generic.
+     *
+     * @template b The result returned by the callable operation.
+     *
+     * @param callable(a): b $f
+     *   Callable `$f` is invoked immediatly with `a`, returning `b` as a result.
+     *
+     * @return static<b>
+     *   A new instance of static containing the result `b` of the calllable
+     *   operation `$f`.
      */
     public function map(callable $f)
     {
-        return new static($f($this->value));
+        return static::of($f($this->value));
     }
 }
 
@@ -78,37 +97,9 @@ class IdentityFunctor extends MyFunctor
  */
 #[TestDox('Assert functor laws for:')]
 #[CoversNothing]
-#[Group('ignore')]
+#[Group('target')]
 class LawsForFunctorsTest extends TestCase
 {
-
-    /**
-     * Do a quick smoke test on the dumped types before asserting laws.
-     *
-     * NOTE: The name of the generic used on the @template tag does determine
-     * whether the correct hint gets picked up by PHPStan.
-     */
-    #[Test]
-    public function testGenericsBeforeLaws(): void
-    {
-        //
-        $a = MyFunctor::of('a');
-        $b = new MyFunctor(1);
-        $c = $a->extract();
-        $d = $b->extract();
-        $id = MyFunctor::id($data);
-        $this->assertIsString($c);
-        $this->assertIsInt($d);
-
-        $data = [1, 2, 3, 4];
-        $f = fn ($a) => $a + 2;
-        $g = fn ($a) => $a * 10;
-        $hello = MyFunctor::of($data);
-        $h = $hello->extract();
-
-        $law1r3 = array_map([MyFunctor::class, 'id'], $h);
-    }
-
     #[Test]
     #[TestDox('Native constructs')]
     public function testNative(): void
@@ -195,7 +186,6 @@ class LawsForFunctorsTest extends TestCase
     {
         $add = curry(fn ($a, $b) => $a + $b);
         $functor = new IdentityFunctor(5);
-        // $a = MyFunctor::of(1); // of dumps correctly, constructor does not.
 
         $partial = $functor->map($add);
         $this->assertTrue($partial->extract() instanceof Closure, 'Functor contains partially applied function');
@@ -209,13 +199,14 @@ class LawsForFunctorsTest extends TestCase
         $this->assertTrue($partial->map($id) == $id($partial));
 
         // compose(map(f), map(g)) == map(compose(f,g))
-        // Can't test composition law normally like this on a partial applicable.
-        $f = fn ($a) => $a * 10;
-        $g = fn ($a) => $a + 2;
-        $composed = fn ($a) => $g($f($a));
-        // $functor->map($add);
-        // $x = $functor->map($f)->map($g);
-        // $y = $functor->map($composed);
-        // $this->assertTrue( == );
+        $a = IdentityFunctor::of(1);
+        $b = $a->extract();
+
+        $f = fn (int $a): int => $a + 2;
+        $g = fn (int $a): int => $a * 10;
+
+        $e = IdentityFunctor::of(3)->map($f)->map($g)->extract();
+        $d = IdentityFunctor::of(3)->map(compose($g, $f))->extract();
+        $this->assertTrue($e === $d);
     }
 }
