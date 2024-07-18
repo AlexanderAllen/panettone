@@ -107,12 +107,14 @@ class LawsForFunctorsTest extends TestCase
      *
      * In this case, apply a functor containing a function to another functor
      * containing an int value.
+     *
+     * This example uses the IdentityFunctor class as a curryied function holder.
      */
     #[Test]
     public function testWhatIsAnApplicativeFunctor(): void
     {
         $add = curry(fn (int $a, int $b): int => $a + $b);
-        $identityFunctorExtended = new class (5) extends IdentityFunctor {
+        $identityFunctorExtended = fn ($id) => new class ($id) extends IdentityFunctor {
             /**
              * @template a
              * @param Functor<a> $f
@@ -122,14 +124,14 @@ class LawsForFunctorsTest extends TestCase
                 return $f->map($this->extract());
             }
         };
-        $applicative = $identityFunctorExtended->map($add);
-        $ten = new $identityFunctorExtended(10);
+        $applicative = $identityFunctorExtended(5)->map($add);
+        $ten = $identityFunctorExtended(10);
         $result = $applicative->apply($ten)->extract();
         $this->assertTrue($result === 15, 'This code is wild, man');
 
-        $five = new $identityFunctorExtended(5);
-        $eleven = new $identityFunctorExtended(11);
-        $applicative2 = new $identityFunctorExtended(curry(fn (int $a, int $b): int => $a + $b));
+        $five = $identityFunctorExtended(5);
+        $eleven = $identityFunctorExtended(11);
+        $applicative2 = $identityFunctorExtended(curry(fn (int $a, int $b): int => $a + $b));
         $b = $applicative2->apply($five)->apply($eleven)->extract();
         $this->assertTrue($b === 16, 'And its only getting wilderer...');
     }
