@@ -83,6 +83,9 @@ abstract class Applicative implements Functor
     }
 }
 
+/**
+ * @implements Applicative<a>
+ */
 class IdentityApplicative extends Applicative
 {
     private $value;
@@ -94,6 +97,12 @@ class IdentityApplicative extends Applicative
     {
         return new static($value);
     }
+
+    /**
+     *
+     * @param Applicative<mixed> $f
+     * @return Applicative<mixed>
+     */
     public function apply(Applicative $f): Applicative
     {
         return static::pure($this->get()($f->get()));
