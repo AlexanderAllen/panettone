@@ -9,8 +9,42 @@ use FunctionalPHP\FantasyLand\Functor;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\{CoversNothing, Group, Test, TestDox};
 
-use function FunctionalPHP\FantasyLand\compose;
 use function Widmogrod\Functional\curry;
+
+enum Law
+{
+    case identity;
+    case homomorphism;
+    case interchange;
+    case composition;
+    case map;
+
+    /**
+     * @template a
+     * @param Applicative<Closure(a): a> $f1
+     * @param callable $f2
+     * @param mixed $x
+     *
+     * @todo From the book: "We cannot ensure the first function return type matches
+     * the second function first parameter type"
+     */
+    public static function assert(Law $case, Applicative $f1, callable $f2, mixed $x): bool
+    {
+        $identity = fn ($x) => $x;
+        $compose = fn (callable $a) => fn (callable $b) => fn ($x) => $a($b($x));
+        $pure_x = $f1->pure($x);
+        $pure_f2 = $f1->pure($f2);
+
+        return match ($case) {
+            static::identity => $f1->pure($identity)->apply($pure_x) == $pure_x,
+            static::homomorphism => $f1->pure($f2)->apply($pure_x) == $f1->pure($f2($x)),
+            static::interchange => $f1->apply($pure_x) == $f1->pure(fn ($f) => $f($x))->apply($f1),
+            static::composition => $f1->pure($compose)->apply($f1)->apply($pure_f2)->apply($pure_x) ==
+                $f1->apply($pure_f2->apply($pure_x)),
+            static::map => $pure_f2->apply($pure_x) == $pure_x->map($f2)
+        };
+    }
+}
 
 /**
  * Laws for applicative functors.
@@ -25,36 +59,7 @@ use function Widmogrod\Functional\curry;
 class LawsTest extends TestCase
 {
     /**
-     * @template a
-     * @param Applicative<Closure(a): a> $f1
-     * @param callable $f2
-     * @param mixed $x
-     * @return array<string, bool>
-     *
-     * @todo From the book: "We cannot ensure the first function return type matches
-     * the second function first parameter type"
-     */
-    public function laws(Applicative $f1, callable $f2, mixed $x): array
-    {
-        $identity = fn ($x) => $x;
-        $compose = fn (callable $a) => fn (callable $b) => fn ($x) => $a($b($x));
-        $pure_x = $f1->pure($x);
-        $pure_f2 = $f1->pure($f2);
-
-        return [
-            'identity' => $f1->pure($identity)->apply($pure_x) == $pure_x,
-            'homomorphism' => $f1->pure($f2)->apply($pure_x) == $f1->pure($f2($x)),
-            'interchange' => $f1->apply($pure_x) == $f1->pure(fn ($f) => $f($x))->apply($f1),
-            'composition' => $f1->pure($compose)->apply($f1)->apply($pure_f2)->apply($pure_x) ==
-                $f1->apply($pure_f2->apply($pure_x)),
-            'map' => $pure_f2->apply($pure_x) == $pure_x->map($f2),
-        ];
-    }
-
-    /**
-     * pure(f)->apply == map(f)
-     *
-     * Applicatives can be used anywhere a functors are used with map.
+     * Sanity check for exceptions and generics.
      */
     #[Test]
     public function testBasics(): void
@@ -76,8 +81,8 @@ class LawsTest extends TestCase
     public function testMap(): void
     {
         $a = IdentityApplicative::pure('strtoupper');
-        $result = $this->laws($a, 'trim', ' Hello Waldo! ');
-
+        $result = Law::assert(Law::map, $a, 'trim', ' Hello Waldo! ');
+        $this->assertTrue($result);
     }
 
     /**
@@ -88,9 +93,11 @@ class LawsTest extends TestCase
      * This law asserts that the apply method only applies the given function
      * without hidden effects or transformations.
      */
-    #[Group('ignore')]
+    // #[Group('ignore')]
     public function testIdentity(): void
     {
+        $result = Law::assert(Law::identity, IdentityApplicative::pure('strtoupper'), 'trim', ' Hello Waldo! ');
+        $this->assertTrue($result);
     }
 
     /**
@@ -107,9 +114,11 @@ class LawsTest extends TestCase
      * @todo link to unary vs curryied functions
      * @todo link to homomorphism (wikipedia)
      */
-    #[Group('ignore')]
+    // #[Group('ignore')]
     public function testHomomorphism(): void
     {
+        $result = Law::assert(Law::homomorphism, IdentityApplicative::pure('strtoupper'), 'trim', ' Hello Waldo! ');
+        $this->assertTrue($result);
     }
 
     /**
@@ -124,9 +133,11 @@ class LawsTest extends TestCase
      * This law asserts that the pure function performs no modifications
      * beyond wrapping the given value.
      */
-    #[Group('ignore')]
+    // #[Group('ignore')]
     public function testInterchange(): void
     {
+        $result = Law::assert(Law::interchange, IdentityApplicative::pure('strtoupper'), 'trim', ' Hello Waldo! ');
+        $this->assertTrue($result);
     }
 
     /**
@@ -137,8 +148,10 @@ class LawsTest extends TestCase
      * Asserts that you can apply a composed version of two functions to the
      * value, or call them separately.
      */
-    #[Group('ignore')]
+    // #[Group('ignore')]
     public function testComposition(): void
     {
+        $result = Law::assert(Law::composition, IdentityApplicative::pure('strtoupper'), 'trim', ' Hello Waldo! ');
+        $this->assertTrue($result);
     }
 }
