@@ -14,8 +14,43 @@ use Widmogrod\Common\ValueOfTrait;
 use Widmogrod\Common\ValueOfInterface;
 
 use function FunctionalPHP\FantasyLand\compose;
-use function Widmogrod\Functional\compose as FunctionalCompose;
 use function Widmogrod\Functional\curry;
+
+enum Law
+{
+    /**
+     * map(id) === id
+     */
+    case identity;
+
+    /**
+     * compose(map(f), map(g)) == map(compose(f,g))
+     */
+    case composition;
+
+    /**
+     * @template a
+     * @param Law $case
+     * @param Functor<a> $b
+     * @param callable $f
+     * @param callable $g
+     * @return bool
+     */
+    public static function assert(
+        Law $case,
+        Functor $b,
+        ?callable $f = null,
+        ?callable $g = null,
+    ): bool {
+        $id = fn ($a) => $a;
+        $composed = fn ($a) => $g($f($a));
+
+        return match ($case) {
+            static::identity => $b->map($id) == $id($b),
+            static::composition => $b->map($f)->map($g) == $b->map($composed),
+        };
+    }
+}
 
 /**
  * Functors allow mapping a function to one or more values in a container.
@@ -94,8 +129,6 @@ class IdentityFunctor extends MyFunctor
 
 /**
  * Assert functor laws using native and custom constructs.
- *
- * @package AlexanderAllen\Panettone\Test
  */
 #[TestDox('Assert functor laws for:')]
 #[CoversNothing]
@@ -134,6 +167,10 @@ class LawsForFunctorsTest extends TestCase
         $applicative2 = $identityFunctorExtended(curry(fn (int $a, int $b): int => $a + $b));
         $b = $applicative2->apply($five)->apply($eleven)->extract();
         $this->assertTrue($b === 16, 'And its only getting wilderer...');
+
+        $this->assertTrue(Law::assert(Law::identity, $five));
+        $this->assertTrue(Law::assert(Law::identity, $applicative));
+        $this->assertTrue(Law::assert(Law::composition, $ten, $add(5), $add(10)));
     }
 
     /**
@@ -192,12 +229,8 @@ class LawsForFunctorsTest extends TestCase
         $f = fn ($a) => $a + 2;
         $g = fn ($a) => $a * 10;
 
-        // First functor law.
-        // map(id) === id
-        // identity dumps the correct type.
-        $law1r1 = array_map([MyFunctor::class, 'id'], $data);
-        $law1r2 = MyFunctor::id($data);
-        $this->assertTrue($law1r1 == $law1r2, 'First law using custom functor and external data');
+        $a = MyFunctor::of($data);
+        $this->assertTrue(Law::assert(Law::identity, $a));
 
         $hello = MyFunctor::of($data);
         $law1r3 = array_map([MyFunctor::class, 'id'], $hello->extract());
@@ -212,6 +245,7 @@ class LawsForFunctorsTest extends TestCase
         );
         $right = fn ($a) => array_map(compose($f, $g), $a);
         $this->assertTrue($left($data) === $right($data));
+        $this->assertTrue(Law::assert(Law::composition, $a, $f, $g));
 
         // Second law, functor class on the left, native constructs on the right.
         // compose(map(f), map(g)) == map(compose(f,g))
@@ -232,19 +266,17 @@ class LawsForFunctorsTest extends TestCase
 
     public function testMaybeMonad(): void
     {
-        // map(id) === id
-        $id = fn ($value) => $value;
         $j = m\Just(10);
         $n = m\Nothing();
-        $this->assertTrue($j->map($id) == $id($j));
-        $this->assertTrue($n->map($id) === $id($n));
 
-        // compose(map(f), map(g)) == map(compose(f,g))
         $f = fn ($a) => $a * 10;
         $g = fn ($a) => $a + 2;
-        $composed = fn ($a) => $g($f($a));
-        $this->assertTrue($j->map($f)->map($g) == $j->map($composed));
-        $this->assertTrue($n->map($f)->map($g) == $n->map($composed));
+
+        $this->assertTrue(Law::assert(Law::identity, $j));
+        $this->assertTrue(Law::assert(Law::identity, $n));
+
+        $this->assertTrue(Law::assert(Law::composition, $j, $f, $g));
+        $this->assertTrue(Law::assert(Law::composition, $n, $f, $g));
     }
 
     public function testIdentityFunctor(): void
@@ -259,11 +291,8 @@ class LawsForFunctorsTest extends TestCase
         $a = fn (callable|Closure $g) => $g(15);
         $this->assertTrue($partial->map($a)->extract() === 20, 'Apply the partial using map');
 
-        // map(id) === id
-        $id = fn ($value) => $value;
-        $this->assertTrue($partial->map($id) == $id($partial));
+        $this->assertTrue(Law::assert(Law::identity, $partial));
 
-        // compose(map(f), map(g)) == map(compose(f,g))
         $a = IdentityFunctor::of(1);
         $b = $a->extract();
 
@@ -273,5 +302,7 @@ class LawsForFunctorsTest extends TestCase
         $e = IdentityFunctor::of(3)->map($f)->map($g)->extract();
         $d = IdentityFunctor::of(3)->map(compose($g, $f))->extract();
         $this->assertTrue($e === $d);
+
+        $this->assertTrue(Law::assert(Law::composition, $a, $f, $g));
     }
 }

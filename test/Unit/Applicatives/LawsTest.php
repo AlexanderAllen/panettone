@@ -22,7 +22,9 @@ enum Law
     /**
      * @template a
      * @param Applicative<Closure(a): a> $f1
+     *  The first function.
      * @param callable $f2
+     *  The second function.
      * @param mixed $x
      *
      * @todo From the book: "We cannot ensure the first function return type matches
