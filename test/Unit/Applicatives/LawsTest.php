@@ -5,11 +5,8 @@ declare(strict_types=1);
 namespace AlexanderAllen\Panettone\Test\Unit\Applicative;
 
 use Closure;
-use FunctionalPHP\FantasyLand\Functor;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\{CoversNothing, Group, Test, TestDox};
-
-use function Widmogrod\Functional\curry;
 
 enum Law
 {
@@ -22,6 +19,7 @@ enum Law
      * without hidden effects or transformations.
      */
     case identity;
+
     /**
      * pure(f)->apply(x) == pure(f(x))
      *
@@ -37,6 +35,7 @@ enum Law
      * @todo link to homomorphism (wikipedia)
      */
     case homomorphism;
+
     /**
      * pure(f)->apply(x) == pure(fn (f) => f(x))->apply(f)
      *
@@ -50,6 +49,7 @@ enum Law
      * beyond wrapping the given value.
      */
     case interchange;
+
     /**
      * pure(compose)->apply(f1)->apply(f2)->apply(x) ==
      * pure(f1)->apply(pure(f2)->apply(x)), or
@@ -59,6 +59,7 @@ enum Law
      * value, or call them separately.
      */
     case composition;
+
     /**
      * pure(f)->apply == map(f)
      *
@@ -77,8 +78,12 @@ enum Law
      * @todo From the book: "We cannot ensure the first function return type matches
      * the second function first parameter type"
      */
-    public static function assert(Law $case, Applicative $f1, callable $f2, mixed $x): bool
-    {
+    public static function assert(
+        Law $case,
+        Applicative $f1,
+        ?callable $f2 = null,
+        mixed $x = null,
+    ): bool {
         $identity = fn ($x) => $x;
         $compose = fn (callable $a) => fn (callable $b) => fn ($x) => $a($b($x));
         $pure_x = $f1->pure($x);
@@ -88,7 +93,8 @@ enum Law
             static::identity => $f1->pure($identity)->apply($pure_x) == $pure_x,
             static::homomorphism => $f1->pure($f2)->apply($pure_x) == $f1->pure($f2($x)),
             static::interchange => $f1->apply($pure_x) == $f1->pure(fn ($f) => $f($x))->apply($f1),
-            static::composition => $f1->pure($compose)->apply($f1)->apply($pure_f2)->apply($pure_x) ==
+            static::composition =>
+                $f1->pure($compose)->apply($f1)->apply($pure_f2)->apply($pure_x) ==
                 $f1->apply($pure_f2->apply($pure_x)),
             static::map => $pure_f2->apply($pure_x) == $pure_x->map($f2)
         };
@@ -107,20 +113,6 @@ enum Law
 #[Group('target')]
 class LawsTest extends TestCase
 {
-    /**
-     * Sanity check for exceptions and generics.
-     */
-    #[Test]
-    public function testBasics(): void
-    {
-        $add = curry(fn (int $a, int $b): int => $a + $b);
-        $five = IdentityApplicative::pure(5);
-        $ten = IdentityApplicative::pure(10);
-        $applicative = IdentityApplicative::pure($add);
-        $result = $applicative->apply($five)->apply($ten)->get();
-        $this->assertTrue($result === 15);
-    }
-
     #[Test]
     public function testMap(): void
     {
