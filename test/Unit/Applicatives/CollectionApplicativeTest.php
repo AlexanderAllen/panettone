@@ -81,6 +81,10 @@ class CollectionApplicativeTest extends TestCase
         $this->assertTrue($r == [2, 4, 6, 11, 12, 13]);
 
         $cases = Law::cases();
-        array_walk($cases, fn (Law $case) => Law::assert($case, $this->a, fn ($a) => $a * 2, 3));
+        array_walk(
+            $cases,
+            fn (Law $case) =>
+            $this->assertTrue(Law::assert($case, $this->a, fn ($a) => $a * 2, 3))
+        );
     }
 }
