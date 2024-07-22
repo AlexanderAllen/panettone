@@ -99,6 +99,16 @@ enum Law
             static::map => $pure_f2->apply($pure_x) == $pure_x->map($f2)
         };
     }
+
+    public static function test(TestCase $test, Applicative $f1, mixed $x): void
+    {
+        $cases = static::cases();
+        array_walk(
+            $cases,
+            fn (Law $case) =>
+            $test->assertTrue(static::assert($case, $f1, fn ($a) => $a * 2, random_int(0, 10)))
+        );
+    }
 }
 
 /**
