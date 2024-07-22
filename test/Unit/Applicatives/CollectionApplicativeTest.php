@@ -64,27 +64,20 @@ class CollectionApplicative extends Applicative implements IteratorAggregate
 #[Group('target')]
 class CollectionApplicativeTest extends TestCase
 {
-    public mixed $a;
-
-    public function setup(): void
+    /**
+     * The applicative contains a function list that is applied to an int array.
+     */
+    public function testApplication(): void
     {
-        $this->a = CollectionApplicative::pure([
+        $a = CollectionApplicative::pure([
             fn ($a) => $a * 2,
             fn ($a) => $a + 10
         ]);
-    }
 
-    public function testApplication(): void
-    {
-        $b = $this->a->apply(CollectionApplicative::pure([1, 2, 3]));
+        $b = $a->apply(CollectionApplicative::pure([1, 2, 3]));
         $r = iterator_to_array($b);
         $this->assertTrue($r == [2, 4, 6, 11, 12, 13]);
 
-        $cases = Law::cases();
-        array_walk(
-            $cases,
-            fn (Law $case) =>
-            $this->assertTrue(Law::assert($case, $this->a, fn ($a) => $a * 2, 3))
-        );
+        Law::test($this, $a, 3);
     }
 }
