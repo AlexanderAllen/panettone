@@ -67,7 +67,7 @@ class CollectionApplicativeTest extends TestCase
     /**
      * The applicative contains a function list that is applied to an int array.
      */
-    public function testApplication(): void
+    public function testSimpleApplicative(): void
     {
         $a = CollectionApplicative::pure([
             fn ($a) => $a * 2,
@@ -79,5 +79,20 @@ class CollectionApplicativeTest extends TestCase
         $this->assertTrue($r == [2, 4, 6, 11, 12, 13]);
 
         Law::test($this, $a, 3);
+    }
+
+    public function testImageGalleryApplicative(): void
+    {
+        $size = fn ($i) => $i;
+        $thumbnail = fn ($i) => $i . '_tn';
+        $mobile = fn ($i) => $i . '_small';
+
+        $images = CollectionApplicative::pure(['one', 'two', 'three']);
+        $process = CollectionApplicative::pure([
+            $size, $thumbnail, $mobile
+        ]);
+
+        $t = $process->apply($images);
+        $this->assertTrue(iterator_to_array($t) == ['one', 'two', 'three', 'one_tn', 'two_tn', 'three_tn', 'one_small', 'two_small', 'three_small']);
     }
 }
