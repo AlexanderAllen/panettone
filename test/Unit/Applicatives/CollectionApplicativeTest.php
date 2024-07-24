@@ -44,6 +44,10 @@ class CollectionApplicative extends Applicative implements IteratorAggregate
         return new static($values);
     }
 
+    /**
+     * @param static<a> $data
+     * @return Applicative<a>
+     */
     public function apply(Applicative $data): Applicative
     {
         $r = fn ($acc, callable $function) => array_merge(

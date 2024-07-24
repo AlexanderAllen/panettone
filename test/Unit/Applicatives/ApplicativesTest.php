@@ -30,9 +30,9 @@ abstract class Applicative implements Functor
      *
      * @template b
      * @param b $value
-     * @return Applicative<b>
+     * @return Functor<b>
      */
-    abstract public static function pure($value): Applicative;
+    abstract public static function pure($value): Functor;
 
     /**
      * Applies the stored function to the given parameter.
