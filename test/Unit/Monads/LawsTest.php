@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace AlexanderAllen\Panettone\Test\Unit\Monads;
 
 use AlexanderAllen\Panettone\Test\Unit\Applicative\Applicative;
+use FunctionalPHP\FantasyLand\Apply;
 use FunctionalPHP\FantasyLand\Chain;
 use FunctionalPHP\FantasyLand\Monad as FantasyLandMonad;
 use FunctionalPHP\FantasyLand\Functor;
@@ -95,31 +96,11 @@ interface Monad
 
 /**
  * @template a
- *
- * Use native construct to handle safe static usage.
- *
- * @todo Move this further up the interface inheritance chain.
- * @see https://phpstan.org/blog/solving-phpstan-error-unsafe-usage-of-new-static safe statics
- */
-interface PointedInterface
-{
-    /**
-     * @param a $value
-     */
-    public function __construct($value);
-}
-
-/**
- * @template a
  * @extends Applicative<a>
  * @implements FantasyLandMonad<a>
- * @implements PointedInterface<a>
  */
-abstract class MonadBase extends Applicative implements FantasyLandMonad, PointedInterface
+abstract class MonadBase extends Applicative implements FantasyLandMonad
 {
-    /** @use PointedTrait<a> */
-    use PointedTrait;
-
     /**
      * Method from the book.
      *
@@ -140,6 +121,23 @@ abstract class MonadBase extends Applicative implements FantasyLandMonad, Pointe
      * @return FantasyLandMonad<a>
      */
     abstract public function bind(callable $f): FantasyLandMonad;
+}
+
+/**
+ * @template a
+ * @extends MonadBase<a>
+ */
+class IdentityMonad extends MonadBase
+{
+    public function bind(callable $f): FantasyLandMonad
+    {
+        return $f($this->get());
+    }
+
+    public function apply(Applicative $a): Applicative
+    {
+        return static::pure($this->get() ($a->get()));
+    }
 }
 
 

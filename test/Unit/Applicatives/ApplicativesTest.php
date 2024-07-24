@@ -18,10 +18,30 @@ use function Widmogrod\Functional\curry;
 
 /**
  * @template a
- * @implements Functor<a>
+ *
+ * Use native construct to handle safe static usage.
+ *
+ * @todo Move this further up the interface inheritance chain.
+ * @see https://phpstan.org/blog/solving-phpstan-error-unsafe-usage-of-new-static safe statics
  */
-abstract class Applicative implements Functor
+interface PointedInterface
 {
+    /**
+     * @param a $value
+     */
+    public function __construct($value);
+}
+
+/**
+ * @template a
+ * @implements Functor<a>
+ * @implements PointedInterface<a>
+ */
+abstract class Applicative implements Functor, PointedInterface
+{
+    /** @use PointedTrait<a> */
+    use PointedTrait;
+
     /**
      * Values that cannot be modified directly are considered pure.
      * Pure is used to create a new applicative from any callable.
@@ -81,35 +101,39 @@ abstract class Applicative implements Functor
     {
         return $this->pure($function)->apply($this);
     }
+
+    /**
+     * @return a
+     */
+    public function get(): mixed
+    {
+        return $this->value;
+    }
 }
 
 /**
- * @implements Applicative<a>
+ * @template a
+ * @extends Applicative<a>
  */
 class IdentityApplicative extends Applicative
 {
-    private $value;
-    protected function __construct($value)
-    {
-        $this->value = $value;
-    }
+    /**
+     * @template b
+     * @param b $value
+     * @return Applicative<a>
+     */
     public static function pure($value): Applicative
     {
         return new static($value);
     }
 
     /**
-     *
-     * @param Applicative<mixed> $f
-     * @return Applicative<mixed>
+     * @param Applicative<a> $f
+     * @return Applicative<a>
      */
     public function apply(Applicative $f): Applicative
     {
         return static::pure($this->get()($f->get()));
-    }
-    public function get(): mixed
-    {
-        return $this->value;
     }
 }
 
