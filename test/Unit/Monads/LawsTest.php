@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace AlexanderAllen\Panettone\Test\Unit\Monads;
 
 use AlexanderAllen\Panettone\Test\Unit\Applicative\Applicative;
+use FunctionalPHP\FantasyLand\Chain;
 use FunctionalPHP\FantasyLand\Monad as FantasyLandMonad;
 use FunctionalPHP\FantasyLand\Functor;
 use PHPUnit\Framework\TestCase;
@@ -116,24 +117,25 @@ abstract class MonadBase extends Applicative implements FantasyLandMonad, Pointe
     use PointedTrait;
 
     /**
+     * Method from the book.
+     *
      * @template b
      * @param b $value
-     * @return static<b>
-     */
-    public static function pure($value): FantasyLandMonad
-    {
-        return new static($value);
-    }
-
-    /**
-     * @template b
-     * @param b $value
-     * @return static<b>
+     * @return FantasyLandMonad<b>
      */
     public static function return(mixed $value): FantasyLandMonad
     {
         return static::pure($value);
     }
+
+    /**
+     * Method both from book and fantasy land.
+     *
+     * @todo Generics on upstream fantasy land are borked.
+     * @param callable(a): FantasyLandMonad<a> $f
+     * @return FantasyLandMonad<a>
+     */
+    abstract public function bind(callable $f): FantasyLandMonad;
 }
 
 
