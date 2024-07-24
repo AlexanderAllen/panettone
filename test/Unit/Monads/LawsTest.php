@@ -17,7 +17,7 @@ use function Widmogrod\Functional\compose;
 enum Law
 {
     /**
-     * a op id == id op a == a
+     * return(x)->bind(f) == f(x)
      *
      * Asserts that operations can be applied with no side effects.
      *
@@ -25,10 +25,14 @@ enum Law
      * sided simple identity.
      */
     case left_identity;
+
+    /**
+     * m->bind(return) == m
+     */
     case right_identity;
 
     /**
-     * (a op b) op c == a op (b op c)
+     * m->bind(f)->bind(g) == m->bind(fn(x) => f(x)->bind(g))
      *
      * Asserts that the operation execution can be ordered arbitrarily, as long
      * as other operations are not interleaved (what is interleaved).
@@ -41,16 +45,16 @@ enum Law
     public static function assert(
         Law $case,
         Monad $m,
-        mixed $a,
-        mixed $b,
-        mixed $c,
+        callable $f,
+        callable $g,
+        mixed $x,
     ): bool {
         return match ($case) {
-            static::left_identity => $m->op($m->id(), $a) == $a,
-            static::right_identity => $m->op($a, $m->id()) == $a,
+            static::left_identity => $m->return($x)->bind($f) == $f($x),
+            static::right_identity => $m->bind([$m, 'return']) == $m,
             static::associative =>
-                $m->op($m->op($a, $b), $c) ==
-                $m->op($a, $m->op($b, $c))
+                $m->bind($f)->bind($g) ==
+                $m->bind(fn ($x) => $f($x)->bind($g))
         };
     }
 }
