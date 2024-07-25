@@ -139,6 +139,10 @@ class IdentityMonad extends MonadBase
         return static::pure($this->get()($a->get()));
     }
 
+    /**
+     * @param Applicative<a> $a
+     * @return Applicative<a>
+     */
     public function ap(Apply $a): Apply
     {
         return static::pure($this->get()($a->get()));
