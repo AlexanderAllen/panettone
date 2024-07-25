@@ -20,19 +20,6 @@ use Traversable;
  */
 class CollectionApplicative extends Applicative implements IteratorAggregate
 {
-    /**
-     * @var a $values
-     */
-    private $values;
-
-    /**
-     * @param a $values
-     */
-    protected function __construct($values)
-    {
-        $this->values = $values;
-    }
-
     public static function pure($values): Applicative
     {
         if ($values instanceof Traversable) {
