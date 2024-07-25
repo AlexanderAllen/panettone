@@ -20,32 +20,46 @@ use PHPUnit\Framework\Attributes\{CoversNothing, Group, TestDox};
  * While applicatives wrap a function, monads encapsulate a value.
  * Applicatives use functions with non-lifted values, monads use functions that
  * return a monad of the same type.
+ *
+ * Applying a function with an applicative wraps the result in an applicative.
+ * Functions that return applicatives applied with an applicative therefore
+ * return applicatives within applicatives. Monads avoid this nesting by
+ * delegating the value encapsulation to bound function.
+ *
+ * Monads can also be used as a substitute for native flow control statements.
+ *
+ * Only monad child classes can decide how to implement `apply` and `bind`,
+ * since only the implementor knows what to do with the wrapped value.
  */
 enum Law
 {
     /**
      * return(x)->bind(f) == f(x)
      *
-     * Asserts that operations can be applied with no side effects.
+     * Asserts `bind` has no side effects on value `x` or applied function `f`.
      *
-     * Instead of having differing left and right identities, Monoids use a two-
-     * sided simple identity.
+     * The result of binding to `f` a value wrapped in a monad is the same as
+     * calling the bound function `f` directly on the wrapped value `x`.
      */
     case left_identity;
 
     /**
      * m->bind(return) == m
+     *
+     * If you bind the returned value to a monad, you get your monad back.
+     *
+     * Ensures that wrappers such as `pure`, `of`, `return`, etc. have no
+     * effect other than encapsulating the value with the monad.
      */
     case right_identity;
 
     /**
      * m->bind(f)->bind(g) == m->bind(fn(x) => f(x)->bind(g))
      *
-     * Asserts that the operation execution can be ordered arbitrarily, as long
-     * as other operations are not interleaved (what is interleaved).
+     * Asserts binding the wrapped `x` to `f` then `g` is the same as binding
+     * `x` to the composition of `f` within `g`.
      *
-     * Associative operations can be broken into separate parts, executed
-     * independently, and eventually applied together.
+     * Advertises the same benefits as other associative and composition laws.
      */
     case associative;
 
