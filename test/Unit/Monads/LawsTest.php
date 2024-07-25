@@ -6,14 +6,9 @@ namespace AlexanderAllen\Panettone\Test\Unit\Monads;
 
 use AlexanderAllen\Panettone\Test\Unit\Applicative\Applicative;
 use FunctionalPHP\FantasyLand\Apply;
-use FunctionalPHP\FantasyLand\Chain;
-use FunctionalPHP\FantasyLand\Monad as FantasyLandMonad;
-use FunctionalPHP\FantasyLand\Functor;
+use FunctionalPHP\FantasyLand\Monad;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\{CoversNothing, Group, TestDox};
-use Widmogrod\Common\PointedTrait;
-
-use function Widmogrod\Functional\compose;
 
 enum Law
 {
@@ -43,9 +38,18 @@ enum Law
      */
     case associative;
 
+    /**
+     * @template a
+     * @param Law $case
+     * @param MonadBase<a> $m
+     * @param callable $f
+     * @param callable $g
+     * @param mixed $x
+     * @return bool
+     */
     public static function assert(
         Law $case,
-        Monad $m,
+        MonadBase $m,
         callable $f,
         callable $g,
         mixed $x,
@@ -61,54 +65,20 @@ enum Law
 }
 
 /**
- * A monoid is a combination of a type, a binary operation on the type, and a
- * associated identity element (this can be worded better, no need for three segments).
- *
- * `id` and `op` methods are abstract as those are implementation-specific.
- *
- * An example use case for monoids is folding a collection of values with the
- * same type as the monoid class.
- */
-interface Monad
-{
-    public static function id(): mixed;
-    public static function op(mixed $a, mixed $b): mixed;
-    /**
-     * @param array<mixed> $values
-     */
-    public static function concat(array $values): mixed;
-
-    public static function return(mixed $value): Monad;
-    public static function bind(callable $f): Monad;
-
-    /**
-     * Values that cannot be modified directly are considered pure.
-     * Pure is used to create a new applicative from any callable.
-     *
-     * Use local generics on static functions.
-     *
-     * @template b
-     * @param b $value
-     * @return FantasyLandMonad<b>
-     */
-    public static function pure($value): FantasyLandMonad;
-}
-
-/**
  * @template a
  * @extends Applicative<a>
- * @implements FantasyLandMonad<a>
+ * @implements Monad<a>
  */
-abstract class MonadBase extends Applicative implements FantasyLandMonad
+abstract class MonadBase extends Applicative implements Monad
 {
     /**
      * Method from the book.
      *
      * @template b
      * @param b $value
-     * @return FantasyLandMonad<b>
+     * @return Monad<b>
      */
-    public static function return(mixed $value): FantasyLandMonad
+    public static function return(mixed $value): Monad
     {
         return static::pure($value);
     }
@@ -116,11 +86,12 @@ abstract class MonadBase extends Applicative implements FantasyLandMonad
     /**
      * Method both from book and fantasy land.
      *
+     * @todo The application of bind fails to compile.
      * @todo Generics on upstream fantasy land are borked.
-     * @param callable(a): FantasyLandMonad<a> $f
-     * @return FantasyLandMonad<a>
+     * @param callable(a): Monad<a> $f
+     * @return Monad<a>
      */
-    abstract public function bind(callable $f): FantasyLandMonad;
+    abstract public function bind(callable $f): Monad;
 }
 
 /**
@@ -129,7 +100,7 @@ abstract class MonadBase extends Applicative implements FantasyLandMonad
  */
 class IdentityMonad extends MonadBase
 {
-    public function bind(callable $f): FantasyLandMonad
+    public function bind(callable $f): Monad
     {
         return $f($this->get());
     }
@@ -150,14 +121,44 @@ class IdentityMonad extends MonadBase
 }
 
 
-#[TestDox('Laws for Monoids')]
+#[TestDox('Laws for Monads')]
 #[CoversNothing]
-#[Group('ignore')]
+#[Group('target')]
 class LawsTest extends TestCase
 {
-    public function testIdentity(): void
+    public function testLeftIdentity(): void
     {
-
+        $r = Law::assert(
+            Law::left_identity,
+            IdentityMonad::return(20),
+            fn ($a) => IdentityMonad::return($a + 10),
+            fn ($a) => IdentityMonad::return($a * 2),
+            10
+        );
+        $this->assertTrue($r);
     }
 
+    public function testRightIdentity(): void
+    {
+        $r = Law::assert(
+            Law::right_identity,
+            IdentityMonad::return(20),
+            fn ($a) => IdentityMonad::return($a + 10),
+            fn ($a) => IdentityMonad::return($a * 2),
+            10
+        );
+        $this->assertTrue($r);
+    }
+
+    public function testAssociativity(): void
+    {
+        $r = Law::assert(
+            Law::associative,
+            IdentityMonad::return(20),
+            fn ($a) => IdentityMonad::return($a + 10),
+            fn ($a) => IdentityMonad::return($a * 2),
+            10
+        );
+        $this->assertTrue($r);
+    }
 }
