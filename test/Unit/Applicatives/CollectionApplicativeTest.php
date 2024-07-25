@@ -33,16 +33,16 @@ class CollectionApplicative extends Applicative implements IteratorAggregate
     }
 
     /**
-     * @param static<a> $data
+     * @param Applicative<a> $data
      * @return Applicative<a>
      */
     public function apply(Applicative $data): Applicative
     {
         $r = fn ($acc, callable $function) => array_merge(
             $acc,
-            array_map($function, $data->values)
+            array_map($function, $data->value)
         );
-        return $this->pure(array_reduce($this->values, $r, []));
+        return $this->pure(array_reduce($this->value, $r, []));
     }
 
     /**
@@ -53,14 +53,14 @@ class CollectionApplicative extends Applicative implements IteratorAggregate
     {
         $r = fn ($acc, callable $function) => array_merge(
             $acc,
-            array_map($function, $data->values)
+            array_map($function, $data->value)
         );
-        return $this->pure(array_reduce($this->values, $r, []));
+        return $this->pure(array_reduce($this->value, $r, []));
     }
 
     public function getIterator(): Traversable
     {
-        return new ArrayIterator($this->values);
+        return new ArrayIterator($this->value);
     }
 }
 
