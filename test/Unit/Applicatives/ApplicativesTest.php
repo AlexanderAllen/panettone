@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace AlexanderAllen\Panettone\Test\Unit\Applicative;
 
 use Closure;
+use FunctionalPHP\FantasyLand\Apply;
 use FunctionalPHP\FantasyLand\Functor;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\{CoversNothing, Group, Test, TestDox};
@@ -34,10 +35,10 @@ interface PointedInterface
 
 /**
  * @template a
- * @implements Functor<a>
+ * @implements Apply<a>
  * @implements PointedInterface<a>
  */
-abstract class Applicative implements Functor, PointedInterface
+abstract class Applicative implements Apply, PointedInterface
 {
     /** @use PointedTrait<a> */
     use PointedTrait;
@@ -50,9 +51,9 @@ abstract class Applicative implements Functor, PointedInterface
      *
      * @template b
      * @param b $value
-     * @return Functor<b>
+     * @return Applicative<b>
      */
-    abstract public static function pure($value): Functor;
+    abstract public static function pure($value): Applicative;
 
     /**
      * Applies the stored function to the given parameter.
@@ -65,10 +66,14 @@ abstract class Applicative implements Functor, PointedInterface
      *
      * PHPStan says, hold my types.
      *
+     * @todo IDK how TF express what apply does inside in stan.
+     *
      * @param Applicative<a> $f
      * @return Applicative<a>
      */
     abstract public function apply(Applicative $f): Applicative;
+
+    abstract public function ap(Apply $b): Apply;
 
     /**
      * map :: Functor f => (a -> b) -> f b
@@ -132,6 +137,15 @@ class IdentityApplicative extends Applicative
      * @return Applicative<a>
      */
     public function apply(Applicative $f): Applicative
+    {
+        return static::pure($this->get()($f->get()));
+    }
+
+    /**
+     * @param Applicative<a> $f
+     * @return Applicative<a>
+     */
+    public function ap(Apply $f): Apply
     {
         return static::pure($this->get()($f->get()));
     }
