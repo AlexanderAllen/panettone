@@ -49,11 +49,16 @@ abstract class Applicative implements Apply, PointedInterface
      *
      * Use local generics on static functions.
      *
+     * Binding signature return to interface instead of abastract.
+     * The interface inherits Functor while this abstract class does not.
+     * The PHPDoc return must be set to `static` to prevent compilation issues
+     * downstream.
+     *
      * @template b
      * @param b $value
-     * @return Applicative<b>
+     * @return static<b>
      */
-    public static function pure($value): Applicative
+    public static function pure($value): Apply
     {
         return new static($value);
     }
