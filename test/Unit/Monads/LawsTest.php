@@ -10,6 +10,17 @@ use FunctionalPHP\FantasyLand\Monad;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\{CoversNothing, Group, TestDox};
 
+/**
+ * Monads are a functional container for values.
+ *
+ * Monads, like functors, are a wrapper or context for values.
+ * Like applicatives, monads provide a means to apply a function to the
+ * encapsulated value. They also share some laws with monoids.
+ *
+ * While applicatives wrap a function, monads encapsulate a value.
+ * Applicatives use functions with non-lifted values, monads use functions that
+ * return a monad of the same type.
+ */
 enum Law
 {
     /**
@@ -72,7 +83,7 @@ enum Law
 abstract class MonadBase extends Applicative implements Monad
 {
     /**
-     * Method from the book.
+     * Alias for `pure`, used by book because Haskell uses `return` for monads.
      *
      * @template b
      * @param b $value
@@ -84,7 +95,12 @@ abstract class MonadBase extends Applicative implements Monad
     }
 
     /**
-     * Method both from book and fantasy land.
+     * Takes a function and applies it to the stored value.
+     *
+     * Bind returns values directly instead of wrapped in a context.
+     *
+     * Method both from book and fantasy land. Sometimes also called `chain` or
+     * `flatMap`.
      *
      * @todo The application of bind fails to compile.
      * @todo Generics on upstream fantasy land are borked.
@@ -105,6 +121,11 @@ class IdentityMonad extends MonadBase
         return $f($this->get());
     }
 
+    /**
+     * Takes a applicative-wrapped value and applies the stored function to it.
+     *
+     * Apply puts values in a context before returning them, unlike `bind`.
+     */
     public function apply(Applicative $a): Applicative
     {
         return static::pure($this->get()($a->get()));

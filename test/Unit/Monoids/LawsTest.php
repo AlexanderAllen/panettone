@@ -53,7 +53,7 @@ enum Law
 
 /**
  * A monoid is a combination of a type, a binary operation on the type, and a
- * associated identity element (this can be worded better, no need for three segments).
+ * associated identity element.
  *
  * `id` and `op` methods are abstract as those are implementation-specific.
  *
