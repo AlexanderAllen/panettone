@@ -53,7 +53,10 @@ abstract class Applicative implements Apply, PointedInterface
      * @param b $value
      * @return Applicative<b>
      */
-    abstract public static function pure($value): Applicative;
+    public static function pure($value): Applicative
+    {
+        return new static($value);
+    }
 
     /**
      * Applies the stored function to the given parameter.
@@ -122,15 +125,6 @@ abstract class Applicative implements Apply, PointedInterface
  */
 class IdentityApplicative extends Applicative
 {
-    /**
-     * @template b
-     * @param b $value
-     * @return Applicative<a>
-     */
-    public static function pure($value): Applicative
-    {
-        return new static($value);
-    }
 
     /**
      * @param Applicative<a> $f

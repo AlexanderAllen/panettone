@@ -7,6 +7,7 @@ namespace AlexanderAllen\Panettone\Test\Unit\Applicative;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\{CoversNothing, DataProvider, Group, Test, TestDox};
 use ArrayIterator;
+use FunctionalPHP\FantasyLand\Apply;
 use IteratorAggregate;
 use Traversable;
 
@@ -36,6 +37,19 @@ class CollectionApplicative extends Applicative implements IteratorAggregate
      * @return Applicative<a>
      */
     public function apply(Applicative $data): Applicative
+    {
+        $r = fn ($acc, callable $function) => array_merge(
+            $acc,
+            array_map($function, $data->values)
+        );
+        return $this->pure(array_reduce($this->values, $r, []));
+    }
+
+    /**
+     * @param static<a> $data
+     * @return Applicative<a>
+     */
+    public function ap(Apply $data): Apply
     {
         $r = fn ($acc, callable $function) => array_merge(
             $acc,
