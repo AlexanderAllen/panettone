@@ -132,6 +132,9 @@
         "test-all": [
             ". tools/phpunit/test-all"
         ],
+        "test-lint": [
+          "tools/phpstan/vendor/bin/phpstan analyze --configuration tools/phpstan/phpstan.neon"
+        ],
         "debug": [
             "Composer\\Config::disableProcessTimeout",
             "export XDEBUG_MODE=develop,debug,coverage && export XDEBUG_TRIGGER=1 && . tools/phpunit/test target "
