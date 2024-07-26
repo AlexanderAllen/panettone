@@ -119,10 +119,10 @@ abstract class MonadBase extends Applicative implements Monad
      *
      * @todo The application of bind fails to compile.
      * @todo Generics on upstream fantasy land are borked.
-     * @param callable(a): Monad<a> $f
+     * @param callable(a): static<a> $f
      * @return static<a>
      */
-    abstract public function bind(callable $f): Monad;
+    abstract public function bind(callable $f);
 }
 
 /**
@@ -131,7 +131,7 @@ abstract class MonadBase extends Applicative implements Monad
  */
 class IdentityMonad extends MonadBase
 {
-    public function bind(callable $function): Monad
+    public function bind(callable $function)
     {
         return $function($this->get());
     }
