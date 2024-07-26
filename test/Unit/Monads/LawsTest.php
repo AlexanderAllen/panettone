@@ -6,6 +6,7 @@ namespace AlexanderAllen\Panettone\Test\Unit\Monads;
 
 use AlexanderAllen\Panettone\Test\Unit\Applicative\Applicative;
 use FunctionalPHP\FantasyLand\Apply;
+use FunctionalPHP\FantasyLand\Chain;
 use FunctionalPHP\FantasyLand\Monad;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\{CoversNothing, Group, TestDox};
@@ -99,11 +100,11 @@ abstract class MonadBase extends Applicative implements Monad
     /**
      * Alias for `pure`, used by book because Haskell uses `return` for monads.
      *
-     * @phpstan-template b
-     * @phpstan-param b $value
-     * @phpstan-return static
+     * @template b
+     * @param b $value
+     * @return Monad<b>
      */
-    public static function return(mixed $value): static
+    public static function return(mixed $value)
     {
         return static::pure($value);
     }
@@ -119,7 +120,7 @@ abstract class MonadBase extends Applicative implements Monad
      * @todo The application of bind fails to compile.
      * @todo Generics on upstream fantasy land are borked.
      * @param callable(a): Monad<a> $f
-     * @return Monad<a>
+     * @return static<a>
      */
     abstract public function bind(callable $f): Monad;
 }
@@ -130,15 +131,16 @@ abstract class MonadBase extends Applicative implements Monad
  */
 class IdentityMonad extends MonadBase
 {
-    public function bind(callable $f): Monad
+    public function bind(callable $function): Monad
     {
-        return $f($this->get());
+        return $function($this->get());
     }
 
     /**
      * Takes a applicative-wrapped value and applies the stored function to it.
      *
-     * Apply puts values in a context before returning them, unlike `bind`.
+     * Unlike `bind`, the `apply` method is responsible for the encapsulation
+     * of the value.
      */
     public function apply(Applicative $a): Applicative
     {
@@ -155,12 +157,23 @@ class IdentityMonad extends MonadBase
     }
 
     /**
-     * @param callable $f
-     * @return callable
+     *
+     * @param a $s
+     * @return Chain<a>
      */
-    public function foo(callable $f): callable
+    public function foo($s): Chain
     {
-        return $f;
+        return static::pure($s);
+    }
+
+    public static function bar(): void
+    {
+        $t = null;
+    }
+
+    public static function baz(mixed $value): static
+    {
+        return static::pure($value);
     }
 }
 
@@ -177,25 +190,20 @@ class LawsTest extends TestCase
      */
     public function tesCallableArrays(): void
     {
-        $t = null;
-        /** @var array<string, callable():void> */
-        $b = [
-            'a' => [IdentityMonad::class, 'a'],
-            'b' => [IdentityMonad::class, 'b']
-        ];
 
-        /** @var callable(): void $c */
-        $c = [IdentityMonad::class, 'a'];
+        /** @var callable $a */
+        $a = [IdentityMonad::class, 'a'];
 
-        /** @var callable(): void $c */
-        $d = [IdentityMonad::class, 'a'];
-
-        $g = [IdentityMonad::class, 'b'];
+        /** @var callable(): void  $b */
+        $b = [IdentityMonad::class, 'bar'];
 
         $e = IdentityMonad::return(1);
 
-        $f = $e->foo($d);
-        $x = $e->foo($g);
+
+
+        $y = $e->bind([$e, 'return']);
+        $x = $e->bind([$e, 'foo']);
+        $z = $e->bind([IdentityMonad::class, 'baz']);
     }
 
     public function testLeftIdentity(): void
