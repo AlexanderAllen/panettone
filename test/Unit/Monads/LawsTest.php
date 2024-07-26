@@ -117,12 +117,15 @@ abstract class MonadBase extends Applicative implements Monad
      * Method both from book and fantasy land. Sometimes also called `chain` or
      * `flatMap`.
      *
+     * template b
+     *
      * @todo The application of bind fails to compile.
      * @todo Generics on upstream fantasy land are borked.
-     * @param callable(a): static<a> $f
+
+     * @param callable(a): static<a> $function
      * @return static<a>
      */
-    abstract public function bind(callable $f);
+    abstract public function bind(callable $function);
 }
 
 /**
