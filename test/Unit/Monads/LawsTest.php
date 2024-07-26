@@ -101,11 +101,11 @@ abstract class MonadBase extends Applicative implements Monad
      *
      * @template b
      * @param b $value
-     * @return Monad<b>
+     * @return static
      */
-    public static function return(mixed $value): Monad
+    public static function return(mixed $value)
     {
-        return static::pure($value);
+        return new static($value);
     }
 
     /**
@@ -118,7 +118,8 @@ abstract class MonadBase extends Applicative implements Monad
      *
      * @todo The application of bind fails to compile.
      * @todo Generics on upstream fantasy land are borked.
-     * @param callable(a): Monad<a> $f
+     * param callable(a): Monad<a> $f
+     * @param array{MonadBase<a>, string} $f
      * @return Monad<a>
      */
     abstract public function bind(callable $f): Monad;
@@ -153,7 +154,18 @@ class IdentityMonad extends MonadBase
     {
         return static::pure($this->get()($a->get()));
     }
+
+    /**
+     * @param callable $f
+     * @return callable
+     */
+    public function foo(callable $f): callable
+    {
+        return $f;
+    }
 }
+
+
 
 
 #[TestDox('Laws for Monads')]
@@ -161,6 +173,29 @@ class IdentityMonad extends MonadBase
 #[Group('target')]
 class LawsTest extends TestCase
 {
+    /**
+     * PHPStan callable has issues with `bind` array callables.
+     */
+    public function tesCallableArrays(): void
+    {
+        $t = null;
+        /** @var array<string, callable():void> */
+        $b = [
+            'a' => [IdentityMonad::class, 'a'],
+            'b' => [IdentityMonad::class, 'b']
+        ];
+
+        /** @var callable(): void $c */
+        $c = [IdentityMonad::class, 'a'];
+
+        /** @var callable(): void $c */
+        $d = [IdentityMonad::class, 'a'];
+
+        $e = IdentityMonad::return(1);
+
+        $f = $e->foo($d);
+    }
+
     public function testLeftIdentity(): void
     {
         $r = Law::assert(
