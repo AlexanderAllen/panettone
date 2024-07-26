@@ -56,9 +56,9 @@ abstract class Applicative implements Apply, PointedInterface
      *
      * @template b
      * @param b $value
-     * @return static<b>
+     * @return static
      */
-    public static function pure($value): Apply
+    public static function pure($value): static
     {
         return new static($value);
     }

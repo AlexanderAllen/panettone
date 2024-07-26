@@ -99,13 +99,13 @@ abstract class MonadBase extends Applicative implements Monad
     /**
      * Alias for `pure`, used by book because Haskell uses `return` for monads.
      *
-     * @template b
-     * @param b $value
-     * @return static
+     * @phpstan-template b
+     * @phpstan-param b $value
+     * @phpstan-return static
      */
-    public static function return(mixed $value)
+    public static function return(mixed $value): static
     {
-        return new static($value);
+        return static::pure($value);
     }
 
     /**
@@ -191,9 +191,12 @@ class LawsTest extends TestCase
         /** @var callable(): void $c */
         $d = [IdentityMonad::class, 'a'];
 
+        $g = [IdentityMonad::class, 'b'];
+
         $e = IdentityMonad::return(1);
 
         $f = $e->foo($d);
+        $x = $e->foo($g);
     }
 
     public function testLeftIdentity(): void
