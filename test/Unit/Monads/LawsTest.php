@@ -118,9 +118,7 @@ abstract class MonadBase extends Applicative implements Monad
      *
      * @todo The application of bind fails to compile.
      * @todo Generics on upstream fantasy land are borked.
-     * param callable(a): Monad<a> $f
-     * param array{MonadBase<a>, string} $f
-     * @param callable $f
+     * @param callable(a): Monad<a> $f
      * @return Monad<a>
      */
     abstract public function bind(callable $f): Monad;
