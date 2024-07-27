@@ -100,17 +100,15 @@ abstract class Applicative implements Apply, PointedInterface
      * @see https://www.php.net/releases/7_4_0.php Announcement
      * @see https://www.php.net/manual/en/language.oop5.variance.php Co- and Contra-variance.
      *
-     * Maps a callable that acceps class generic `a` then returns local generic `b`.
+     * Maps `f` to an applicative of `a` then applies it to `self`.s
      *
-     * @template b The result returned by the callable operation.
+     * @param callable(a): static<a> $function
+     *   Callable `f` is invoked immediatly with `a`.
      *
-     * @param callable(a): b $function
-     *   Callable `$f` is invoked immediatly with `a`, returning `b` as a result.
-     *
-     * @return static<callable(a): b>
-     *   A new `static` instance containing containing `b`.
+     * @return static<a>
+     *   A new instance of `static`.
      */
-    public function map(callable $function): Functor
+    public function map(callable $function): Apply
     {
         return $this->pure($function)->apply($this);
     }
@@ -130,7 +128,6 @@ abstract class Applicative implements Apply, PointedInterface
  */
 class IdentityApplicative extends Applicative
 {
-
     /**
      * @param Applicative<a> $f
      * @return Applicative<a>
