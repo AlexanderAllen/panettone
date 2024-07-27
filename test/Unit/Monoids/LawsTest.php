@@ -141,7 +141,12 @@ abstract class MonoidBase implements Monoid
     /**
      * Concat folds value into a result of type `a`.
      *
-     * For example if `a` is an array of `int`, the result is a folded `int`.
+     * For example if `a` is an array of `int`, the result is an `int`.
+     * That means that `a` is transformed to the folded `b` before being wrapped
+     * by the Semigroup.
+     *
+    //  * @template b
+    //  *   When operation `op` folds `a` into a `b`.
      *
      * @param static<a> $value
      * @return static<a>
@@ -153,6 +158,7 @@ abstract class MonoidBase implements Monoid
         $c = static::of($b);
         return $c;
     }
+
     // public function __invoke(mixed ...$args): mixed
     // {
     //     switch (count($args)) {
@@ -160,15 +166,13 @@ abstract class MonoidBase implements Monoid
     //             throw new RuntimeException('Expects at least 1 parameter.');
     //         case 1:
     //             return function ($b) use ($args) {
-    //                 return static::op($args[0], $b);
+    //                 return [$this, 'op', $args[0], $b];
     //             };
     //         default:
     //             return $this->concat($args);
     //     }
     // }
 }
-
-// (new IntSum([1, 2, 3]))->concat()
 
 /**
  * @template a
@@ -331,25 +335,25 @@ class LawsTest extends TestCase
         $this->assertTrue($result);
     }
 
-    // public function testNonAssociativeCheck(): void
-    // {
-    //     $monoid = new class extends MonoidBase {
-    //         public function id(): int
-    //         {
-    //             return 0;
-    //         }
-    //         public function op(mixed $a, mixed $b): int
-    //         {
-    //             return $a - $b;
-    //         }
-    //     };
+    public function testNonAssociativeCheck(): void
+    {
+        $monoid = new class (5) extends MonoidBase {
+            public function id(): int
+            {
+                return 0;
+            }
+            public function op(mixed $a, mixed $b): int
+            {
+                return $a - $b;
+            }
+        };
 
-    //     $result = Law::assert(Law::associative, $monoid, 5, 10, 20);
-    //     $this->assertFalse($result, 'Subscration operation is not associative');
+        $result = Law::assert(Law::associative, $monoid, 10, 20);
+        $this->assertFalse($result, 'Subscration operation is not associative');
 
-    //     $result = Law::assert(Law::left_identity, $monoid, 5, 10, 20);
-    //     $this->assertFalse($result, 'Subscration operation is not associative');
-    // }
+        $result = Law::assert(Law::left_identity, $monoid, 10, 20);
+        $this->assertFalse($result, 'Subscration operation is not associative');
+    }
 
     public function testMonoidsAsIntFoldables(): void
     {
@@ -357,7 +361,9 @@ class LawsTest extends TestCase
         $foo = $numbers->concat($numbers);
         $bar = $foo->extract();
 
+
         $this->assertTrue($bar == 268);
+
     }
 
     // public function testMonoidsAsArrayFoldables(): void
@@ -368,9 +374,9 @@ class LawsTest extends TestCase
 
     // public function testMonoidsAsCallables(): void
     // {
-    //     $add = new IntSum();
-    //     $times = new IntProduct();
-    //     $composed = compose($add(5), $times(2));
+    //     $add = new IntSum(5);
+    //     $times = new IntProduct(2);
+    //     $composed = compose($add(), $times());
     //     $this->assertTrue($composed(2) == 9);
     // }
 }
