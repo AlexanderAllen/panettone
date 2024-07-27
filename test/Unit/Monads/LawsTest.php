@@ -110,23 +110,19 @@ abstract class MonadBase extends Applicative implements Monad
     }
 
     /**
-     * Takes a function and applies it to the stored value.
-     *
      * Bind returns values directly instead of wrapped in a context.
      *
      * Method both from book and fantasy land. Sometimes also called `chain` or
      * `flatMap`.
      *
-     * template b
-     *
-     * @todo The application of bind fails to compile.
      * @todo Generics on upstream fantasy land are borked.
 
      * @param callable(a): static<a> $function
      * @return static<a>
      */
-    abstract public function bind(callable $function);
+    abstract public function bind(callable $function): Monad;
 }
+
 
 /**
  * @template a
@@ -134,7 +130,7 @@ abstract class MonadBase extends Applicative implements Monad
  */
 class IdentityMonad extends MonadBase
 {
-    public function bind(callable $function)
+    public function bind(callable $function): Monad
     {
         return $function($this->get());
     }
@@ -174,7 +170,12 @@ class IdentityMonad extends MonadBase
         $t = null;
     }
 
-    public static function baz(mixed $value): static
+    /**
+     *
+     * @param a $value
+     * @return IdentityMonad<a>
+     */
+    public static function baz(mixed $value): IdentityMonad
     {
         return static::pure($value);
     }
