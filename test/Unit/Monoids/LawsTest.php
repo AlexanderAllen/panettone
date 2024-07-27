@@ -309,27 +309,27 @@ class LawsTest extends TestCase
         $this->assertTrue($result);
     }
 
-    // public function testAssociativity(): void
-    // {
+    public function testAssociativity(): void
+    {
 
-    //     $result = Law::assert(Law::associative, new IntSum(), 5, 10, 20);
-    //     $this->assertTrue($result);
+        $result = Law::assert(Law::associative, new IntSum(5), 10, 20);
+        $this->assertTrue($result);
 
-    //     $result = Law::assert(Law::associative, new IntProduct(), 5, 10, 20);
-    //     $this->assertTrue($result);
+        $result = Law::assert(Law::associative, new IntProduct(5), 10, 20);
+        $this->assertTrue($result);
 
-    //     $result = Law::assert(Law::associative, new StringConcat(), 'Hello ', 'World', '!');
-    //     $this->assertTrue($result);
+        $result = Law::assert(Law::associative, new StringConcat('Hello '), 'World', '!');
+        $this->assertTrue($result);
 
-    //     $result = Law::assert(Law::associative, new ArrayMerge(), [1, 2, 3], [4, 5], [10]);
-    //     $this->assertTrue($result);
+        $result = Law::assert(Law::associative, new ArrayMerge([1, 2, 3]), [4, 5], [10]);
+        $this->assertTrue($result);
 
-    //     $result = Law::assert(Law::associative, new All(), true, false, true);
-    //     $this->assertTrue($result);
+        $result = Law::assert(Law::associative, new All(true), false, true);
+        $this->assertTrue($result);
 
-    //     $result = Law::assert(Law::associative, new Any(), true, false, true);
-    //     $this->assertTrue($result);
-    // }
+        $result = Law::assert(Law::associative, new Any(true), false, true);
+        $this->assertTrue($result);
+    }
 
     // public function testNonAssociativeCheck(): void
     // {
