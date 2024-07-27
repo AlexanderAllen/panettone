@@ -113,6 +113,9 @@ abstract class MonoidBase implements Monoid
         return $this;
     }
 
+    /**
+     * @return a $value
+     */
     public function extract()
     {
         return $this->value;
@@ -136,14 +139,18 @@ abstract class MonoidBase implements Monoid
     abstract public function op(mixed $a, mixed $b): mixed;
 
     /**
-     * @param Semigroup<a>&MonoidBase<a> $value
+     * Concat folds value into a result of type `a`.
+     *
+     * For example if `a` is an array of `int`, the result is a folded `int`.
+     *
+     * @param static<a> $value
      * @return static<a>
      */
     public function concat(Semigroup $value): Semigroup
     {
         $a = $value->value;
         $b = array_reduce($a, [$this, 'op'], [$this, 'id']());
-        $c = (new static())->set($b);
+        $c = static::of($b);
         return $c;
     }
     // public function __invoke(mixed ...$args): mixed
@@ -274,38 +281,31 @@ class LawsTest extends TestCase
 {
     public function testIdentity(): void
     {
-        $a = new IntSum(5);
-        $result = Law::assert(Law::left_identity, $a, 10, 20);
+        $result = Law::assert(Law::left_identity, new IntSum(5), 10, 20);
         $this->assertTrue($result);
-        $result = Law::assert(Law::right_identity, $a, 10, 20);
-        $this->assertTrue($result);
-
-        $b = new IntProduct(5);
-        $result = Law::assert(Law::left_identity, $b, 10, 20);
-        $this->assertTrue($result);
-        $result = Law::assert(Law::right_identity, $b, 10, 20);
+        $result = Law::assert(Law::right_identity, new IntSum(5), 10, 20);
         $this->assertTrue($result);
 
-        $c = new StringConcat('Hello ');
-        $result = Law::assert(Law::left_identity, $c, 'World', '!');
+        $result = Law::assert(Law::left_identity, new IntProduct(5), 10, 20);
         $this->assertTrue($result);
-        $result = Law::assert(Law::right_identity, $c, 'World', '!');
-        $this->assertTrue($result);
-
-        $d = new Any(true);
-        $result = Law::assert(Law::left_identity, $d, false, true);
+        $result = Law::assert(Law::right_identity, new IntProduct(5), 10, 20);
         $this->assertTrue($result);
 
-        $e = new Any(false);
-        $result = Law::assert(Law::right_identity, $e, false, true);
+        $result = Law::assert(Law::left_identity, new StringConcat('Hello '), 'World', '!');
+        $this->assertTrue($result);
+        $result = Law::assert(Law::right_identity, new StringConcat('Hello '), 'World', '!');
         $this->assertTrue($result);
 
-        $f = new All(true);
-        $result = Law::assert(Law::left_identity, $f, false, true);
+        $result = Law::assert(Law::left_identity, new Any(true), false, true);
         $this->assertTrue($result);
 
-        $g = new All(false);
-        $result = Law::assert(Law::right_identity, $g, false, true);
+        $result = Law::assert(Law::right_identity, new Any(false), false, true);
+        $this->assertTrue($result);
+
+        $result = Law::assert(Law::left_identity, new All(true), false, true);
+        $this->assertTrue($result);
+
+        $result = Law::assert(Law::right_identity, new All(false), false, true);
         $this->assertTrue($result);
     }
 
@@ -351,16 +351,14 @@ class LawsTest extends TestCase
     //     $this->assertFalse($result, 'Subscration operation is not associative');
     // }
 
-    // public function testMonoidsAsIntFoldables(): void
-    // {
-    //     // $numbers = IntSum::of([1, 23, 45, 187, 12]);
-    //     $a = [1, 23, 45, 187, 12];
-    //     $numbers = (new IntSum())->set($a);
-    //     $foo = $numbers->concat($numbers);
-    //     $bar = $foo->extract();
+    public function testMonoidsAsIntFoldables(): void
+    {
+        $numbers = IntSum::of([1, 23, 45, 187, 12]);
+        $foo = $numbers->concat($numbers);
+        $bar = $foo->extract();
 
-    //     $this->assertTrue($bar == 268);
-    // }
+        $this->assertTrue($bar == 268);
+    }
 
     // public function testMonoidsAsArrayFoldables(): void
     // {
