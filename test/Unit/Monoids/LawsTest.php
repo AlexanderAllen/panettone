@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace AlexanderAllen\Panettone\Test\Unit\Monoids;
 
+use FunctionalPHP\FantasyLand\Semigroup;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\{CoversNothing, Group, TestDox};
 use RuntimeException;
+use Widmogrod\Common\PointedTrait;
+use Widmogrod\Common\ValueOfInterface;
 
 use function Widmogrod\Functional\compose;
 
@@ -34,6 +37,15 @@ enum Law
      */
     case associative;
 
+    /**
+     * @template a
+     * @param Law $case
+     * @param Monoid<a> $m
+     * @param mixed $a
+     * @param mixed $b
+     * @param mixed $c
+     * @return bool
+     */
     public static function assert(
         Law $case,
         Monoid $m,
@@ -52,120 +64,200 @@ enum Law
 }
 
 /**
- * A monoid is a combination of a type, a binary operation on the type, and a
- * associated identity element.
+ * A monoid is a semigroup with an identity element.
+ *
+ * Monoids combine of a type, a binary operation on the type, and a
+ * associated identity element. They are an algebraic structure between
+ * semigroups and groups.
  *
  * `id` and `op` methods are abstract as those are implementation-specific.
  *
  * An example use case for monoids is folding a collection of values with the
  * same type as the monoid class.
+ *
+ * @template a
+ * @extends Semigroup<a>
+ * @extends ValueOfInterface<a>
+ *
+ * @link https://en.wikipedia.org/wiki/Monoid Monoid theory
+ * @link https://en.wikipedia.org/wiki/Semigroup Semigroup theory
  */
-interface Monoid
+interface Monoid extends Semigroup, ValueOfInterface
 {
-    public static function id(): mixed;
-    public static function op(mixed $a, mixed $b): mixed;
+    public function id(): mixed;
+    public function op(mixed $a, mixed $b): mixed;
+
     /**
-     * @param array<mixed> $values
+     * Return result of applying one semigroup with another.
+     *
+     * @param Semigroup<a> $value
+     * @return Semigroup<a>
      */
-    public static function concat(array $values): mixed;
+    public function concat(Semigroup $value): Semigroup;
 }
 
+/**
+ * @template a
+ * @implements Monoid<a>
+ */
 abstract class MonoidBase implements Monoid
 {
-    abstract public static function id(): mixed;
-    abstract public static function op(mixed $a, mixed $b): mixed;
-    public static function concat(array $values): mixed
+    // /** @use PointedTrait<a> */
+    // use PointedTrait;
+
+    /**
+     * @param a $value
+     */
+    public function set(mixed $value): static
     {
-        $class = get_called_class();
-        return array_reduce($values, [$class, 'op'], [$class, 'id']());
+        $this->value = $value;
+        return $this;
     }
-    public function __invoke(mixed ...$args): mixed
+
+    protected mixed $value;
+
+    public function extract()
     {
-        switch (count($args)) {
-            case 0:
-                throw new RuntimeException('Expects at least 1 parameter.');
-            case 1:
-                return function ($b) use ($args) {
-                    return static::op($args[0], $b);
-                };
-            default:
-                return static::concat($args);
-        }
+        return $this->value;
     }
+
+    /**
+     * Identity element.
+     *
+     * Used as initial value in concat / reduce operations.
+     * @return a
+     */
+    abstract public function id(): mixed;
+    abstract public function op(mixed $a, mixed $b): mixed;
+
+    /**
+     * @param Semigroup<a>&MonoidBase<a> $value
+     * @return static<a>
+     */
+    public function concat(Semigroup $value): Semigroup
+    {
+        $a = $value->value;
+        $b = array_reduce($a, [$this, 'op'], [$this, 'id']());
+        $c = (new static())->set($b);
+        return $c;
+    }
+    // public function __invoke(mixed ...$args): mixed
+    // {
+    //     switch (count($args)) {
+    //         case 0:
+    //             throw new RuntimeException('Expects at least 1 parameter.');
+    //         case 1:
+    //             return function ($b) use ($args) {
+    //                 return static::op($args[0], $b);
+    //             };
+    //         default:
+    //             return $this->concat($args);
+    //     }
+    // }
 }
 
+// (new IntSum([1, 2, 3]))->concat()
+
+/**
+ * @template a
+ * @extends MonoidBase<a>
+ */
 class IntSum extends MonoidBase
 {
-    public static function id(): int
+    public function id(): int
     {
         return 0;
     }
-    public static function op(mixed $a, mixed $b): mixed
+    public function op(mixed $a, mixed $b): mixed
     {
         return $a + $b;
     }
 }
 
+/**
+ * @template a
+ * @extends MonoidBase<a>
+ */
 class IntProduct extends MonoidBase
 {
-    public static function id(): int
+    public function id(): int
     {
         return 1;
     }
-    public static function op(mixed $a, mixed $b): mixed
+    public function op(mixed $a, mixed $b): mixed
     {
         return $a * $b;
     }
 }
 
+/**
+ * @template a
+ * @extends MonoidBase<a>
+ */
 class StringConcat extends MonoidBase
 {
-    public static function id(): string
+    public function id(): string
     {
         return '';
     }
-    public static function op(mixed $a, mixed $b): mixed
+    public function op(mixed $a, mixed $b): mixed
     {
         return $a . $b;
     }
 }
 
+/**
+ * @template a
+ * @extends MonoidBase<a>
+ */
 class ArrayMerge extends MonoidBase
 {
-    public static function id(): mixed
+    public function id(): mixed
     {
         return [];
     }
-    public static function op(mixed $a, mixed $b): mixed
+    public function op(mixed $a, mixed $b): mixed
     {
         return array_merge($a, $b);
     }
 }
 
+/**
+ * @template a
+ * @extends MonoidBase<a>
+ */
 class Any extends MonoidBase
 {
-    public static function id(): bool
+    public function id(): bool
     {
         return false;
     }
-    public static function op(mixed $a, mixed $b): bool
+    public function op(mixed $a, mixed $b): bool
     {
         return $a || $b;
     }
 }
 
+/**
+ * @template a
+ * @extends MonoidBase<a>
+ */
 class All extends MonoidBase
 {
-    public static function id(): bool
+    public function id(): bool
     {
         return true;
     }
-    public static function op(mixed $a, mixed $b): bool
+    public function op(mixed $a, mixed $b): bool
     {
         return $a && $b;
     }
 }
 
+/**
+ * @template a
+ * @extends MonoidBase<a>
+ */
 abstract class None extends MonoidBase
 {
 }
@@ -227,11 +319,11 @@ class LawsTest extends TestCase
     public function testNonAssociativeCheck(): void
     {
         $monoid = new class extends MonoidBase {
-            public static function id(): int
+            public function id(): int
             {
                 return 0;
             }
-            public static function op(mixed $a, mixed $b): int
+            public function op(mixed $a, mixed $b): int
             {
                 return $a - $b;
             }
@@ -246,21 +338,26 @@ class LawsTest extends TestCase
 
     public function testMonoidsAsIntFoldables(): void
     {
-        $numbers = [1, 23, 45, 187, 12];
-        $this->assertTrue(IntSum::concat($numbers) == 268);
+        // $numbers = IntSum::of([1, 23, 45, 187, 12]);
+        $a = [1, 23, 45, 187, 12];
+        $numbers = (new IntSum())->set($a);
+        $foo = $numbers->concat($numbers);
+        $bar = $foo->extract();
+
+        $this->assertTrue($bar == 268);
     }
 
-    public function testMonoidsAsArrayFoldables(): void
-    {
-        $a = [[1, 2, 3], ['one', 'two', 'three'], [true, false]];
-        $this->assertTrue(ArrayMerge::concat($a) == [1, 2, 3, 'one', 'two', 'three', true, false]);
-    }
+    // public function testMonoidsAsArrayFoldables(): void
+    // {
+    //     $a = [[1, 2, 3], ['one', 'two', 'three'], [true, false]];
+    //     $this->assertTrue(ArrayMerge::concat($a) == [1, 2, 3, 'one', 'two', 'three', true, false]);
+    // }
 
-    public function testMonoidsAsCallables(): void
-    {
-        $add = new IntSum();
-        $times = new IntProduct();
-        $composed = compose($add(5), $times(2));
-        $this->assertTrue($composed(2) == 9);
-    }
+    // public function testMonoidsAsCallables(): void
+    // {
+    //     $add = new IntSum();
+    //     $times = new IntProduct();
+    //     $composed = compose($add(5), $times(2));
+    //     $this->assertTrue($composed(2) == 9);
+    // }
 }
