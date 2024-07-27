@@ -21,7 +21,7 @@ use Traversable;
  */
 class CollectionApplicative extends Applicative implements IteratorAggregate
 {
-    public static function pure($values): Applicative
+    public static function pure($values): static
     {
         if ($values instanceof Traversable) {
             $values = iterator_to_array($values);
@@ -34,9 +34,9 @@ class CollectionApplicative extends Applicative implements IteratorAggregate
 
     /**
      * @param Applicative<a> $data
-     * @return Applicative<a>
+     * @return static<a>
      */
-    public function apply(Applicative $data): Applicative
+    public function apply(Applicative $data): static
     {
         $r = fn ($acc, callable $function) => array_merge(
             $acc,

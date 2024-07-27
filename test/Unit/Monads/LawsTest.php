@@ -115,6 +115,9 @@ abstract class MonadBase extends Applicative implements Monad
      * Method both from book and fantasy land. Sometimes also called `chain` or
      * `flatMap`.
      *
+     * Using local generic `b` on return types breaks compilation all over, so
+     * OP will patiently wait till somebody smarter does it (skill issues).
+     *
      * @param callable(a): static<a> $function
      * @return static<a>
      */
@@ -201,11 +204,11 @@ class LawsTest extends TestCase
 
         $e = IdentityMonad::return(1);
 
-
-
         $y = $e->bind([$e, 'return']);
         $x = $e->bind([$e, 'foo']);
         $z = $e->bind([IdentityMonad::class, 'baz']);
+
+        // $this->assertTrue($z == $e);
     }
 
     public function testLeftIdentity(): void
